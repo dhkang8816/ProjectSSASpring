@@ -1,5 +1,7 @@
 import unittest
+from unittest.mock import Mock, patch
 
+from apps import runtime_settings
 from apps.services import sensor_helper
 
 
@@ -26,6 +28,64 @@ class CollisionLevelTest(unittest.TestCase):
     def test_sensor_output_parser_uses_last_json_line(self):
         parsed = sensor_helper._parse_sensor_output("mpremote info\n{\"distance\": 12.5}\n")
         self.assertEqual({"distance": 12.5}, parsed)
+
+    def test_sensor_read_uses_the_shared_runtime_com_port(self):
+        completed = Mock(stdout='{"distance": 12.5}')
+        with patch.object(runtime_settings, "ESP32_COM_PORT", "COM77"), \
+                patch.object(sensor_helper.buzzer_helper, "run_mpremote", return_value=completed) as run_mpremote:
+            sensor_helper._read_from_esp32()
+
+        self.assertEqual("COM77", run_mpremote.call_args.args[0][1])
+
+    def test_sensor_command_configures_battery_inside_the_existing_mpremote_call(self):
+        command = sensor_helper._battery_config_script()
+
+        self.assertIn("configure_battery", command)
+        self.assertIn("read_sensor_status", command)
+        self.assertNotIn("serial.Serial", command)
+
+    def test_battery_normalization_keeps_missing_measurements_disconnected(self):
+        with patch.object(runtime_settings, "BATTERY_ENABLED", True):
+            battery = sensor_helper._normalize_battery_state({"available": False})
+
+        self.assertFalse(battery["available"])
+        self.assertIsNone(battery["voltage"])
+        self.assertIsNone(battery["percent"])
+        self.assertEqual("DISCONNECTED", battery["status"])
+
+    def test_battery_normalization_uses_configured_thresholds(self):
+        payload = {"available": True, "voltage": 3.31, "percent": 9.8}
+        with patch.object(runtime_settings, "BATTERY_ENABLED", True), \
+                patch.object(runtime_settings, "BATTERY_CRITICAL_PERCENT", 10.0), \
+                patch.object(runtime_settings, "BATTERY_LOW_PERCENT", 25.0):
+            battery = sensor_helper._normalize_battery_state(payload)
+
+        self.assertTrue(battery["available"])
+        self.assertEqual(3.31, battery["voltage"])
+        self.assertEqual(9.8, battery["percent"])
+        self.assertEqual("CRITICAL", battery["status"])
+
+    def test_non_physical_source_never_receives_the_esp32_battery_value(self):
+        original_status = sensor_helper.get_latest_sensor_status()
+        try:
+            with sensor_helper._sensor_lock:
+                sensor_helper._latest_status["battery"] = {
+                    "available": True,
+                    "voltage": 3.91,
+                    "percent": 73.5,
+                    "status": "NORMAL",
+                    "updatedAt": 1,
+                }
+            with patch.object(runtime_settings, "BATTERY_SOURCE_KEY", "esp32"):
+                battery = sensor_helper.get_latest_battery_status("video_1")
+
+            self.assertFalse(battery["available"])
+            self.assertIsNone(battery["percent"])
+            self.assertEqual("video_1", battery["sourceKey"])
+        finally:
+            with sensor_helper._sensor_lock:
+                sensor_helper._latest_status.clear()
+                sensor_helper._latest_status.update(original_status)
 
 
 if __name__ == "__main__":

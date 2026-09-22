@@ -25,6 +25,25 @@ class StreamHealthRouteTest(unittest.TestCase):
         start_yolo.assert_not_called()
         start_buzzer.assert_not_called()
 
+    def test_battery_route_returns_cached_status_without_direct_serial_access(self):
+        battery = {
+            "available": True,
+            "voltage": 3.91,
+            "percent": 73.5,
+            "status": "NORMAL",
+            "updatedAt": 1,
+            "sourceKey": "esp32",
+        }
+        with patch("apps.services.starter.start_services") as start_services, \
+                patch.object(views.sensor_helper, "get_latest_battery_status", return_value=battery) as cached_battery:
+            app = create_app("testing")
+            response = app.test_client().get("/stream/battery/status")
+
+        self.assertEqual(200, response.status_code)
+        self.assertEqual(73.5, response.get_json()["percent"])
+        cached_battery.assert_called_once_with()
+        start_services.assert_called_once()
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -20,7 +20,7 @@ body {
 	overflow-x: hidden;
 }
 
-header, .top-header {
+#ssaHeader {
 	position: fixed !important;
 	top: 0 !important;
 	left: 0 !important;
@@ -364,6 +364,47 @@ header, .top-header {
 	letter-spacing: 0.04em;
 }
 
+#yoloMainPage .battery-hud {
+	position: absolute;
+	top: 46px;
+	left: 12px;
+	right: auto;
+	z-index: 22;
+	display: flex;
+	align-items: center;
+	gap: 5px;
+	padding: 6px 9px;
+	border: 1px solid rgba(34, 197, 94, 0.45);
+	border-radius: 6px;
+	background: rgba(15, 23, 42, 0.82);
+	color: #86efac;
+	font-size: 12px;
+	font-weight: 700;
+	font-variant-numeric: tabular-nums;
+	pointer-events: none;
+	backdrop-filter: blur(2px);
+}
+
+#yoloMainPage .battery-hud-label {
+	color: #94a3b8;
+	font-size: 10px;
+}
+
+#yoloMainPage .battery-hud.is-low {
+	border-color: rgba(250, 204, 21, 0.55);
+	color: #facc15;
+}
+
+#yoloMainPage .battery-hud.is-critical {
+	border-color: rgba(248, 113, 113, 0.6);
+	color: #f87171;
+}
+
+#yoloMainPage .battery-hud.is-unavailable {
+	border-color: rgba(100, 116, 139, 0.42);
+	color: #94a3b8;
+}
+
 .streaming-frame {
 	width: 100%;
 	height: 0;
@@ -424,11 +465,11 @@ header, .top-header {
 	padding: 0 4px;
 }
 
-/* 4채널 관제용 최소 환경 센서 HUD: 우상단 배치로 변경 */
+/* 4채널 관제용 환경 센서 HUD: 타이머와 같은 높이의 우상단 배치 */
 .video-sensor-hud {
 	position: absolute;
 	right: 12px;
-	top: 12px; /* bottom: 42px 에서 top: 12px로 변경하여 우상단으로 이동 */
+	top: 12px;
 	z-index: 21;
 	display: flex;
 	align-items: center;
@@ -766,6 +807,9 @@ header, .top-header {
 							<span class="flight-timer-dot"></span><span
 								class="flight-timer-value">--:--:--</span>
 						</div>
+						<div class="battery-hud is-unavailable" id="batteryHud_video_1" title="DISCONNECTED">
+							<span class="battery-hud-label">BAT</span><span class="battery-hud-value">N/A</span>
+						</div>
 						<img id="droneVideo_video_1" class="streaming-frame" alt="동영상 1번" />
 						<div class="video-sensor-hud is-offline" title="SENSOR OFFLINE">
 							<span class="sensor-temp" title="온도">0°C</span><span
@@ -788,6 +832,9 @@ header, .top-header {
 						<div class="flight-timer-overlay" id="flightTimer_video_2">
 							<span class="flight-timer-dot"></span><span
 								class="flight-timer-value">--:--:--</span>
+						</div>
+						<div class="battery-hud is-unavailable" id="batteryHud_video_2" title="DISCONNECTED">
+							<span class="battery-hud-label">BAT</span><span class="battery-hud-value">N/A</span>
 						</div>
 						<img id="droneVideo_video_2" class="streaming-frame" alt="동영상 2번" />
 						<div class="video-sensor-hud is-offline" title="SENSOR OFFLINE">
@@ -812,6 +859,9 @@ header, .top-header {
 							<span class="flight-timer-dot"></span><span
 								class="flight-timer-value">--:--:--</span>
 						</div>
+						<div class="battery-hud is-unavailable" id="batteryHud_video_3" title="DISCONNECTED">
+							<span class="battery-hud-label">BAT</span><span class="battery-hud-value">N/A</span>
+						</div>
 						<img id="droneVideo_video_3" class="streaming-frame" alt="동영상 3번" />
 						<div class="video-sensor-hud is-offline" title="SENSOR OFFLINE">
 							<span class="sensor-temp" title="온도">0°C</span><span
@@ -834,6 +884,9 @@ header, .top-header {
 						<div class="flight-timer-overlay" id="flightTimer_esp32">
 							<span class="flight-timer-dot"></span><span
 								class="flight-timer-value">--:--:--</span>
+						</div>
+						<div class="battery-hud is-unavailable" id="batteryHud_esp32" title="DISCONNECTED">
+							<span class="battery-hud-label">BAT</span><span class="battery-hud-value">N/A</span>
 						</div>
 						<img id="droneVideo_esp32" class="streaming-frame" alt="실시간 CAM" />
 						<div class="video-sensor-hud is-offline" title="SENSOR OFFLINE">
@@ -1090,6 +1143,15 @@ header, .top-header {
 				return;
 			elements.box.classList.remove('stream-error');
 			if (enabled) {
+				if (elements.image.dataset.channel === channelKey
+						&& elements.image.dataset.connected === 'true'
+						&& elements.image.getAttribute('src')) {
+					return;
+				}
+
+				elements.image.removeAttribute('src');
+				elements.image.dataset.channel = channelKey;
+				elements.image.dataset.connected = 'true';
 				elements.image.onerror = function() {
 					elements.box.classList.add('stream-error');
 				};
@@ -1099,6 +1161,8 @@ header, .top-header {
 			} else {
 				elements.image.onerror = null;
 				elements.image.removeAttribute('src');
+				delete elements.image.dataset.channel;
+				delete elements.image.dataset.connected;
 			}
 		}
 
@@ -1667,15 +1731,66 @@ header, .top-header {
 			});
 		}
 
+		function renderMainBatteryHud(channelKey, battery) {
+			const hud = document.getElementById('batteryHud_' + channelKey);
+			if (!hud)
+				return;
+			const value = hud.querySelector('.battery-hud-value');
+			const available = !!(battery && battery.available
+					&& isFinite(Number(battery.percent)));
+			const status = available ? String(battery.status || 'NORMAL').toUpperCase()
+					: 'DISCONNECTED';
+			hud.classList.remove('is-low', 'is-critical', 'is-unavailable');
+			if (!available) {
+				hud.classList.add('is-unavailable');
+				hud.title = 'DISCONNECTED';
+				if (value)
+					value.textContent = 'N/A';
+				return;
+			}
+
+			if (status === 'LOW')
+				hud.classList.add('is-low');
+			else if (status === 'CRITICAL')
+				hud.classList.add('is-critical');
+			const voltage = Number(battery.voltage);
+			hud.title = (isFinite(voltage) ? voltage.toFixed(2) + 'V / ' : '') + status;
+			if (value)
+				value.textContent = Math.round(Number(battery.percent)) + '%';
+		}
+
+		function renderMainBatteryStatus(battery) {
+			const sourceKey = battery && battery.sourceKey;
+			yoloSourceKeys.forEach(function(channelKey) {
+				renderMainBatteryHud(channelKey,
+						sourceKey === channelKey ? battery : null);
+			});
+		}
+
+		function refreshMainBatteryStatus() {
+			$.ajax({
+				url : yoloContextPath + '/yolo/battery/status',
+				type : 'GET',
+				dataType : 'json',
+				cache : false
+			}).done(function(battery) {
+				renderMainBatteryStatus(battery || null);
+			}).fail(function() {
+				renderMainBatteryStatus(null);
+			});
+		}
+
 		$(document).ready(function() {
 			readDetectionStatus();
 			loadTopAlarmSoundState();
 			refreshFlightStatus();
 			refreshMainSensorStatus();
+			refreshMainBatteryStatus();
 			syncMainDashboardHeight();
 			refreshMainDashboard();
 			window.setInterval(renderFlightTimers, 1000);
 			window.setInterval(refreshMainSensorStatus, 3000);
+			window.setInterval(refreshMainBatteryStatus, 3000);
 			window.setInterval(refreshMainDashboard, 60000);
 		});
 

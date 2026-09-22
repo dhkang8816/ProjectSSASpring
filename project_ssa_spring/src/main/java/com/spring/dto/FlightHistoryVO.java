@@ -20,7 +20,9 @@ public class FlightHistoryVO {
     private Timestamp startTime;
     private Timestamp endTime;              // 비행종료일시
     private double flightDuration;      // 총비행시간
-    private double batteryConsumption;  // 배터리소모량
+    private Double startBatteryPercent;
+    private Double endBatteryPercent;
+    private Double batteryConsumption;  // 배터리소모량
     private Date flightDate;            // 데이터등록일시 
     private String droneId;             // 드론 기체 ID 
 

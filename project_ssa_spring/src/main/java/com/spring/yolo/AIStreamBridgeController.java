@@ -62,6 +62,9 @@ public class AIStreamBridgeController {
 			"SSA_FLASK_CONTROL_TIMEOUT_MS", 7000);
 	private static final boolean LEGACY_LABEL_EVENT_SIDE_EFFECTS_ENABLED =
 			RuntimeSettings.enabled("SSA_ENABLE_LEGACY_LABEL_EVENT_SIDE_EFFECTS", false);
+	private static final String BATTERY_UNAVAILABLE_JSON =
+			"{\"available\":false,\"voltage\":null,\"percent\":null,"
+					+ "\"status\":\"DISCONNECTED\",\"updatedAt\":null}";
 	private static String currentMode = "local";
 	private static String lastActiveSourceKey = "video_1";
 	@Autowired
@@ -76,7 +79,7 @@ public class AIStreamBridgeController {
 	@Autowired
 	private FlightHistoryService flightHistoryService;
 
-	private static final Map<String, Long> activeFlightStartMap = new ConcurrentHashMap<>();
+	private static final Map<String, ActiveFlightContext> activeFlightContextMap = new ConcurrentHashMap<>();
 	private final ObjectMapper objectMapper = new ObjectMapper();
 
 	@GetMapping("/yolo/view")
@@ -108,9 +111,6 @@ public class AIStreamBridgeController {
 
 	@RequestMapping("/yolo/videoFeed")
 	public void bridgeStream(HttpServletResponse response) {
-		if (activeFlightStartMap.putIfAbsent(lastActiveSourceKey, System.currentTimeMillis()) == null) {
-			System.out.println(" [최초 화면 진입 이륙] 채널 [" + lastActiveSourceKey + "]의 첫 비행 타이머가 가동되었습니다.");
-		}
 		String pythonServerUrl = FLASK_SERVER_URL + "/video_feed";
 		executeProxy(pythonServerUrl, response, FLASK_VIDEO_CONNECT_TIMEOUT_MS, FLASK_VIDEO_READ_TIMEOUT_MS, false);
 	}
@@ -210,15 +210,31 @@ public class AIStreamBridgeController {
 		}
 	}
 
+	@GetMapping(value = "/yolo/battery/status", produces = "application/json; charset=UTF-8")
+	@ResponseBody
+	public ResponseEntity<String> batteryStatus() {
+		return batteryStatus(null);
+	}
+
+	@GetMapping(value = "/yolo/battery/status/{sourceKey}", produces = "application/json; charset=UTF-8")
+	@ResponseBody
+	public ResponseEntity<String> batteryStatusBySource(@PathVariable("sourceKey") String sourceKey) {
+		if (!isKnownYoloChannel(sourceKey)) {
+			return new ResponseEntity<>("{\"status\":\"FAIL\",\"error\":\"unknown source_key\"}",
+					HttpStatus.NOT_FOUND);
+		}
+		return batteryStatus(sourceKey);
+	}
+
 	@GetMapping(value = "/yolo/flight/status", produces = "application/json; charset=UTF-8")
 	@ResponseBody
 	public ResponseEntity<Map<String, Object>> flightStatus() {
 		Map<String, Object> result = new LinkedHashMap<>();
 		for (String sourceKey : new String[] { "video_1", "video_2", "video_3", "esp32" }) {
-			Long startTime = activeFlightStartMap.get(sourceKey);
+			ActiveFlightContext context = activeFlightContextMap.get(sourceKey);
 			Map<String, Object> sourceStatus = new LinkedHashMap<>();
-			sourceStatus.put("running", startTime != null);
-			sourceStatus.put("startTime", startTime);
+			sourceStatus.put("running", context != null);
+			sourceStatus.put("startTime", context == null ? null : context.startTimeMs);
 			sourceStatus.put("droneId", resolveDroneId(sourceKey));
 			result.put(sourceKey, sourceStatus);
 		}
@@ -230,15 +246,12 @@ public class AIStreamBridgeController {
 	public String changeVideoSource(@PathVariable("sourceKey") String sourceKey) {
 		System.out.println(" → [스프링] 사용자가 새로운 채널 전환 요청: " + sourceKey);
 		try {
-			String prevSourceKey = lastActiveSourceKey;
-			completeActiveFlight(prevSourceKey);
-			beginActiveFlight(sourceKey);
-			System.out.println(" [채널 전환 이륙 감지] 새 채널 [" + sourceKey + "] 비행 타이머 시작.");
-
 			lastActiveSourceKey = sourceKey;
 			RestTemplate restTemplate = new RestTemplate();
 			currentMode = "esp32".equals(sourceKey) ? "esp32" : "local";
 
+			// Legacy source switching changes only the displayed Flask source.
+			// Flight history is controlled exclusively by detection start/stop.
 			String flaskApiUrl = FLASK_SERVER_URL + "/change_source/" + sourceKey;
 			restTemplate.getForObject(flaskApiUrl, String.class);
 		} catch (Exception e) {
@@ -411,24 +424,32 @@ public class AIStreamBridgeController {
 	}
 
 	private void beginActiveFlight(String sourceKey) {
-		if (activeFlightStartMap.putIfAbsent(sourceKey, System.currentTimeMillis()) == null) {
+		ActiveFlightContext context = new ActiveFlightContext(System.currentTimeMillis(), readCachedBatteryPercent(sourceKey));
+		if (activeFlightContextMap.putIfAbsent(sourceKey, context) == null) {
 			System.out.println("[비행 시작] " + sourceKey + " / " + resolveDroneId(sourceKey));
 		}
 	}
 
 	private void completeActiveFlight(String sourceKey) {
-		Long startTimeMs = activeFlightStartMap.remove(sourceKey);
-		if (startTimeMs == null) {
+		ActiveFlightContext context = activeFlightContextMap.remove(sourceKey);
+		if (context == null) {
 			return;
 		}
 
 		long endTimeMs = System.currentTimeMillis();
-		double durationHours = (double) (endTimeMs - startTimeMs) / 3600000.0;
+		double durationHours = (double) (endTimeMs - context.startTimeMs) / 3600000.0;
+		Double endBatteryPercent = readCachedBatteryPercent(sourceKey);
+		Double batteryConsumption = context.startBatteryPercent == null || endBatteryPercent == null
+				? null
+				: Math.max(0.0d, context.startBatteryPercent - endBatteryPercent);
 		String droneId = resolveDroneId(sourceKey);
 		FlightHistoryVO historyVO = FlightHistoryVO.builder()
-				.startTime(new Timestamp(startTimeMs))
+				.startTime(new Timestamp(context.startTimeMs))
 				.endTime(new Timestamp(endTimeMs))
 				.flightDuration(durationHours)
+				.startBatteryPercent(context.startBatteryPercent)
+				.endBatteryPercent(endBatteryPercent)
+				.batteryConsumption(batteryConsumption)
 				.droneId(droneId)
 				.build();
 		try {
@@ -442,6 +463,45 @@ public class AIStreamBridgeController {
 
 	private String resolveDroneId(String sourceKey) {
 		return aiStreamBridgeService.resolveActiveDroneId("esp32".equals(sourceKey) ? "esp32" : "local", sourceKey);
+	}
+
+	private ResponseEntity<String> batteryStatus(String sourceKey) {
+		try {
+			String path = sourceKey == null ? "/battery/status" : "/battery/status/" + sourceKey;
+			ResponseEntity<String> flaskResponse = flaskRestTemplate(FLASK_LABEL_TIMEOUT_MS)
+					.getForEntity(FLASK_SERVER_URL + path, String.class);
+			return ResponseEntity.status(flaskResponse.getStatusCode()).body(flaskResponse.getBody());
+		} catch (Exception e) {
+			return new ResponseEntity<>(BATTERY_UNAVAILABLE_JSON, HttpStatus.BAD_GATEWAY);
+		}
+	}
+
+	private Double readCachedBatteryPercent(String sourceKey) {
+		try {
+			ResponseEntity<String> response = flaskRestTemplate(FLASK_LABEL_TIMEOUT_MS)
+					.getForEntity(FLASK_SERVER_URL + "/battery/status/" + sourceKey, String.class);
+			if (!response.getStatusCode().is2xxSuccessful()) {
+				return null;
+			}
+			JsonNode battery = objectMapper.readTree(response.getBody());
+			if (!battery.path("available").asBoolean(false)) {
+				return null;
+			}
+			double percent = battery.path("percent").asDouble(Double.NaN);
+			return Double.isFinite(percent) ? percent : null;
+		} catch (Exception e) {
+			return null;
+		}
+	}
+
+	private static final class ActiveFlightContext {
+		private final long startTimeMs;
+		private final Double startBatteryPercent;
+
+		private ActiveFlightContext(long startTimeMs, Double startBatteryPercent) {
+			this.startTimeMs = startTimeMs;
+			this.startBatteryPercent = startBatteryPercent;
+		}
 	}
 
 	private RestTemplate flaskRestTemplate(int timeoutMs) {

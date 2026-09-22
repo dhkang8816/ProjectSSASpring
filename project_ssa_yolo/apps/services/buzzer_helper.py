@@ -1,6 +1,7 @@
 """Serialize ESP32 buzzer commands without blocking YOLO workers.
 
-The ESP32 board is controlled through the existing ``mpremote + COM6`` path.
+The ESP32 board is controlled through the configured ``mpremote`` serial port
+(``COM6`` by default).
 Only this module invokes mpremote, and one daemon worker owns the queue so two
 threads never open the COM port concurrently.
 """
@@ -9,6 +10,8 @@ import queue
 import subprocess
 import sys
 import threading
+
+from apps import runtime_settings
 
 
 _buzzer_queue = queue.Queue()
@@ -22,12 +25,14 @@ _mpremote_lock = threading.Lock()
 
 _MPREMOTE_PREFIX = (sys.executable, "-m", "mpremote")
 _COMMANDS = {
-    "animal": ("connect", "COM6", "resume", "exec", "import main; main.play_animal_alert()"),
-    "danger": ("connect", "COM6", "resume", "exec", "import main; main.play_danger_alert()"),
+    "animal": ("resume", "exec", "import main; main.play_animal_alert()"),
+    "danger": ("resume", "exec", "import main; main.play_danger_alert()"),
+    "startup": ("resume", "exec", "import main; main.play_startup_melody()"),
 }
 _ERROR_MESSAGES = {
     "animal": "animal buzzer command failed",
     "danger": "danger buzzer command failed",
+    "startup": "startup buzzer command failed",
 }
 
 
@@ -51,11 +56,11 @@ def _run_mpremote_command(alert_type):
         if alert_type.startswith("collision:"):
             level = alert_type.split(":", 1)[1]
             command = (
-                "connect", "COM6", "resume", "exec",
+                "connect", runtime_settings.ESP32_COM_PORT, "resume", "exec",
                 f"import main; main.play_collision_alert('{level}')",
             )
         else:
-            command = _COMMANDS[alert_type]
+            command = ("connect", runtime_settings.ESP32_COM_PORT, *_COMMANDS[alert_type])
         run_mpremote(command, capture_output=True)
     except Exception as error:
         message = _ERROR_MESSAGES.get(alert_type, "collision buzzer command failed")
@@ -189,3 +194,8 @@ def trigger_animal_sound():
 def trigger_danger_sound():
     """Queue a danger-object alert and return immediately."""
     _enqueue("danger")
+
+
+def play_startup_melody():
+    """Queue one short startup sound through the existing COM owner."""
+    return _enqueue("startup")

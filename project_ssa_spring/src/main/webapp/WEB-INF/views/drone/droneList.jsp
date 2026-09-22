@@ -9,34 +9,21 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>드론 관리 목록</title>
 <style>
-body {
-	background-color: #0b0f19 !important;
-	color: #e2e8f0 !important;
-	font-family: 'Segoe UI', Roboto, 'Malgun Gothic', sans-serif;
-	margin: 0;
-	padding: 0;
-	overflow-x: hidden;
-}
-
-.control-page-content {
+#droneListPage.control-page-content {
 	position: absolute !important;
 	top: 80px !important;
-	left: 150px !important;
-	width: calc(100% - 150px) !important;
 	padding: 30px 40px;
 	box-sizing: border-box;
 	z-index: 50 !important;
 }
 
 @media ( max-width : 760px) {
-	.control-page-content {
-		left: 0 !important;
-		width: 100% !important;
+	#droneListPage.control-page-content {
 		padding: 20px 16px;
 	}
 }
 
-.panel {
+#droneListPage .panel {
 	background: rgba(20, 26, 42, 0.85) !important;
 	border: 1px solid #1e293b !important;
 	border-radius: 16px;
@@ -47,7 +34,7 @@ body {
 	box-sizing: border-box;
 }
 
-.panel h2 {
+#droneListPage .panel h2 {
 	color: #ffffff;
 	margin: 0 0 6px 0 !important;
 	font-size: 20px;
@@ -56,7 +43,7 @@ body {
 	text-align: left;
 }
 
-.search-box {
+#droneListPage .search-box {
 	margin: 20px 0;
 	padding: 20px;
 	background: rgba(17, 24, 39, 0.6) !important;
@@ -64,7 +51,7 @@ body {
 	border-radius: 12px;
 }
 
-table {
+#droneListPage table {
 	width: 100%;
 	border-collapse: separate !important;
 	border-spacing: 0 !important;
@@ -76,7 +63,7 @@ table {
 	overflow: hidden;
 }
 
-th {
+#droneListPage th {
 	background-color: #111827 !important;
 	color: #38bdf8 !important;
 	padding: 14px 16px !important;
@@ -87,7 +74,7 @@ th {
 	border-bottom: 2px solid #1e293b !important;
 }
 
-td {
+#droneListPage td {
 	padding: 14px 16px !important;
 	background-color: transparent !important;
 	color: #cbd5e1 !important;
@@ -97,22 +84,22 @@ td {
 	border-bottom: 1px solid #1e293b !important;
 }
 
-tr {
+#droneListPage tr {
 	transition: background-color 0s ease;
 }
 
-tbody tr:hover td {
+#droneListPage tbody tr:hover td {
 	background-color: rgba(30, 41, 59, 0.6) !important;
 	color: #ffffff !important;
 }
 
-.no-data {
+#droneListPage .no-data {
 	padding: 60px !important;
 	color: #64748b !important;
 	font-size: 14px;
 }
 
-form {
+#droneListPage form {
 	display: flex;
 	flex-wrap: wrap;
 	gap: 12px;
@@ -121,7 +108,7 @@ form {
 	font-size: 13.5px;
 }
 
-input[type="text"], select {
+#droneListPage input[type="text"], #droneListPage select {
 	padding: 8px 12px;
 	background: #111827 !important;
 	color: #ffffff !important;
@@ -132,12 +119,12 @@ input[type="text"], select {
 	transition: all 0.15s ease;
 }
 
-input[type="text"]:focus, select:focus {
+#droneListPage input[type="text"]:focus, #droneListPage select:focus {
 	border-color: #0ea5e9 !important;
 	box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.25);
 }
 
-a.main-link {
+#droneListPage a.main-link {
 	color: #38bdf8 !important;
 	font-weight: 600;
 	text-decoration: none;
@@ -146,12 +133,12 @@ a.main-link {
 	transition: color 0.15s ease;
 }
 
-a.main-link:hover {
+#droneListPage a.main-link:hover {
 	color: #7dd3fc !important;
 	text-decoration: underline !important;
 }
 
-button {
+#droneListPage button {
 	padding: 9px 16px;
 	border: 0;
 	border-radius: 8px !important;
@@ -161,25 +148,25 @@ button {
 	transition: all 0.15s ease;
 }
 
-button.btn-register {
+#droneListPage button.btn-register {
 	background-color: #10b981 !important;
 	color: #ffffff !important;
 }
 
-button.btn-register:hover {
+#droneListPage button.btn-register:hover {
 	background-color: #059669 !important;
 }
 
-button.btn-search {
+#droneListPage button.btn-search {
 	background-color: #0ea5e9 !important;
 	color: #ffffff !important;
 }
 
-button.btn-search:hover {
+#droneListPage button.btn-search:hover {
 	background-color: #0284c7 !important;
 }
 
-.badge-status {
+#droneListPage .badge-status {
 	padding: 4px 12px !important;
 	border-radius: 20px !important;
 	font-size: 11.5px !important;
@@ -187,13 +174,13 @@ button.btn-search:hover {
 	display: inline-block;
 }
 
-.badge-status.pending {
+#droneListPage .badge-status.pending {
 	background-color: rgba(245, 158, 11, 0.15) !important;
 	color: #f59e0b !important;
 	border: 1px solid rgba(245, 158, 11, 0.3) !important;
 }
 
-.pagination {
+#droneListPage .pagination {
 	display: flex;
 	list-style: none;
 	gap: 6px;
@@ -202,11 +189,11 @@ button.btn-search:hover {
 	margin: 0 !important;
 }
 
-.pagination li {
+#droneListPage .pagination li {
 	margin: 0 !important;
 }
 
-.pagination a, .pagination strong {
+#droneListPage .pagination a, #droneListPage .pagination strong {
 	display: block;
 	padding: 6px 12px;
 	background: #111827 !important;
@@ -219,27 +206,27 @@ button.btn-search:hover {
 	transition: all 0.15s;
 }
 
-.pagination a:hover {
+#droneListPage .pagination a:hover {
 	color: #ffffff !important;
 	background: #1f2937 !important;
 	border-color: #334155;
 }
 
-.pagination li.active strong, .pagination strong {
+#droneListPage .pagination li.active strong, #droneListPage .pagination strong {
 	color: #38bdf8 !important;
 	background: rgba(14, 165, 233, 0.15) !important;
 	border-color: #0ea5e9 !important;
 }
 
 @media ( max-width : 760px) {
-	table {
+	#droneListPage table {
 		display: block;
 		overflow-x: auto;
 		white-space: nowrap;
 	}
 }
 
-.panel {
+#droneListPage .panel {
 	display: grid !important;
 	grid-template-columns: minmax(180px, 1fr) auto;
 	grid-template-areas: "title search" "summary action" "table table"
@@ -252,7 +239,7 @@ button.btn-search:hover {
 	overflow-x: auto;
 }
 
-.panel>h2 {
+#droneListPage .panel>h2 {
 	grid-area: title;
 	margin: 0 !important;
 	padding: 0 0 16px;
@@ -261,63 +248,63 @@ button.btn-search:hover {
 	font-size: 22px !important;
 }
 
-.panel>br {
+#droneListPage .panel>br {
 	display: none;
 }
 
-.panel>.staff-list-summary {
+#droneListPage .panel>.staff-list-summary {
 	grid-area: summary;
 	color: #94a3b8;
 	font-size: 14px;
 	font-weight: 500;
 }
 
-.panel>.staff-list-summary strong {
+#droneListPage .panel>.staff-list-summary strong {
 	color: #38bdf8;
 	background: rgba(56, 189, 248, .1);
 	border-radius: 4px;
 	padding: 2px 6px;
 }
 
-.panel>.search-box, .panel>form {
+#droneListPage .panel>.search-box, #droneListPage .panel>form {
 	grid-area: search;
 	justify-self: end;
 	margin: 0 !important;
 }
 
-.panel>.btn-register {
+#droneListPage .panel>.btn-register {
 	grid-area: action;
 	justify-self: end;
 	margin: 0 !important;
 }
 
-.panel>table {
+#droneListPage .panel>table {
 	grid-area: table;
 	min-width: 1100px;
 	margin: 0 !important;
 }
 
-.panel>table th, .panel>table td {
+#droneListPage .panel>table th, #droneListPage .panel>table td {
 	white-space: nowrap;
 }
 
-.panel>div[style*="margin-top"], .panel>.pagination {
+#droneListPage .panel>div[style*="margin-top"], #droneListPage .panel>.pagination {
 	grid-area: pager;
 	justify-self: center;
 	margin: 0 !important;
 }
 
 @media ( max-width : 760px) {
-	.panel {
+	#droneListPage .panel {
 		grid-template-columns: 1fr;
 		grid-template-areas: "title" "search" "summary" "action" "table" "pager";
 	}
-	.panel>form, .panel>.btn-register {
+	#droneListPage .panel>form, #droneListPage .panel>.btn-register {
 		justify-self: stretch;
 	}
 }
 
-.drone-id {
+#droneListPage .drone-id {
 	color: #38bdf8;
 	font-weight: 700;
 	letter-spacing: 0.02em;

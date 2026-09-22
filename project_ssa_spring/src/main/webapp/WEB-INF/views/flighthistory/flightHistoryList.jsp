@@ -292,6 +292,7 @@ body {
 						<th>비행 시작 일시</th>
 						<th>비행 종료 일시</th>
 						<th>총 비행 시간</th>
+						<th>배터리 소모</th>
 						<th>데이터 등록일</th>
 					</tr>
 				</thead>
@@ -299,7 +300,7 @@ body {
 					<c:choose>
 						<c:when test="${empty flightHistoryList}">
 							<tr>
-								<td colspan="6" class="no-data">기록된 드론 비행 이력이 없습니다.</td>
+								<td colspan="7" class="no-data">기록된 드론 비행 이력이 없습니다.</td>
 							</tr>
 						</c:when>
 						<c:otherwise>
@@ -322,6 +323,10 @@ body {
 									
 									<td style="text-align: right; padding-right: 20px !important;">${history.flightDuration}
 										시간&nbsp;</td>
+									<td><c:choose>
+											<c:when test="${empty history.batteryConsumption}">측정 없음</c:when>
+											<c:otherwise>${history.batteryConsumption} %</c:otherwise>
+										</c:choose></td>
 									<td><fmt:formatDate value="${history.flightDate}"
 											pattern="yyyy-MM-dd" /></td>
 								</tr>

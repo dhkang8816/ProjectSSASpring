@@ -184,13 +184,28 @@ button.btn-list:hover {
                     <td>${flightHistory.flightDuration} 시간</td>
                 </tr>
                 <tr>
-                    <th>배터리 총 소모량</th>
+                    <th>시작 배터리</th>
                     <td>
                         <c:choose>
-                            <c:when test="${empty flightHistory.batteryConsumption}">
-                                
-                                <span class="badge-status rejected">집계불가</span>
-                            </c:when>
+                            <c:when test="${empty flightHistory.startBatteryPercent}"><span class="badge-status rejected">측정 없음</span></c:when>
+                            <c:otherwise>${flightHistory.startBatteryPercent} %</c:otherwise>
+                        </c:choose>
+                    </td>
+                </tr>
+                <tr>
+                    <th>종료 배터리</th>
+                    <td>
+                        <c:choose>
+                            <c:when test="${empty flightHistory.endBatteryPercent}"><span class="badge-status rejected">측정 없음</span></c:when>
+                            <c:otherwise>${flightHistory.endBatteryPercent} %</c:otherwise>
+                        </c:choose>
+                    </td>
+                </tr>
+                <tr>
+                    <th>배터리 소모량</th>
+                    <td>
+                        <c:choose>
+                            <c:when test="${empty flightHistory.batteryConsumption}"><span class="badge-status rejected">측정 없음</span></c:when>
                             <c:otherwise>${flightHistory.batteryConsumption} %</c:otherwise>
                         </c:choose>
                     </td>

@@ -160,6 +160,20 @@ def sensor_status():
     return jsonify(sensor_helper.get_latest_sensor_status())
 
 
+@stream.route("/battery/status")
+def battery_status():
+    """Return cached ESP32 battery telemetry without opening COM on demand."""
+    return jsonify(sensor_helper.get_latest_battery_status())
+
+
+@stream.route("/battery/status/<source_key>")
+def battery_status_by_source(source_key):
+    """Only the configured physical board source exposes the battery value."""
+    if not yolo_detector.is_known_source(source_key):
+        return jsonify({"error": "unknown source_key", "source_key": source_key}), 404
+    return jsonify(sensor_helper.get_latest_battery_status(source_key))
+
+
 @stream.route("/detection/<source_key>/<action>", methods=["POST"])
 @csrf.exempt
 def control_source_detection(source_key, action):

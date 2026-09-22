@@ -15,36 +15,22 @@
 	rel="stylesheet">
 <style>
 
-body {
-    background-color: #0b0f19 !important; 
-    color: #e2e8f0 !important;
-    font-family: 'Segoe UI', Roboto, sans-serif;
-    margin: 0;
-    padding: 0;
-    overflow-x: hidden;
-}
-
-
-.patrol-list-content {
+#patrolReportListPage.patrol-list-content {
     position: absolute !important;
     top: 80px !important; 
-    left: 150px !important; 
-    width: calc(100% - 150px) !important; 
     padding: 30px 40px;
     box-sizing: border-box;
     z-index: 50 !important;
 }
 
 @media (max-width: 760px) {
-    .patrol-list-content {
-        left: 0 !important;
-        width: 100% !important;
+    #patrolReportListPage.patrol-list-content {
         padding: 20px 16px;
     }
 }
 
 
-.main-panel {
+#patrolReportListPage .main-panel {
     background: transparent !important;
     border: 0 !important;
     border-radius: 0 !important;
@@ -55,7 +41,7 @@ body {
 }
 
 
-.staff-top-bar { 
+#patrolReportListPage .staff-top-bar {
     display: flex; 
     justify-content: flex-start; 
     align-items: center; 
@@ -64,7 +50,7 @@ body {
     border-bottom: 1px solid #1e293b; 
 }
 
-.staff-top-bar h2 { 
+#patrolReportListPage .staff-top-bar h2 {
     margin: 0 !important; 
     color: #fff !important; 
     font-size: 22px !important; 
@@ -73,20 +59,20 @@ body {
 }
 
 
-.staff-summary-bar { 
+#patrolReportListPage .staff-summary-bar {
     display: flex; 
     justify-content: space-between; 
     align-items: center; 
     margin-bottom: 20px; 
 }
 
-.staff-count { 
+#patrolReportListPage .staff-count {
     color: #94a3b8; 
     font-size: 14px; 
     font-weight: 500; 
 }
 
-.count-num { 
+#patrolReportListPage .count-num {
     color: #38bdf8; 
     background: rgba(56, 189, 248, .1); 
     border-radius: 4px; 
@@ -94,14 +80,14 @@ body {
     font-weight: 700; 
 }
 
-.staff-table-wrapper { 
+#patrolReportListPage .staff-table-wrapper {
     overflow-x: auto; 
     overflow-y: hidden; 
     width: 100%;
 }
 
 
-.table-zone {
+#patrolReportListPage .table-zone {
     min-width: 850px;
     width: 100%;
     border-collapse: separate !important;
@@ -114,7 +100,7 @@ body {
     overflow: hidden;
 }
 
-.table-zone th {
+#patrolReportListPage .table-zone th {
     white-space: nowrap;
     background-color: #111827 !important; 
     color: #38bdf8 !important; 
@@ -126,7 +112,7 @@ body {
     text-align: center !important; 
 }
 
-.table-zone td {
+#patrolReportListPage .table-zone td {
     white-space: nowrap;
     padding: 12px 16px !important;
     background-color: transparent !important;
@@ -138,18 +124,18 @@ body {
 }
 
 
-.table-zone tbody tr {
+#patrolReportListPage .table-zone tbody tr {
     transition: background-color 0s ease;
     cursor: pointer;
 }
 
-.table-zone tbody tr:hover td {
+#patrolReportListPage .table-zone tbody tr:hover td {
     background-color: rgba(30, 41, 59, 0.6) !important;
     color: #ffffff !important;
 }
 
 
-.btn-create {
+#patrolReportListPage .btn-create {
     background-color: #10b981 !important; 
     color: white !important;
     border: none !important;
@@ -162,18 +148,18 @@ body {
     transition: all 0.15s ease;
 }
 
-.btn-create:hover {
+#patrolReportListPage .btn-create:hover {
     background-color: #059669 !important;
     box-shadow: 0 4px 16px rgba(16, 185, 129, 0.4);
     transform: translateY(-1px);
 }
 
-.btn-create:active {
+#patrolReportListPage .btn-create:active {
     transform: translateY(0);
 }
 
 
-.badge-status {
+#patrolReportListPage .badge-status {
     padding: 4px 12px !important;
     border-radius: 20px !important; 
     font-size: 11.5px !important;
@@ -181,26 +167,26 @@ body {
     display: inline-block;
 }
 
-.badge-0 {
+#patrolReportListPage .badge-0 {
     background-color: rgba(245, 158, 11, 0.15) !important;
     color: #f59e0b !important;
     border: 1px solid rgba(245, 158, 11, 0.3) !important;
 } 
 
-.badge-1 {
+#patrolReportListPage .badge-1 {
     background-color: rgba(16, 185, 129, 0.15) !important;
     color: #10b981 !important;
     border: 1px solid rgba(16, 185, 129, 0.3) !important;
 } 
 
-.badge-2 {
+#patrolReportListPage .badge-2 {
     background-color: rgba(239, 68, 68, 0.15) !important;
     color: #ef4444 !important;
     border: 1px solid rgba(239, 68, 68, 0.3) !important;
 } 
 
 
-.pagination {
+#patrolReportListPage .pagination {
     display: flex;
     justify-content: center;
     gap: 6px;
@@ -209,11 +195,11 @@ body {
     margin: 25px 0 0 0 !important;
 }
 
-.pagination li {
+#patrolReportListPage .pagination li {
     margin: 0 !important;
 }
 
-.pagination li a, .pagination li strong {
+#patrolReportListPage .pagination li a, #patrolReportListPage .pagination li strong {
     display: block;
     padding: 6px 12px;
     background: #111827 !important;
@@ -226,25 +212,25 @@ body {
     transition: all 0.15s;
 }
 
-.pagination li a:hover {
+#patrolReportListPage .pagination li a:hover {
     color: #ffffff !important;
     background: #1f2937 !important;
     border-color: #334155;
 }
 
-.pagination li.active strong, .pagination li strong {
+#patrolReportListPage .pagination li.active strong, #patrolReportListPage .pagination li strong {
     color: #38bdf8 !important; 
     background: rgba(14, 165, 233, 0.15) !important;
     border-color: #0ea5e9 !important;
 }
 
 @media (max-width:760px) { 
-    .staff-summary-bar { 
+    #patrolReportListPage .staff-summary-bar {
         align-items: stretch; 
         flex-direction: column; 
         gap: 10px;
     } 
-    .btn-create { 
+    #patrolReportListPage .btn-create {
         align-self: flex-end; 
     } 
 }

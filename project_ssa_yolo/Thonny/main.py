@@ -14,7 +14,7 @@ ULTRASONIC_TRIGGER_PIN = 17
 ULTRASONIC_ECHO_PIN = 1
 
 # 부저 음량 통일
-BUZZER_DUTY = 5
+BUZZER_DUTY = 10
 
 # 초음파 유효 측정 범위
 MIN_DISTANCE_CM = 2
@@ -24,6 +24,21 @@ MAX_DISTANCE_CM = 50
 DANGER_DISTANCE_CM = 10
 WARNING_DISTANCE_CM = 20
 CAUTION_DISTANCE_CM = 30
+
+# Battery ADC configuration.  These defaults express the earlier experimental
+# 4095 * 5.02 * 0.96 calculation as independently adjustable values:
+# 3.3V ADC reference * 1.52 divider ratio * 0.96 calibration ~= 4.82V.
+# Confirm the physical divider and pin before changing these values on a board.
+BATTERY_ENABLED = True
+BATTERY_ADC_PIN = 2
+BATTERY_ADC_REFERENCE_VOLTAGE = 3.3
+BATTERY_DIVIDER_RATIO = 1.52
+BATTERY_CALIBRATION = 0.96
+BATTERY_MIN_VOLTAGE = 3.0
+BATTERY_MAX_VOLTAGE = 4.2
+BATTERY_SAMPLE_COUNT = 8
+BATTERY_LOW_PERCENT = 25
+BATTERY_CRITICAL_PERCENT = 10
 
 
 # =========================================================
@@ -46,6 +61,76 @@ try:
     light_sensor.atten(ADC.ATTN_11DB)
 except AttributeError:
     pass
+
+
+# Battery sensing deliberately shares the single read_sensor_status() command
+# with the other board sensors.  A failed/absent ADC is represented as
+# DISCONNECTED rather than a misleading 0% battery level.
+battery_sensor = None
+
+
+def _initialize_battery_sensor():
+    global battery_sensor
+    battery_sensor = None
+    if not BATTERY_ENABLED:
+        return
+    try:
+        battery_sensor = ADC(Pin(BATTERY_ADC_PIN))
+        try:
+            battery_sensor.atten(ADC.ATTN_11DB)
+        except AttributeError:
+            pass
+    except Exception:
+        battery_sensor = None
+
+
+def configure_battery(enabled=None, adc_pin=None, adc_reference_voltage=None,
+        divider_ratio=None, calibration=None, min_voltage=None,
+        max_voltage=None, sample_count=None, low_percent=None,
+        critical_percent=None):
+    """Apply PC runtime settings without opening another board connection."""
+    global BATTERY_ENABLED, BATTERY_ADC_PIN, BATTERY_ADC_REFERENCE_VOLTAGE
+    global BATTERY_DIVIDER_RATIO, BATTERY_CALIBRATION, BATTERY_MIN_VOLTAGE
+    global BATTERY_MAX_VOLTAGE, BATTERY_SAMPLE_COUNT, BATTERY_LOW_PERCENT
+    global BATTERY_CRITICAL_PERCENT
+
+    previous = (
+        BATTERY_ENABLED, BATTERY_ADC_PIN, BATTERY_ADC_REFERENCE_VOLTAGE,
+        BATTERY_DIVIDER_RATIO, BATTERY_CALIBRATION, BATTERY_MIN_VOLTAGE,
+        BATTERY_MAX_VOLTAGE, BATTERY_SAMPLE_COUNT, BATTERY_LOW_PERCENT,
+        BATTERY_CRITICAL_PERCENT
+    )
+    if enabled is not None:
+        BATTERY_ENABLED = bool(enabled)
+    if adc_pin is not None:
+        BATTERY_ADC_PIN = int(adc_pin)
+    if adc_reference_voltage is not None and adc_reference_voltage > 0:
+        BATTERY_ADC_REFERENCE_VOLTAGE = float(adc_reference_voltage)
+    if divider_ratio is not None and divider_ratio > 0:
+        BATTERY_DIVIDER_RATIO = float(divider_ratio)
+    if calibration is not None and calibration > 0:
+        BATTERY_CALIBRATION = float(calibration)
+    if min_voltage is not None and max_voltage is not None and max_voltage > min_voltage:
+        BATTERY_MIN_VOLTAGE = float(min_voltage)
+        BATTERY_MAX_VOLTAGE = float(max_voltage)
+    if sample_count is not None and sample_count > 0:
+        BATTERY_SAMPLE_COUNT = int(sample_count)
+    if low_percent is not None and low_percent >= 0:
+        BATTERY_LOW_PERCENT = float(low_percent)
+    if critical_percent is not None and critical_percent >= 0:
+        BATTERY_CRITICAL_PERCENT = float(critical_percent)
+
+    current = (
+        BATTERY_ENABLED, BATTERY_ADC_PIN, BATTERY_ADC_REFERENCE_VOLTAGE,
+        BATTERY_DIVIDER_RATIO, BATTERY_CALIBRATION, BATTERY_MIN_VOLTAGE,
+        BATTERY_MAX_VOLTAGE, BATTERY_SAMPLE_COUNT, BATTERY_LOW_PERCENT,
+        BATTERY_CRITICAL_PERCENT
+    )
+    if current != previous:
+        _initialize_battery_sensor()
+
+
+_initialize_battery_sensor()
 
 
 # =========================================================
@@ -137,6 +222,14 @@ def play_danger_alert():
     stop_buzzer()
 
 
+def play_startup_melody():
+    """Short do-mi-sol confirmation after the Flask optional workers are ready."""
+    for frequency in (262, 330, 392):
+        _beep(frequency, 90)
+        time.sleep_ms(55)
+    stop_buzzer()
+
+
 # =========================================================
 # 충돌 경고 알람
 # =========================================================
@@ -219,6 +312,68 @@ def read_light():
 
     except Exception:
         return 0
+
+
+# =========================================================
+# Battery telemetry
+# =========================================================
+
+def _battery_disconnected():
+    return {
+        "available": False,
+        "voltage": None,
+        "percent": None,
+        "status": "DISCONNECTED"
+    }
+
+
+def _battery_status_for_percent(percent):
+    if percent <= BATTERY_CRITICAL_PERCENT:
+        return "CRITICAL"
+    if percent <= BATTERY_LOW_PERCENT:
+        return "LOW"
+    return "NORMAL"
+
+
+def read_battery_status():
+    """Return filtered Li-ion voltage and percent, or DISCONNECTED safely."""
+    if not BATTERY_ENABLED or battery_sensor is None:
+        return _battery_disconnected()
+
+    try:
+        total = 0
+        sample_count = max(1, BATTERY_SAMPLE_COUNT)
+        for _ in range(sample_count):
+            total += battery_sensor.read()
+
+        raw_value = total / sample_count
+        # A battery supply cannot legitimately be 0V.  Treat this as an open
+        # input or unsupported ADC rather than persisting/displaying 0%.
+        if raw_value <= 0:
+            return _battery_disconnected()
+
+        voltage = (
+            raw_value / 4095
+            * BATTERY_ADC_REFERENCE_VOLTAGE
+            * BATTERY_DIVIDER_RATIO
+            * BATTERY_CALIBRATION
+        )
+        if voltage <= 0 or BATTERY_MAX_VOLTAGE <= BATTERY_MIN_VOLTAGE:
+            return _battery_disconnected()
+
+        percent = (voltage - BATTERY_MIN_VOLTAGE) / (
+            BATTERY_MAX_VOLTAGE - BATTERY_MIN_VOLTAGE
+        ) * 100
+        percent = max(0, min(100, percent))
+
+        return {
+            "available": True,
+            "voltage": round(voltage, 2),
+            "percent": round(percent, 1),
+            "status": _battery_status_for_percent(percent)
+        }
+    except Exception:
+        return _battery_disconnected()
 
 
 # =========================================================
@@ -355,6 +510,7 @@ def read_sensor_status():
     - distance
     - collisionLevel
     - collisionWarning
+    - battery
 
     반환
     """
@@ -383,5 +539,6 @@ def read_sensor_status():
         "illumination": illumination,
         "distance": distance,
         "collisionLevel": collision_level,
-        "collisionWarning": collision_warning
+        "collisionWarning": collision_warning,
+        "battery": read_battery_status()
     }

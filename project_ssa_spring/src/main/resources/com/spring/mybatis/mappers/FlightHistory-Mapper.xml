@@ -9,6 +9,8 @@
         <result property="startTime" column="START_TIME" />
         <result property="endTime" column="END_TIME" />
         <result property="flightDuration" column="FLIGHT_DURATION" />
+        <result property="startBatteryPercent" column="START_BATTERY_PERCENT" />
+        <result property="endBatteryPercent" column="END_BATTERY_PERCENT" />
         <result property="batteryConsumption" column="BATTERY_CONSUMPTION" />
         <result property="flightDate" column="FLIGHT_DATE" />
         <result property="droneId" column="DRONE_ID" />
@@ -30,16 +32,20 @@
             START_TIME, 
             END_TIME, 
             FLIGHT_DURATION, 
+            START_BATTERY_PERCENT,
+            END_BATTERY_PERCENT,
             BATTERY_CONSUMPTION, 
             FLIGHT_DATE, 
             DRONE_ID
         )
         SELECT 
-            (SELECT NVL(MAX(FLIGHT_ID), 0) + 1 FROM FLIGHT_HISTORY), -- 💡 시퀀스 대체 서브쿼리
+	        SEQ_FLIGHT_HISTORY.NEXTVAL,
 	        #{startTime, jdbcType=TIMESTAMP},
 	        #{endTime, jdbcType=TIMESTAMP},
             #{flightDuration},
-            #{batteryConsumption},
+            #{startBatteryPercent, jdbcType=NUMERIC},
+            #{endBatteryPercent, jdbcType=NUMERIC},
+            #{batteryConsumption, jdbcType=NUMERIC},
             SYSDATE,
             #{droneId}
         FROM DUAL
@@ -58,6 +64,8 @@
                     START_TIME, 
                     END_TIME, 
                     FLIGHT_DURATION, 
+                    START_BATTERY_PERCENT,
+                    END_BATTERY_PERCENT,
                     BATTERY_CONSUMPTION, 
                     FLIGHT_DATE, 
                     DRONE_ID
@@ -83,6 +91,8 @@
             START_TIME, 
             END_TIME, 
             FLIGHT_DURATION, 
+            START_BATTERY_PERCENT,
+            END_BATTERY_PERCENT,
             BATTERY_CONSUMPTION, 
             FLIGHT_DATE, 
             DRONE_ID

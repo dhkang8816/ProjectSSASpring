@@ -11,36 +11,22 @@
 <title>보호 동물 목록</title>
 <style>
 
-body {
-    background-color: #0b0f19 !important; 
-    color: #e2e8f0 !important;
-    font-family: 'Segoe UI', Roboto, 'Malgun Gothic', sans-serif;
-    margin: 0;
-    padding: 0;
-    overflow-x: hidden;
-}
-
-
-.control-page-content {
+#animalListPage.control-page-content {
     position: absolute !important;
     top: 80px !important;
-    left: 150px !important;
-    width: calc(100% - 150px) !important;
     padding: 30px 40px;
     box-sizing: border-box;
     z-index: 50 !important;
 }
 
 @media (max-width: 760px) {
-    .control-page-content {
-        left: 0 !important;
-        width: 100% !important;
+    #animalListPage.control-page-content {
         padding: 20px 16px;
     }
 }
 
 
-.panel { 
+#animalListPage .panel {
     display: grid !important;
     grid-template-columns: minmax(180px, 1fr) auto;
     
@@ -57,7 +43,7 @@ body {
     overflow-x: auto; 
 }
 
-.panel h2 {
+#animalListPage .panel h2 {
     color: #ffffff;
     margin: 0 0 24px 0 !important;
     font-size: 20px;
@@ -67,7 +53,7 @@ body {
 }
 
 
-.search-box {
+#animalListPage .search-box {
     margin: 20px 0;
     padding: 20px;
     background: rgba(17, 24, 39, 0.6) !important;
@@ -76,7 +62,7 @@ body {
 }
 
 
-table {
+#animalListPage table {
     width: 100%;
     border-collapse: separate !important;
     border-spacing: 0 !important;
@@ -88,7 +74,7 @@ table {
     overflow: hidden;
 }
 
-th {
+#animalListPage th {
     background-color: #111827 !important; 
     color: #38bdf8 !important; 
     padding: 14px 16px !important;
@@ -99,7 +85,7 @@ th {
     border-bottom: 2px solid #1e293b !important;
 }
 
-td {
+#animalListPage td {
     padding: 12px 16px !important;
     background-color: transparent !important;
     color: #cbd5e1 !important;
@@ -111,23 +97,23 @@ td {
 }
 
 
-tr {
+#animalListPage tr {
     transition: background-color 0s ease;
 }
 
-tbody tr:hover td {
+#animalListPage tbody tr:hover td {
     background-color: rgba(30, 41, 59, 0.6) !important;
     color: #ffffff !important;
 }
 
-.no-data {
+#animalListPage .no-data {
     padding: 60px !important;
     color: #64748b !important;
     font-size: 14px;
 }
 
 
-form {
+#animalListPage form {
     display: flex;
     flex-wrap: wrap;
     gap: 12px;
@@ -136,7 +122,7 @@ form {
     font-size: 13.5px;
 }
 
-input[type="text"], select {
+#animalListPage input[type="text"], #animalListPage select {
     padding: 8px 12px;
     background: #111827 !important;
     color: #ffffff !important;
@@ -147,13 +133,13 @@ input[type="text"], select {
     transition: all 0.15s ease;
 }
 
-input[type="text"]:focus, select:focus {
+#animalListPage input[type="text"]:focus, #animalListPage select:focus {
     border-color: #0ea5e9 !important;
     box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.25);
 }
 
 
-a.main-link {
+#animalListPage a.main-link {
     color: #38bdf8 !important;
     font-weight: 600;
     text-decoration: none;
@@ -162,13 +148,13 @@ a.main-link {
     transition: color 0.15s ease;
 }
 
-a.main-link:hover {
+#animalListPage a.main-link:hover {
     color: #7dd3fc !important;
     text-decoration: underline !important;
 }
 
 
-button {
+#animalListPage button {
     padding: 9px 16px;
     border: 0;
     border-radius: 8px !important;
@@ -179,25 +165,25 @@ button {
 }
 
 
-button.btn-register {
+#animalListPage button.btn-register {
     background-color: #10b981 !important;
     color: #ffffff !important;
 }
-button.btn-register:hover {
+#animalListPage button.btn-register:hover {
     background-color: #059669 !important;
 }
 
 
-button.btn-info {
+#animalListPage button.btn-info {
     background-color: #0ea5e9 !important;
     color: #ffffff !important;
 }
-button.btn-info:hover {
+#animalListPage button.btn-info:hover {
     background-color: #0284c7 !important;
 }
 
 
-.badge-status {
+#animalListPage .badge-status {
     padding: 4px 12px !important;
     border-radius: 20px !important;
     font-size: 11.5px !important;
@@ -206,28 +192,28 @@ button.btn-info:hover {
 }
 
 
-.badge-status.status-progress {
+#animalListPage .badge-status.status-progress {
     background-color: rgba(245, 158, 11, 0.15) !important;
     color: #f59e0b !important;
     border: 1px solid rgba(245, 158, 11, 0.3) !important;
 }
 
 
-.badge-status.status-complete {
+#animalListPage .badge-status.status-complete {
     background-color: rgba(16, 185, 129, 0.15) !important;
     color: #10b981 !important;
     border: 1px solid rgba(16, 185, 129, 0.3) !important;
 }
 
 
-.badge-status.status-none {
+#animalListPage .badge-status.status-none {
     background-color: rgba(148, 163, 184, 0.15) !important;
     color: #94a3b8 !important;
     border: 1px solid rgba(148, 163, 184, 0.3) !important;
 }
 
 
-.pagination {
+#animalListPage .pagination {
     display: flex;
     list-style: none;
     gap: 6px;
@@ -236,11 +222,11 @@ button.btn-info:hover {
     margin: 0 !important;
 }
 
-.pagination li {
+#animalListPage .pagination li {
     margin: 0 !important;
 }
 
-.pagination a, .pagination strong {
+#animalListPage .pagination a, #animalListPage .pagination strong {
     display: block;
     padding: 6px 12px;
     background: #111827 !important;
@@ -253,28 +239,28 @@ button.btn-info:hover {
     transition: all 0.15s;
 }
 
-.pagination a:hover {
+#animalListPage .pagination a:hover {
     color: #ffffff !important;
     background: #1f2937 !important;
     border-color: #334155;
 }
 
 
-.pagination li.active strong, .pagination strong {
+#animalListPage .pagination li.active strong, #animalListPage .pagination strong {
     color: #38bdf8 !important;
     background: rgba(14, 165, 233, 0.15) !important;
     border-color: #0ea5e9 !important;
 }
 
 @media (max-width: 760px) {
-    table {
+    #animalListPage table {
         display: block;
         overflow-x: auto;
         white-space: nowrap;
     }
 }
 
-.panel { display:grid !important; grid-template-columns:minmax(180px,1fr) auto; grid-template-areas:"title search" "summary action" "table table" "pager pager"; gap:20px; padding:0 !important; background:transparent !important; border:0 !important; box-shadow:none !important; overflow-x:auto; }.panel > h2 { grid-area:title; margin:0 !important; padding:0 0 16px; border-bottom:1px solid #1e293b; color:#fff !important; font-size:22px !important; }.panel > br { display:none; }.panel > .staff-list-summary { grid-area:summary; color:#94a3b8; font-size:14px; font-weight:500; }.panel > .staff-list-summary strong { color:#38bdf8; background:rgba(56,189,248,.1); border-radius:4px; padding:2px 6px; }.panel > .search-box { grid-area:search; justify-self:end; margin:0 !important; }.panel > .btn-register { grid-area:action; justify-self:end; margin:0 !important; }.panel > table { grid-area:table; min-width:850px; margin:0 !important; }.panel > table th,.panel > table td { white-space:nowrap; }.panel > div[style*="margin-top"] { grid-area:pager; justify-self:center; margin:0 !important; }@media(max-width:760px){.panel{grid-template-columns:1fr;grid-template-areas:"title" "search" "summary" "action" "table" "pager"}.panel > .search-box,.panel > .btn-register{justify-self:stretch}}
+#animalListPage .panel { display:grid !important; grid-template-columns:minmax(180px,1fr) auto; grid-template-areas:"title search" "summary action" "table table" "pager pager"; gap:20px; padding:0 !important; background:transparent !important; border:0 !important; box-shadow:none !important; overflow-x:auto; }#animalListPage .panel > h2 { grid-area:title; margin:0 !important; padding:0 0 16px; border-bottom:1px solid #1e293b; color:#fff !important; font-size:22px !important; }#animalListPage .panel > br { display:none; }#animalListPage .panel > .staff-list-summary { grid-area:summary; color:#94a3b8; font-size:14px; font-weight:500; }#animalListPage .panel > .staff-list-summary strong { color:#38bdf8; background:rgba(56,189,248,.1); border-radius:4px; padding:2px 6px; }#animalListPage .panel > .search-box { grid-area:search; justify-self:end; margin:0 !important; }#animalListPage .panel > .btn-register { grid-area:action; justify-self:end; margin:0 !important; }#animalListPage .panel > table { grid-area:table; min-width:850px; margin:0 !important; }#animalListPage .panel > table th,#animalListPage .panel > table td { white-space:nowrap; }#animalListPage .panel > div[style*="margin-top"] { grid-area:pager; justify-self:center; margin:0 !important; }@media(max-width:760px){#animalListPage .panel{grid-template-columns:1fr;grid-template-areas:"title" "search" "summary" "action" "table" "pager"}#animalListPage .panel > .search-box,#animalListPage .panel > .btn-register{justify-self:stretch}}
 
 
 </style>

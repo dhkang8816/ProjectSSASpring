@@ -36,7 +36,8 @@
 	
 	
 	
-	<security:http pattern="/yolo/apiyolo/api/**" security="none" />
+	<!-- Flask/YOLO event callbacks target YoloApiReceiverController (/yolo/api/**). -->
+	<security:http pattern="/yolo/api/**" security="none" />
 	<security:http pattern="/api/event/**" security="none" />
 	<security:http pattern="/api/user/**" security="none" />
 	

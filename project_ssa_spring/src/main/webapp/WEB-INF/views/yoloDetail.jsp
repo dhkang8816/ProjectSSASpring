@@ -18,7 +18,7 @@ body {
 	overflow-x: hidden;
 }
 
-header, .top-header {
+#ssaHeader {
 	position: fixed !important;
 	top: 0 !important;
 	left: 0 !important;
@@ -545,6 +545,46 @@ header, .top-header {
 	letter-spacing: 0.04em;
 }
 
+#yoloDetailPage .battery-hud {
+	position: absolute;
+	top: 64px;
+	left: 18px;
+	z-index: 20;
+	display: flex;
+	align-items: center;
+	gap: 5px;
+	padding: 6px 9px;
+	border: 1px solid rgba(34, 197, 94, 0.45);
+	border-radius: 6px;
+	background: rgba(15, 23, 42, 0.82);
+	color: #86efac;
+	font-size: 12px;
+	font-weight: 700;
+	font-variant-numeric: tabular-nums;
+	pointer-events: none;
+	backdrop-filter: blur(2px);
+}
+
+#yoloDetailPage .battery-hud-label {
+	color: #94a3b8;
+	font-size: 10px;
+}
+
+#yoloDetailPage .battery-hud.is-low {
+	border-color: rgba(250, 204, 21, 0.55);
+	color: #facc15;
+}
+
+#yoloDetailPage .battery-hud.is-critical {
+	border-color: rgba(248, 113, 113, 0.6);
+	color: #f87171;
+}
+
+#yoloDetailPage .battery-hud.is-unavailable {
+	border-color: rgba(100, 116, 139, 0.42);
+	color: #94a3b8;
+}
+
 .streaming-frame-large {
 	width: 100%;
 	aspect-ratio: 16/9;
@@ -692,6 +732,9 @@ header, .top-header {
 					<div class="single-video-display-box stream-off" id="box_single">
 						<div class="flight-timer-overlay" id="flightTimer_single">
 							<span class="flight-timer-dot"></span><span class="flight-timer-value">--:--:--</span>
+						</div>
+						<div class="battery-hud is-unavailable" id="batteryHud_single" title="DISCONNECTED">
+							<span class="battery-hud-label">BAT</span><span class="battery-hud-value">N/A</span>
 						</div>
 
 						<div class="drone-spec-overlay">
@@ -1245,6 +1288,48 @@ header, .top-header {
 			});
 		}
 
+		function renderDetailBatteryStatus(battery) {
+			const hud = document.getElementById('batteryHud_single');
+			if (!hud)
+				return;
+			const value = hud.querySelector('.battery-hud-value');
+			const available = !!(battery && battery.available
+					&& isFinite(Number(battery.percent)));
+			const status = available ? String(battery.status || 'NORMAL').toUpperCase()
+					: 'DISCONNECTED';
+			hud.classList.remove('is-low', 'is-critical', 'is-unavailable');
+			if (!available) {
+				hud.classList.add('is-unavailable');
+				hud.title = 'DISCONNECTED';
+				if (value)
+					value.textContent = 'N/A';
+				return;
+			}
+
+			if (status === 'LOW')
+				hud.classList.add('is-low');
+			else if (status === 'CRITICAL')
+				hud.classList.add('is-critical');
+			const voltage = Number(battery.voltage);
+			hud.title = (isFinite(voltage) ? voltage.toFixed(2) + 'V / ' : '') + status;
+			if (value)
+				value.textContent = Math.round(Number(battery.percent)) + '%';
+		}
+
+		function refreshDetailBatteryStatus() {
+			$.ajax({
+				url : yoloContextPath + '/yolo/battery/status/'
+						+ encodeURIComponent(currentChannelKey),
+				type : 'GET',
+				dataType : 'json',
+				cache : false
+			}).done(function(battery) {
+				renderDetailBatteryStatus(battery || null);
+			}).fail(function() {
+				renderDetailBatteryStatus(null);
+			});
+		}
+
 		$(document).ready(function() {
 			updateActiveTabUI();
 			loadCurrentEnvironment(refreshWeatherEnvironment);
@@ -1253,6 +1338,7 @@ header, .top-header {
 			fn_loadMappingInfo();
 			refreshFlightStatus();
 			refreshEnvironmentAndCollision();
+			refreshDetailBatteryStatus();
 			$('#environmentSearchKeyword').on('keydown', function(event) {
 				if (event.key === 'Enter') {
 					event.preventDefault();
@@ -1263,6 +1349,7 @@ header, .top-header {
 			setInterval(readStatus, 2000);
 			setInterval(renderFlightTimer, 1000);
 			setInterval(refreshEnvironmentAndCollision, 1000); 
+			setInterval(refreshDetailBatteryStatus, 3000);
 			setInterval(refreshWeatherEnvironment, 5 * 60 * 1000);
 			setInterval(refreshSpaceWeather, 5 * 60 * 1000);
 		});
@@ -1273,7 +1360,7 @@ header, .top-header {
 			currentChannelKey = channelKey;
 
 			const newUrl = window.location.pathname + '?channel=' + channelKey;
-			window.history.pushState({
+			window.history.replaceState({
 				channel : channelKey
 			}, '', newUrl);
 
@@ -1282,6 +1369,7 @@ header, .top-header {
 			fn_loadMappingInfo();
 			refreshFlightStatus();
 			refreshEnvironmentAndCollision();
+			refreshDetailBatteryStatus();
 		}
 
 		window.addEventListener('popstate', function(event) {
@@ -1295,6 +1383,7 @@ header, .top-header {
 				fn_loadMappingInfo();
 				refreshFlightStatus();
 				refreshEnvironmentAndCollision();
+				refreshDetailBatteryStatus();
 			}
 		});
 
@@ -1322,6 +1411,15 @@ header, .top-header {
 				return;
 			els.box.classList.remove('stream-error');
 			if (enabled) {
+				if (els.image.dataset.channel === currentChannelKey
+						&& els.image.dataset.connected === 'true'
+						&& els.image.getAttribute('src')) {
+					return;
+				}
+
+				els.image.removeAttribute('src');
+				els.image.dataset.channel = currentChannelKey;
+				els.image.dataset.connected = 'true';
 				els.image.onerror = function() {
 					els.box.classList.add('stream-error');
 				};
@@ -1331,6 +1429,8 @@ header, .top-header {
 			} else {
 				els.image.onerror = null;
 				els.image.removeAttribute('src');
+				delete els.image.dataset.channel;
+				delete els.image.dataset.connected;
 			}
 		}
 

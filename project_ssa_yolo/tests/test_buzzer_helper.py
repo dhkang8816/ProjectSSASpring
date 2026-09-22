@@ -1,7 +1,10 @@
+import threading
+import time
 import unittest
 from unittest.mock import Mock, patch
 
-from apps.services import buzzer_helper
+from apps import runtime_settings
+from apps.services import buzzer_helper, sensor_helper
 
 
 class BuzzerHelperTest(unittest.TestCase):
@@ -37,6 +40,49 @@ class BuzzerHelperTest(unittest.TestCase):
         command = run.call_args.args[0]
         self.assertEqual([*buzzer_helper._MPREMOTE_PREFIX, "version"], command)
         self.assertFalse(run.call_args.kwargs["shell"])
+
+    def test_buzzer_command_uses_the_shared_runtime_com_port(self):
+        with patch.object(runtime_settings, "ESP32_COM_PORT", "COM77"), \
+                patch.object(buzzer_helper, "run_mpremote") as run_mpremote:
+            buzzer_helper._run_mpremote_command("animal")
+
+        self.assertEqual("COM77", run_mpremote.call_args.args[0][1])
+
+    def test_startup_melody_uses_the_existing_queue_path(self):
+        with patch.object(buzzer_helper, "_enqueue", return_value=True) as enqueue:
+            queued = buzzer_helper.play_startup_melody()
+
+        self.assertTrue(queued)
+        enqueue.assert_called_once_with("startup")
+
+    def test_sensor_and_buzzer_mpremote_calls_are_serialized_by_one_lock(self):
+        active_calls = 0
+        maximum_parallel_calls = 0
+        guard = threading.Lock()
+        completed = Mock(stdout="{}")
+
+        def fake_subprocess_run(*args, **kwargs):
+            nonlocal active_calls, maximum_parallel_calls
+            with guard:
+                active_calls += 1
+                maximum_parallel_calls = max(maximum_parallel_calls, active_calls)
+            time.sleep(0.03)
+            with guard:
+                active_calls -= 1
+            return completed
+
+        with patch.object(buzzer_helper.subprocess, "run", side_effect=fake_subprocess_run):
+            sensor_thread = threading.Thread(target=sensor_helper._read_from_esp32)
+            buzzer_thread = threading.Thread(
+                target=buzzer_helper._run_mpremote_command,
+                args=("startup",),
+            )
+            sensor_thread.start()
+            buzzer_thread.start()
+            sensor_thread.join()
+            buzzer_thread.join()
+
+        self.assertEqual(1, maximum_parallel_calls)
 
 
 if __name__ == "__main__":

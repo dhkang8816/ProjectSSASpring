@@ -12,36 +12,22 @@
 	href="${pageContext.request.contextPath}/resources/css/style.css">
 <style>
 
-body {
-	background-color: #0b0f19 !important; 
-	color: #e2e8f0 !important;
-	font-family: 'Segoe UI', Roboto, sans-serif;
-	margin: 0;
-	padding: 0;
-	overflow-x: hidden;
-}
-
-
-.control-page-content {
+#workFlowListPage.control-page-content {
 	position: absolute !important;
 	top: 80px !important; 
-	left: 150px !important; 
-	width: calc(100% - 150px) !important; 
 	padding: 30px 40px;
 	box-sizing: border-box;
 	z-index: 50 !important;
 }
 
 @media ( max-width : 760px) {
-	.control-page-content {
-		left: 0 !important;
-		width: 100% !important;
+	#workFlowListPage.control-page-content {
 		padding: 20px 16px;
 	}
 }
 
 
-.panel {
+#workFlowListPage .panel {
 	background: rgba(20, 26, 42, 0.85) !important;
 	border: 1px solid #1e293b !important;
 	border-radius: 16px !important;
@@ -52,7 +38,7 @@ body {
 	box-sizing: border-box;
 }
 
-.panel h2 {
+#workFlowListPage .panel h2 {
 	color: #ffffff !important;
 	margin: 0 0 6px 0 !important;
 	font-size: 20px !important;
@@ -60,14 +46,14 @@ body {
 	letter-spacing: -0.02em;
 }
 
-.panel p {
+#workFlowListPage .panel p {
 	color: #94a3b8 !important;
 	font-size: 13.5px;
 	margin: 0 0 24px 0;
 }
 
 
-table {
+#workFlowListPage table {
 	width: 100%;
 	border-collapse: separate !important;
 	border-spacing: 0 !important;
@@ -79,7 +65,7 @@ table {
 	overflow: hidden;
 }
 
-th {
+#workFlowListPage th {
 	background-color: #111827 !important; 
 	color: #38bdf8 !important; 
 	padding: 14px 16px !important;
@@ -90,7 +76,7 @@ th {
 	text-align: center !important; 
 }
 
-td {
+#workFlowListPage td {
 	padding: 14px 16px !important;
 	background-color: transparent !important;
 	color: #cbd5e1 !important;
@@ -101,29 +87,29 @@ td {
 }
 
 
-tr {
+#workFlowListPage tr {
 	transition: background-color 0.15s ease;
 }
 
-tbody tr:hover td {
+#workFlowListPage tbody tr:hover td {
 	background-color: rgba(30, 41, 59, 0.6) !important;
 	color: #ffffff !important;
 }
 
 
-a {
+#workFlowListPage a {
 	color: #38bdf8 !important;
 	text-decoration: none !important;
 	font-weight: 600;
 }
 
-a:hover {
+#workFlowListPage a:hover {
 	color: #7dd3fc !important;
 	text-decoration: underline !important;
 }
 
 
-.btn-action-link {
+#workFlowListPage .btn-action-link {
 	display: inline-block;
 	padding: 5px 12px;
 	background-color: #1e293b;
@@ -135,7 +121,7 @@ a:hover {
 	transition: all 0.15s;
 }
 
-.btn-action-link:hover {
+#workFlowListPage .btn-action-link:hover {
 	background-color: #0ea5e9;
 	color: #ffffff !important;
 	border-color: #38bdf8;
@@ -143,7 +129,7 @@ a:hover {
 }
 
 
-.badge-status {
+#workFlowListPage .badge-status {
 	padding: 4px 12px !important;
 	border-radius: 20px !important; 
 	font-size: 11.5px !important;
@@ -151,26 +137,26 @@ a:hover {
 	display: inline-block;
 }
 
-.pending {
+#workFlowListPage .pending {
 	background-color: rgba(245, 158, 11, 0.15) !important;
 	color: #f59e0b !important;
 	border: 1px solid rgba(245, 158, 11, 0.3) !important;
 }
 
-.approved {
+#workFlowListPage .approved {
 	background-color: rgba(16, 185, 129, 0.15) !important;
 	color: #10b981 !important;
 	border: 1px solid rgba(16, 185, 129, 0.3) !important;
 }
 
-.rejected {
+#workFlowListPage .rejected {
 	background-color: rgba(239, 68, 68, 0.15) !important;
 	color: #ef4444 !important;
 	border: 1px solid rgba(239, 68, 68, 0.3) !important;
 }
 
 
-.pagination {
+#workFlowListPage .pagination {
 	display: flex;
 	justify-content: center;
 	gap: 6px;
@@ -179,7 +165,7 @@ a:hover {
 	margin: 25px 0 0 0 !important;
 }
 
-.pagination a, .pagination strong {
+#workFlowListPage .pagination a, #workFlowListPage .pagination strong {
 	display: block;
 	padding: 6px 12px;
 	background: #111827 !important;
@@ -192,20 +178,20 @@ a:hover {
 	transition: all 0.15s;
 }
 
-.pagination a:hover {
+#workFlowListPage .pagination a:hover {
 	color: #ffffff !important;
 	background: #1f2937 !important;
 	border-color: #334155;
 }
 
-.pagination strong {
+#workFlowListPage .pagination strong {
 	color: #38bdf8 !important; 
 	background: rgba(14, 165, 233, 0.15) !important;
 	border-color: #0ea5e9;
 }
 
 
-.panel {
+#workFlowListPage .panel {
 	display: grid !important;
 	grid-template-columns: 1fr;
 	grid-template-areas: "title" "summary" "table" "pager";
@@ -217,7 +203,7 @@ a:hover {
 	overflow-x: auto;
 }
 
-.panel>h2 {
+#workFlowListPage .panel>h2 {
 	grid-area: title;
 	margin: 0 !important;
 	padding: 0 0 16px;
@@ -226,7 +212,7 @@ a:hover {
 	font-size: 22px !important;
 }
 
-.panel > .staff-list-summary {
+#workFlowListPage .panel > .staff-list-summary {
     grid-area: summary;
     display: flex;
     align-items: center;
@@ -237,24 +223,24 @@ a:hover {
     font-weight: 500;
 }
 
-.panel>.staff-list-summary strong {
+#workFlowListPage .panel>.staff-list-summary strong {
 	color: #38bdf8;
 	background: rgba(56, 189, 248, .1);
 	border-radius: 4px;
 	padding: 2px 6px;
 }
 
-.panel>table {
+#workFlowListPage .panel>table {
 	grid-area: table;
 	min-width: 850px;
 	margin: 0 !important;
 }
 
-.panel>table th, .panel>table td {
+#workFlowListPage .panel>table th, #workFlowListPage .panel>table td {
 	white-space: nowrap;
 }
 
-.panel>.pager {
+#workFlowListPage .panel>.pager {
 	grid-area: pager;
 	justify-self: center;
 }

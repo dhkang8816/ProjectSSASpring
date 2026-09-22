@@ -34,7 +34,33 @@ def _bool(name, default=False):
 
 
 SPRING_HOST = _text("SSA_SPRING_HOST", "http://localhost:80/project_ssa_spring")
-ESP32_STREAM_URL = _text("SSA_ESP32_STREAM_URL", "http://192.168.137.242:80/stream")
+ESP32_STREAM_URL = _text("SSA_ESP32_STREAM_URL", "http://192.168.137.31:80/stream")
+ESP32_COM_PORT = _text("SSA_ESP32_COM_PORT", "COM6")
+
+# Battery telemetry is produced by the existing ESP32 sensor polling command;
+# it never opens another serial connection.  Updated board code receives these
+# values inside that same command, while an older board simply keeps its local
+# defaults and reports DISCONNECTED until it is deployed.
+BATTERY_ENABLED = _bool("SSA_BATTERY_ENABLED", True)
+BATTERY_SOURCE_KEY = _text("SSA_BATTERY_SOURCE_KEY", "esp32")
+if BATTERY_SOURCE_KEY not in {"video_1", "video_2", "video_3", "esp32"}:
+    BATTERY_SOURCE_KEY = "esp32"
+BATTERY_ADC_PIN = _int("SSA_BATTERY_ADC_PIN", 2, minimum=0)
+BATTERY_ADC_REFERENCE_VOLTAGE = _float("SSA_BATTERY_ADC_REFERENCE_VOLTAGE", 3.3, minimum=0.1)
+BATTERY_MIN_VOLTAGE = _float("SSA_BATTERY_MIN_VOLTAGE", 3.0, minimum=0.1)
+BATTERY_MAX_VOLTAGE = _float("SSA_BATTERY_MAX_VOLTAGE", 4.2, minimum=0.1)
+if BATTERY_MAX_VOLTAGE <= BATTERY_MIN_VOLTAGE:
+    BATTERY_MIN_VOLTAGE, BATTERY_MAX_VOLTAGE = 3.0, 4.2
+BATTERY_DIVIDER_RATIO = _float("SSA_BATTERY_DIVIDER_RATIO", 1.52, minimum=0.01)
+BATTERY_CALIBRATION = _float("SSA_BATTERY_CALIBRATION", 0.96, minimum=0.01)
+BATTERY_SAMPLE_COUNT = _int("SSA_BATTERY_SAMPLE_COUNT", 8, minimum=1)
+BATTERY_LOW_PERCENT = _float("SSA_BATTERY_LOW_PERCENT", 25.0, minimum=0.0)
+BATTERY_CRITICAL_PERCENT = _float("SSA_BATTERY_CRITICAL_PERCENT", 10.0, minimum=0.0)
+if BATTERY_CRITICAL_PERCENT > BATTERY_LOW_PERCENT:
+    BATTERY_CRITICAL_PERCENT, BATTERY_LOW_PERCENT = 10.0, 25.0
+BATTERY_MOCK_ENABLED = _bool("SSA_BATTERY_MOCK_ENABLED", False)
+BATTERY_MOCK_PERCENT = min(100.0, _float("SSA_BATTERY_MOCK_PERCENT", 80.0, minimum=0.0))
+BUZZER_STARTUP_SOUND_ENABLED = _bool("SSA_BUZZER_STARTUP_SOUND_ENABLED", True)
 YOLO_MODEL_PATH = _text(
     "SSA_YOLO_MODEL_PATH",
     str(PROJECT_ROOT / "runs" / "detect" / "my_yolov12_project" / "yolov8n_train-6" / "weights" / "best.pt"),
