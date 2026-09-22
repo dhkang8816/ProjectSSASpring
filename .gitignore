@@ -1,0 +1,38 @@
+# Eclipse workspace
+.metadata/
+Servers/
+
+# Build
+**/target/
+**/bin/
+**/build/
+
+# IDE
+**/.settings/
+**/.classpath
+**/.project
+**/.vscode/
+
+# Python
+**/__pycache__/
+**/*.pyc
+**/.venv/
+**/venv/
+
+# Secrets
+**/.env
+**/jdbc.properties
+
+# YOLO generated / heavy files
+**/runs/
+**/*.pt
+**/*.mp4
+**/videos/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+**/logs/
+**/*.log

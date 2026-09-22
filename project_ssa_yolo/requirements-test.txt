@@ -1,0 +1,2 @@
+# Test-only dependencies. Runtime services do not import pytest.
+pytest>=8,<9

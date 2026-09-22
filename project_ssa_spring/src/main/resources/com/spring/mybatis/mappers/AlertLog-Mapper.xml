@@ -1,0 +1,100 @@
+﻿<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="AlertLog-Mapper">
+
+    
+    
+    <insert id="insertAlertLog" parameterType="com.spring.dto.AlertLogVO">
+        <selectKey keyProperty="alertId" resultType="int" order="BEFORE">
+            SELECT ALERT_LOG_SEQ.NEXTVAL FROM DUAL
+        </selectKey>
+        INSERT INTO ALERT_LOG (
+            ALERT_ID,
+            ALERT_TYPE,
+            DLOG_ID,
+            DANLOG_ID,
+            ALERT_MSG,
+            SEND_STATUS,
+            SEND_DATE,
+            FIRST_SEND_TIME
+        ) VALUES (
+            
+            #{alertId, jdbcType=INTEGER},
+            #{alertType, jdbcType=VARCHAR},      
+            #{dlogId, jdbcType=INTEGER},         
+            #{danlogId, jdbcType=INTEGER},       
+            #{alertMsg, jdbcType=VARCHAR},       
+            #{sendStatus, jdbcType=VARCHAR},     
+            SYSDATE,                             
+            SYSTIMESTAMP                         
+        )
+    </insert>
+
+
+    
+    <select id="getAlertLogListWithPaging" parameterType="com.spring.cmd.PageMaker" resultType="com.spring.dto.AlertLogVO">
+        <![CDATA[
+        SELECT 
+            alertId, alertMsg, sendStatus, sendDate, dlogId, firstSendTime, alertType, danlogId
+        FROM (
+            SELECT 
+                ROWNUM as rnum, 
+                ALERT_ID as alertId,
+                ALERT_MSG as alertMsg,
+                SEND_STATUS as sendStatus,
+                SEND_DATE as sendDate,
+                DLOG_ID as dlogId,
+                FIRST_SEND_TIME as firstSendTime,
+                ALERT_TYPE as alertType,
+                DANLOG_ID as danlogId
+            FROM (
+                SELECT * 
+                FROM ALERT_LOG 
+                WHERE 1=1
+        ]]>
+                <if test="searchType == 'type' and keyword != ''">
+                    AND ALERT_TYPE LIKE '%' || #{keyword} || '%'
+                </if>
+                <if test="searchType == 'msg' and keyword != ''">
+                    AND ALERT_MSG LIKE '%' || #{keyword} || '%'
+                </if>
+        <![CDATA[
+                ORDER BY ALERT_ID DESC
+            )
+            WHERE ROWNUM <= #{endRow}
+        )
+        WHERE rnum >= #{startRow}
+        ]]>
+    </select>
+
+    
+    <select id="getTotalCount" parameterType="com.spring.cmd.PageMaker" resultType="int">
+        SELECT COUNT(*) FROM ALERT_LOG
+        WHERE 1=1
+        <if test="searchType == 'type' and keyword != ''">
+            AND ALERT_TYPE LIKE '%' || #{keyword} || '%'
+        </if>
+        <if test="searchType == 'msg' and keyword != ''">
+            AND ALERT_MSG LIKE '%' || #{keyword} || '%'
+        </if>
+    </select>
+    
+	     
+	 <select id="getAlertLog" parameterType="int" resultType="com.spring.dto.AlertLogVO">
+	     SELECT 
+	         ALERT_ID         as alertId,
+	         ALERT_MSG        as alertMsg,
+	         SEND_STATUS      as sendStatus,
+	         SEND_DATE        as sendDate,
+	         DLOG_ID          as dlogId,
+	         FIRST_SEND_TIME  as firstSendTime,
+	         ALERT_TYPE       as alertType,
+	         DANLOG_ID        as danlogId
+	     FROM 
+	         ALERT_LOG
+	     WHERE 
+	         ALERT_ID = #{alertId}
+	 </select>
+
+
+</mapper>

@@ -1,0 +1,32 @@
+﻿<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE configuration PUBLIC "-//mybatis.org//DTD Config 3.0//EN" "https://mybatis.org/dtd/mybatis-3-config.dtd">
+<configuration>
+
+	
+	<settings>
+		<setting name="mapUnderscoreToCamelCase" value="true" />
+	</settings>
+	
+	<typeAliases>
+		<typeAlias type="java.lang.String" alias="str" />
+		<typeAlias type="java.lang.Integer" alias="int" />
+
+		<typeAlias type="com.spring.dto.AlertLogVO" alias="alertLog" />
+		<typeAlias type="com.spring.dto.AnimalCounterVO" alias="animalCounter" />
+		<typeAlias type="com.spring.dto.AnimalDetailVO" alias="animalDetail" />
+		<typeAlias type="com.spring.dto.CommonCodeVO" alias="commonCode" />
+		<typeAlias type="com.spring.dto.DangerDetailVO" alias="dangerDetail" />
+		<typeAlias type="com.spring.dto.DangerLogVO" alias="dangerLog" />
+		<typeAlias type="com.spring.dto.DetectionLogVO" alias="detectionLog" />
+		<typeAlias type="com.spring.dto.DroneVO" alias="drone" />
+		<typeAlias type="com.spring.dto.FlightHistoryVO" alias="flightHistory" />
+		<typeAlias type="com.spring.dto.LoginLogVO" alias="loginLog" />
+		<typeAlias type="com.spring.dto.MemberLogVO" alias="memberLog" />
+		<typeAlias type="com.spring.dto.MemberRoleVO" alias="memberRole" />
+		<typeAlias type="com.spring.dto.MemberVO" alias="member" />
+		<typeAlias type="com.spring.dto.PatrolReportVO" alias="patrolReport" />
+		<typeAlias type="com.spring.dto.VideoDroneMapVO" alias="videoDroneMap" />
+		<typeAlias type="com.spring.dto.WorkFlowVO" alias="workFlow" />
+		<typeAlias type="com.spring.dto.EnvironmentVO" alias="environment" />
+	</typeAliases>
+</configuration>

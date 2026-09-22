@@ -1,0 +1,131 @@
+﻿<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:c="http://www.springframework.org/schema/c"
+	xmlns:p="http://www.springframework.org/schema/p"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans https://www.springframework.org/schema/beans/spring-beans.xsd">
+
+	
+	<bean id="commonCodeDAO" class="com.spring.dao.CommonCodeDAOImpl">
+		<constructor-arg ref="sqlSession" />
+	</bean>
+	<bean id="memberDAO" class="com.spring.dao.MemberDAOImpl">
+		<constructor-arg ref="sqlSession" />
+	</bean>
+	<bean id="animalDetailDAO" class="com.spring.dao.AnimalDetailDAOImpl">
+		<constructor-arg ref="sqlSession" />
+	</bean>
+	<bean id="animalCounterDAO" class="com.spring.dao.AnimalCounterDAOImpl">
+		<constructor-arg ref="sqlSession" />
+	</bean>
+	<bean id="dangerDetailDAO" class="com.spring.dao.DangerDetailDAOImpl">
+		<constructor-arg ref="sqlSession" />
+	</bean>
+	<bean id="droneDAO" class="com.spring.dao.DroneDAOImpl">
+		<constructor-arg ref="sqlSession" />
+	</bean>
+	<bean id="detectionLogDAO" class="com.spring.dao.DetectionLogDAOImpl">
+		<constructor-arg ref="sqlSession" />
+	</bean>
+	<bean id="dangerLogDAO" class="com.spring.dao.DangerLogDAOImpl">
+		<constructor-arg ref="sqlSession" />
+	</bean>
+	<bean id="flightHistoryDAO" class="com.spring.dao.FlightHistoryDAOImpl">
+		<constructor-arg ref="sqlSession" />
+	</bean>
+	<bean id="AlertLogDAO" class="com.spring.dao.AlertLogDAOImpl">
+		<constructor-arg ref="sqlSession" />
+	</bean>
+	<bean id="LoginLogDAO" class="com.spring.dao.LoginLogDAOImpl">
+		<constructor-arg ref="sqlSession" />
+	</bean>
+	<bean id="PatrolReportDAO" class="com.spring.dao.PatrolReportDAOImpl">
+		<constructor-arg ref="sqlSession" />
+	</bean>
+	<bean id="VideoDroneMapDAO" class="com.spring.dao.VideoDroneMapDAOImpl">
+		<constructor-arg ref="sqlSession" />
+	</bean>
+	<bean id="WorkFlowDAO" class="com.spring.dao.WorkFlowDAOImpl">
+		<constructor-arg ref="sqlSession" />
+	</bean>
+	<bean id="EnvironmentDAO" class="com.spring.dao.EnvironmentDAOImpl">
+		<constructor-arg ref="sqlSession" />
+	</bean>
+
+	
+	<bean id="commonCodeService"
+		class="com.spring.service.CommonCodeServiceImpl">
+		<constructor-arg ref="commonCodeDAO" />
+	</bean>
+	<bean id="memberService" class="com.spring.service.MemberServiceImpl">
+		<constructor-arg ref="memberDAO" />
+	</bean>
+	<bean id="animalDetailService"
+		class="com.spring.service.AnimalDetailServiceImpl">
+		<constructor-arg ref="animalDetailDAO" />
+		
+		<constructor-arg ref="animalCounterDAO" />
+	</bean>
+	<bean id="animalCounterService"
+		class="com.spring.service.AnimalCounterServiceImpl">
+		<constructor-arg ref="animalCounterDAO" />
+	</bean>
+	<bean id="dangerDetailService"
+		class="com.spring.service.DangerDetailServiceImpl">
+		<constructor-arg ref="dangerDetailDAO" />
+	</bean>
+	<bean id="droneService" class="com.spring.service.DroneServiceImpl">
+		<constructor-arg ref="droneDAO" />
+	</bean>
+	<bean id="detectionLogService"
+		class="com.spring.service.DetectionLogServiceImpl">
+		<constructor-arg ref="detectionLogDAO" />
+	</bean>
+	<bean id="dangerLogService" class="com.spring.service.DangerLogServiceImpl">
+		<constructor-arg ref="dangerLogDAO" />
+	</bean>
+	<bean id="flightHistoryService"
+		class="com.spring.service.FlightHistoryServiceImpl">
+		<constructor-arg ref="flightHistoryDAO" />
+	</bean>
+	<bean id="AlertLogService"
+		class="com.spring.service.AlertLogServiceImpl">
+		<constructor-arg ref="AlertLogDAO" />
+	</bean>
+	<bean id="PatrolReportService"
+		class="com.spring.service.PatrolReportServiceImpl">
+		<constructor-arg ref="PatrolReportDAO" />
+		<constructor-arg ref="WorkFlowDAO" />
+		<constructor-arg ref="memberDAO" />
+	</bean>
+	<bean id="AIStreamBridgeService" class="com.spring.yolo.AIStreamBridgeService">
+	    <constructor-arg ref="VideoDroneMapDAO" />
+	</bean>
+	<bean id="VideoDroneMapService" class="com.spring.service.VideoDroneMapServiceImpl">
+	    <constructor-arg ref="VideoDroneMapDAO" />
+	    <constructor-arg ref="AIStreamBridgeService" />
+	</bean>
+	<bean id="WorkFlowService"
+		class="com.spring.service.WorkFlowServiceImpl">
+		<constructor-arg ref="WorkFlowDAO" />
+		<constructor-arg ref="memberDAO" />
+		<constructor-arg ref="PatrolReportDAO" />
+	</bean>
+	<bean id="EnvironmentService"
+		class="com.spring.service.EnvironmentServiceImpl">
+		<constructor-arg ref="EnvironmentDAO" />
+	</bean>
+	<bean id="GeocodingService"
+      class="com.spring.service.GeocodingServiceImpl">
+	</bean>
+	<bean id="WeatherApiService"
+      class="com.spring.service.WeatherApiServiceImpl">
+	</bean>
+	<bean id="SpaceWeatherService"
+	      class="com.spring.service.SpaceWeatherServiceImpl">
+	</bean>
+	<bean id="systemDiagnosticsService"
+		class="com.spring.service.SystemDiagnosticsService">
+		<constructor-arg ref="dataSourceSpied" />
+		<constructor-arg ref="EnvironmentService" />
+	</bean>
+</beans>

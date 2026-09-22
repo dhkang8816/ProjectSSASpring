@@ -1,0 +1,98 @@
+﻿<?xml version="1.0" encoding="UTF-8"?>
+<Configuration status="WARN">
+	<Appenders>
+		<Console name="Console" target="SYSTEM_OUT">
+			<PatternLayout
+				pattern="%d{yyyy-MM-dd HH:mm:ss} [%t] %-5level %logger{36} - %msg%n" />
+		</Console>
+		<RollingFile name="File" fileName="logs/app.log"
+			filePattern="logs/app-%d{yyyy-MM-dd}-%i.log.gz">
+			<PatternLayout
+				pattern="%d{yyyy-MM-dd HH:mm:ss} [%t] %-5level %logger{36} - %msg%n" />
+			<Policies>
+				<TimeBasedTriggeringPolicy interval="1" />
+				<SizeBasedTriggeringPolicy size="10MB" />
+			</Policies>
+		</RollingFile>
+	</Appenders>
+	<Loggers>
+		
+		
+		
+		
+		<Logger name="org.springframework.web.multipart" level="TRACE" additivity="false">
+			<AppenderRef ref="Console" />
+		</Logger>
+		
+		<Logger name="org.apache.commons.fileupload" level="DEBUG" additivity="false">
+			<AppenderRef ref="Console" />
+		</Logger>
+		
+		<Logger name="jakarta.servlet.http" level="DEBUG" additivity="false">
+			<AppenderRef ref="Console" />
+		</Logger>
+		
+
+		<Logger name="org.springframework.bean" level="error" additivity="false">
+			<AppenderRef ref="Console" />
+		</Logger> 
+		<Logger name="org.springframework.web" level="error" additivity="false">
+			<AppenderRef ref="Console" />
+		</Logger> 
+		<Logger name="org.springframework.web.servlet.mvc.method.annotation" level="error" additivity="false">
+			<AppenderRef ref="Console" />
+		</Logger> 
+		
+		
+		<Logger name="org.springframework.security" level="error" additivity="false">
+			<AppenderRef ref="Console" />
+		</Logger>
+
+		
+		<Logger name="com.spring" level="DEBUG" additivity="false">
+			<AppenderRef ref="Console" />
+		</Logger>
+		
+		<Logger name="com.zaxxer.hikari" level="error" additivity="false">
+			<AppenderRef ref="Console" />
+		</Logger>
+		<Logger name="com.zaxxer.hikari.HikariConfig" level="error" additivity="false"> 
+			<AppenderRef ref="Console" />
+		</Logger>
+		
+		
+		<Logger name="jdbc.audit" level="Error" additivity="false">
+			<AppenderRef ref="Console" />
+		</Logger>
+		
+		
+		<Logger name="jdbc.resultset" level="ERROR" additivity="false">
+			<AppenderRef ref="Console" />
+		</Logger> 
+		<Logger name="jdbc.resultsettable" level="ERROR" additivity="false">
+			<AppenderRef ref="Console" />
+		</Logger> 
+		
+		
+		<Logger name="jdbc.sqlonly" level="error" additivity="false">
+			<AppenderRef ref="Console" />
+		</Logger>
+		
+		
+		<Logger name="jdbc.connection" level="ERROR" additivity="false">
+			<AppenderRef ref="Console" />
+		</Logger> 
+		<Logger name="org.springframework.aop" level="DEBUG" additivity="false">
+            <AppenderRef ref="Console" />
+        </Logger>
+		
+		
+		<Logger name="org.springframework.transaction" level="DEBUG" additivity="false">
+			<AppenderRef ref="Console" />
+		</Logger> 
+
+		<Root level="info">
+			<AppenderRef ref="Console" />
+		</Root>
+	</Loggers>
+</Configuration>

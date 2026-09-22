@@ -1,0 +1,6 @@
+jdbc.driver=oracle.jdbc.OracleDriver
+jdbc.url=jdbc:oracle:thin:@localhost:1521:XE
+jdbc.username=YOUR_USERNAME
+jdbc.password=YOUR_PASSWORD
+jdbc.maximumPoolSize=2
+jdbc.minimumIdle=1

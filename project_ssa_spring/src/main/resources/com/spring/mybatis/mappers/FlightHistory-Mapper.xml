@@ -1,0 +1,99 @@
+﻿<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="FlightHistory-Mapper">
+
+    
+    <resultMap id="flightHistoryMap" type="com.spring.dto.FlightHistoryVO">
+        <id property="flightId" column="FLIGHT_ID" />
+        <result property="startTime" column="START_TIME" />
+        <result property="endTime" column="END_TIME" />
+        <result property="flightDuration" column="FLIGHT_DURATION" />
+        <result property="batteryConsumption" column="BATTERY_CONSUMPTION" />
+        <result property="flightDate" column="FLIGHT_DATE" />
+        <result property="droneId" column="DRONE_ID" />
+    </resultMap>
+
+    
+    <sql id="searchCondition">
+        <where>
+            <if test="searchType == 'd'.toString() and keyword != null and keyword != ''">
+                AND DRONE_ID LIKE '%' || #{keyword} || '%'
+            </if>
+        </where>
+    </sql>
+
+    
+    <insert id="insertFlightHistory" parameterType="com.spring.dto.FlightHistoryVO">
+        INSERT INTO FLIGHT_HISTORY (
+            FLIGHT_ID, 
+            START_TIME, 
+            END_TIME, 
+            FLIGHT_DURATION, 
+            BATTERY_CONSUMPTION, 
+            FLIGHT_DATE, 
+            DRONE_ID
+        )
+        SELECT 
+            (SELECT NVL(MAX(FLIGHT_ID), 0) + 1 FROM FLIGHT_HISTORY), -- 💡 시퀀스 대체 서브쿼리
+	        #{startTime, jdbcType=TIMESTAMP},
+	        #{endTime, jdbcType=TIMESTAMP},
+            #{flightDuration},
+            #{batteryConsumption},
+            SYSDATE,
+            #{droneId}
+        FROM DUAL
+        
+        WHERE EXISTS (
+            SELECT 1 FROM DRONE WHERE DRONE_ID = #{droneId}
+        )
+    </insert>
+
+    
+    <select id="selectFlightHistoryList" resultMap="flightHistoryMap" parameterType="com.spring.cmd.PageMaker">
+        SELECT * FROM (
+            SELECT ROWNUM AS rn, a.* FROM (
+                SELECT 
+                    FLIGHT_ID, 
+                    START_TIME, 
+                    END_TIME, 
+                    FLIGHT_DURATION, 
+                    BATTERY_CONSUMPTION, 
+                    FLIGHT_DATE, 
+                    DRONE_ID
+                FROM FLIGHT_HISTORY
+                <include refid="searchCondition" />
+                
+                ORDER BY FLIGHT_ID DESC
+            ) a WHERE ROWNUM &lt;= #{endRow}
+        ) WHERE rn &gt;= #{startRow}
+    </select>
+
+    
+    <select id="selectFlightHistoryCount" resultType="int" parameterType="com.spring.cmd.PageMaker">
+        SELECT COUNT(*) 
+        FROM FLIGHT_HISTORY
+        <include refid="searchCondition" />
+    </select>
+
+    
+    <select id="selectFlightHistoryById" resultMap="flightHistoryMap" parameterType="int">
+        SELECT 
+            FLIGHT_ID, 
+            START_TIME, 
+            END_TIME, 
+            FLIGHT_DURATION, 
+            BATTERY_CONSUMPTION, 
+            FLIGHT_DATE, 
+            DRONE_ID
+        FROM FLIGHT_HISTORY
+        WHERE FLIGHT_ID = #{flightId}
+    </select>
+
+    
+    <delete id="deleteFlightHistory" parameterType="int">
+        DELETE FROM FLIGHT_HISTORY
+        WHERE FLIGHT_ID = #{flightId}
+    </delete>
+
+</mapper>

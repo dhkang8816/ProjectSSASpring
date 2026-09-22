@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="WorkFlow-Mapper">
+    <resultMap id="workFlowResultMap" type="com.spring.dto.WorkFlowVO">
+        <id property="approvalId" column="APPROVAL_ID" />
+        <result property="appStatus" column="APP_STATUS" /><result property="rejectReason" column="REJECT_REASON" />
+        <result property="adminSign" column="ADMIN_SIGN" /><result property="requestDate" column="REQUEST_DATE" />
+        <result property="completeDate" column="COMPLETE_DATE" /><result property="drafterId" column="DRAFTER_ID" />
+        <result property="approverId" column="APPROVER_ID" /><result property="reportId" column="REPORT_ID" />
+        <result property="drafterName" column="DRAFTER_NAME" /><result property="approverName" column="APPROVER_NAME" />
+        <result property="reportDate" column="REPORT_DATE" /><result property="actionTaken" column="ACTION_TAKEN" />
+        <result property="remark" column="REMARK" />
+    </resultMap>
+    <sql id="workflowColumns">
+        W.APPROVAL_ID, W.APP_STATUS, W.REJECT_REASON, W.ADMIN_SIGN, W.REQUEST_DATE, W.COMPLETE_DATE,
+        W.DRAFTER_ID, W.APPROVER_ID, W.REPORT_ID, D.NAME AS DRAFTER_NAME, A.NAME AS APPROVER_NAME,
+        P.REPORT_DATE, P.ACTION_TAKEN, P.REMARK
+    </sql>
+    <sql id="workflowJoin">
+        FROM WORKFLOW W INNER JOIN PATROL_REPORT P ON P.REPORT_ID = W.REPORT_ID
+        LEFT JOIN MEMBER D ON D.MEMBER_ID = W.DRAFTER_ID LEFT JOIN MEMBER A ON A.MEMBER_ID = W.APPROVER_ID
+    </sql>
+    <select id="selectWorkFlowList" parameterType="map" resultMap="workFlowResultMap">
+        SELECT * FROM (SELECT ROWNUM AS RNUM, X.* FROM (
+            SELECT <include refid="workflowColumns" /> <include refid="workflowJoin" />
+            WHERE W.APPROVER_ID = #{approverId}
+            ORDER BY CASE WHEN W.APP_STATUS = '0' THEN 0 ELSE 1 END, W.APPROVAL_ID DESC
+        ) X WHERE ROWNUM &lt;= #{pageMaker.endRow}) WHERE RNUM &gt;= #{pageMaker.startRow}
+    </select>
+    <select id="selectWorkFlowTotalCount" parameterType="map" resultType="int">
+        SELECT COUNT(*) FROM WORKFLOW WHERE APPROVER_ID = #{approverId}
+    </select>
+    <insert id="insertWorkFlow" parameterType="com.spring.dto.WorkFlowVO">
+        <selectKey keyProperty="approvalId" resultType="long" order="BEFORE">SELECT NVL(MAX(APPROVAL_ID), 0) + 1 FROM WORKFLOW</selectKey>
+        INSERT INTO WORKFLOW (APPROVAL_ID, APP_STATUS, REJECT_REASON, ADMIN_SIGN, REQUEST_DATE, COMPLETE_DATE, DRAFTER_ID, APPROVER_ID, REPORT_ID)
+        VALUES (#{approvalId}, '0', NULL, 'N', SYSDATE, NULL, #{drafterId}, #{approverId}, #{reportId})
+    </insert>
+    <select id="selectWorkFlowById" parameterType="long" resultMap="workFlowResultMap">
+        SELECT <include refid="workflowColumns" /> <include refid="workflowJoin" /> WHERE W.APPROVAL_ID = #{approvalId}
+    </select>
+    <select id="selectWorkFlowByReportId" parameterType="long" resultMap="workFlowResultMap">
+        SELECT <include refid="workflowColumns" /> <include refid="workflowJoin" />
+        WHERE W.REPORT_ID = #{reportId}
+        ORDER BY W.APPROVAL_ID DESC
+    </select>
+    <update id="approveWorkFlow" parameterType="map">
+        UPDATE WORKFLOW SET APP_STATUS = '1', ADMIN_SIGN = 'Y', COMPLETE_DATE = SYSDATE, REJECT_REASON = NULL
+        WHERE APPROVAL_ID = #{approvalId} AND APPROVER_ID = #{approverId} AND APP_STATUS = '0'
+    </update>
+    <update id="rejectWorkFlow" parameterType="map">
+        UPDATE WORKFLOW SET APP_STATUS = '2', ADMIN_SIGN = 'Y', COMPLETE_DATE = SYSDATE, REJECT_REASON = #{rejectReason}
+        WHERE APPROVAL_ID = #{approvalId} AND APPROVER_ID = #{approverId} AND APP_STATUS = '0'
+    </update>
+    <update id="resubmitWorkFlowByReportId" parameterType="map">
+        UPDATE WORKFLOW
+        SET APP_STATUS = '0', ADMIN_SIGN = 'N', REQUEST_DATE = SYSDATE, COMPLETE_DATE = NULL, REJECT_REASON = NULL
+        WHERE REPORT_ID = #{reportId} AND DRAFTER_ID = #{drafterId} AND APP_STATUS = '2'
+    </update>
+    <delete id="deleteWorkFlowsByReportId" parameterType="int">
+        DELETE FROM WORKFLOW WHERE REPORT_ID = #{reportId}
+    </delete>
+</mapper>

@@ -1,0 +1,138 @@
+﻿<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+
+<mapper namespace="DetectionLog-Mapper">
+
+    
+    <resultMap id="detectionLogMap" type="com.spring.dto.DetectionLogVO">
+        <id property="dlogId" column="DLOG_ID" />
+        <result property="detectTime" column="DETECT_TIME" />
+        <result property="animalType" column="ANIMAL_TYPE" />
+        <result property="snapshotPath" column="SNAPSHOT_PATH" /> 
+        <result property="detectionDate" column="DETECTION_DATE" />
+        <result property="droneId" column="DRONE_ID" />
+        <result property="actionStatus" column="ACTION_STATUS" />
+        <result property="actionReason" column="ACTION_REASON" />
+        <result property="detectCount" column="DETECT_COUNT" />
+    </resultMap>
+
+    
+    <sql id="searchCondition">
+        <where>
+            <if test="searchType == 'a'.toString() and keyword != null and keyword != ''">
+                AND ANIMAL_TYPE LIKE '%' || #{keyword} || '%'
+            </if>
+            <if test="searchType == 'd'.toString() and keyword != null and keyword != ''">
+                AND DRONE_ID LIKE '%' || #{keyword} || '%'
+            </if>
+            <if test="searchType == 's'.toString() and keyword != null and keyword != ''">
+                AND ACTION_STATUS = #{keyword}
+            </if>
+        </where>
+    </sql>
+
+	 
+	 <insert id="insertDetectionLog" parameterType="com.spring.dto.DetectionLogVO">
+	     <selectKey keyProperty="dlogId" resultType="int" order="BEFORE">
+	         SELECT DETECTION_LOG_SEQ.NEXTVAL FROM DUAL
+	     </selectKey>
+	     INSERT INTO DETECTION_LOG (
+	         DLOG_ID, 
+	         DETECT_TIME, 
+	         ANIMAL_TYPE, 
+	         SNAPSHOT_PATH, 
+	         DETECTION_DATE, 
+	         DRONE_ID, 
+	         ACTION_STATUS, 
+	         ACTION_REASON, 
+	         DETECT_COUNT
+	     )
+	     SELECT 
+	         #{dlogId, jdbcType=INTEGER},
+	         CURRENT_TIMESTAMP,
+	         
+	         
+	         #{animalType, jdbcType=VARCHAR},
+	         NVL(#{snapshotPath, jdbcType=VARCHAR}, 'NONE'), -- NOT NULL 제약조건 완벽 방어
+	         SYSDATE,
+	         #{droneId, jdbcType=VARCHAR},
+	         '0',
+	         NVL(#{actionReason, jdbcType=VARCHAR}, '스프링 중계 허브 자동 기록'),
+	         #{detectCount, jdbcType=INTEGER}
+	         
+	     FROM DUAL
+	     
+	     WHERE EXISTS (
+	         SELECT 1 FROM DRONE WHERE DRONE_ID = #{droneId, jdbcType=VARCHAR}
+	     )
+	 </insert>
+
+
+
+    
+    <select id="selectDetectionLogList" resultMap="detectionLogMap" parameterType="com.spring.cmd.PageMaker">
+        SELECT * FROM (
+            SELECT ROWNUM AS rn, a.* FROM (
+                SELECT 
+                    DLOG_ID, 
+                    DETECT_TIME, 
+                    ANIMAL_TYPE, 
+                    SNAPSHOT_PATH, 
+                    DETECTION_DATE, 
+                    DRONE_ID, 
+                    ACTION_STATUS, 
+                    ACTION_REASON, 
+                    DETECT_COUNT
+                FROM DETECTION_LOG
+                <include refid="searchCondition" />
+                
+                ORDER BY DLOG_ID DESC
+            ) a WHERE ROWNUM &lt;= #{endRow}
+        ) WHERE rn &gt;= #{startRow}
+    </select>
+
+    
+    <select id="selectDetectionLogCount" resultType="int" parameterType="com.spring.cmd.PageMaker">
+        SELECT COUNT(*) 
+        FROM DETECTION_LOG
+        <include refid="searchCondition" />
+    </select>
+
+    
+    <select id="selectDetectionLogById" resultMap="detectionLogMap" parameterType="int">
+        SELECT 
+            DLOG_ID, 
+            DETECT_TIME, 
+            ANIMAL_TYPE, 
+            SNAPSHOT_PATH, 
+            DETECTION_DATE, 
+            DRONE_ID, 
+            ACTION_STATUS, 
+            ACTION_REASON, 
+            DETECT_COUNT
+        FROM DETECTION_LOG
+        WHERE DLOG_ID = #{dlogId}
+    </select>
+
+    
+    <update id="updateActionStatus" parameterType="com.spring.dto.DetectionLogVO">
+        UPDATE DETECTION_LOG
+        SET 
+            ACTION_STATUS = #{actionStatus},
+            ACTION_REASON = #{actionReason, jdbcType=VARCHAR}
+        WHERE DLOG_ID = #{dlogId}
+    </update>
+    
+    
+	<select id="selectTodayDetectionStats" resultType="java.util.HashMap">
+	    SELECT 
+	        COUNT(*) AS "TOTAL_COUNT",
+	        COUNT(CASE WHEN ACTION_STATUS = '2' THEN 1 END) AS "COMPLETE_COUNT"
+	    FROM DETECTION_LOG
+	    WHERE DETECTION_DATE &gt;= TRUNC(SYSDATE)
+	      AND DETECTION_DATE &lt; TRUNC(SYSDATE) + 1
+	</select>
+
+
+</mapper>

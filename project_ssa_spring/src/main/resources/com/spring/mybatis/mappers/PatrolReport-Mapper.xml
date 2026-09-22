@@ -1,0 +1,146 @@
+﻿<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="PatrolReport-Mapper">
+
+    
+    <resultMap id="reportResultMap" type="com.spring.dto.PatrolReportVO">
+        <id property="reportId" column="REPORT_ID" />
+        <result property="reportDate" column="REPORT_DATE" />
+        <result property="totalFlightTime" column="TOTAL_FLIGHT_TIME" javaType="double" />
+        <result property="totalDetectCount" column="TOTAL_DETECT_COUNT" />
+        <result property="completionRate" column="COMPLETION_RATE" />
+        <result property="confirmStatus" column="CONFIRM_STATUS" />
+        <result property="patrolDate" column="PATROL_DATE" />
+        <result property="modDate" column="MOD_DATE" />
+        <result property="memberId" column="MEMBER_ID" />
+        
+        <result property="actionTaken" column="ACTION_TAKEN" />
+        <result property="remark" column="REMARK" />
+    </resultMap>
+
+	 
+	 <insert id="insertReport" parameterType="com.spring.dto.PatrolReportVO">
+	    
+	    <selectKey keyProperty="reportId" resultType="long" order="BEFORE">
+	        SELECT NVL(MAX(REPORT_ID), 0) + 1 FROM PATROL_REPORT
+	    </selectKey>
+	    
+	    INSERT INTO PATROL_REPORT (
+	        REPORT_ID, 
+	        REPORT_DATE, 
+	        TOTAL_FLIGHT_TIME, 
+	        TOTAL_DETECT_COUNT,
+	        COMPLETION_RATE, 
+	        CONFIRM_STATUS, 
+	        PATROL_DATE, 
+	        MOD_DATE, 
+	        MEMBER_ID,
+	        ACTION_TAKEN,
+	        REMARK
+	    ) VALUES (
+	        #{reportId}, 
+	        #{reportDate}, 
+	        #{totalFlightTime}, 
+	        #{totalDetectCount},
+	        #{completionRate}, 
+	        #{confirmStatus, jdbcType=VARCHAR}, 
+	        #{patrolDate}, 
+	        #{modDate, jdbcType=TIMESTAMP}, 
+	        #{memberId},
+	        #{actionTaken, jdbcType=VARCHAR}, 
+	        #{remark, jdbcType=VARCHAR}
+	    )
+	 </insert>
+
+    
+    <select id="getReportById" parameterType="int" resultMap="reportResultMap">
+        SELECT 
+            REPORT_ID, REPORT_DATE, TOTAL_FLIGHT_TIME, TOTAL_DETECT_COUNT,
+            COMPLETION_RATE, CONFIRM_STATUS, PATROL_DATE, MOD_DATE, MEMBER_ID,
+            ACTION_TAKEN, REMARK -- 추가
+        FROM PATROL_REPORT
+        WHERE REPORT_ID = #{reportId}
+    </select>
+
+    
+    <select id="getReportList" resultMap="reportResultMap">
+        SELECT 
+            REPORT_ID, REPORT_DATE, TOTAL_FLIGHT_TIME, TOTAL_DETECT_COUNT,
+            COMPLETION_RATE, CONFIRM_STATUS, PATROL_DATE, MOD_DATE, MEMBER_ID,
+            ACTION_TAKEN, REMARK -- 추가
+        FROM PATROL_REPORT
+        ORDER BY REPORT_ID DESC
+    </select>
+    
+    
+    <select id="getReportListWithPaging" parameterType="com.spring.cmd.PageMaker" resultMap="reportResultMap">
+        SELECT * FROM (
+            SELECT ROWNUM AS rn, a.* FROM (
+                SELECT 
+                    REPORT_ID, REPORT_DATE, TOTAL_FLIGHT_TIME, TOTAL_DETECT_COUNT,
+                    COMPLETION_RATE, CONFIRM_STATUS, PATROL_DATE, MOD_DATE, MEMBER_ID,
+                    ACTION_TAKEN, REMARK
+                FROM PATROL_REPORT
+                ORDER BY REPORT_ID DESC
+            ) a WHERE ROWNUM &lt;= #{endRow}
+        ) WHERE rn &gt;= #{startRow}
+    </select>
+
+    
+    <select id="getReportTotalCount" parameterType="com.spring.cmd.PageMaker" resultType="int">
+        SELECT COUNT(*) FROM PATROL_REPORT
+    </select>
+
+	  
+    <select id="getPendingReportListWithPaging" parameterType="com.spring.cmd.PageMaker" resultMap="reportResultMap">
+        SELECT * FROM (
+            SELECT ROWNUM AS rn, a.* FROM (
+                SELECT
+                    REPORT_ID, REPORT_DATE, TOTAL_FLIGHT_TIME, TOTAL_DETECT_COUNT,
+                    COMPLETION_RATE, CONFIRM_STATUS, PATROL_DATE, MOD_DATE, MEMBER_ID,
+                    ACTION_TAKEN, REMARK
+                FROM PATROL_REPORT
+                WHERE CONFIRM_STATUS = '0'
+                ORDER BY REPORT_ID DESC
+            ) a WHERE ROWNUM &lt;= #{endRow}
+        ) WHERE rn &gt;= #{startRow}
+    </select>
+
+    <select id="getPendingReportTotalCount" parameterType="com.spring.cmd.PageMaker" resultType="int">
+        SELECT COUNT(*) FROM PATROL_REPORT WHERE CONFIRM_STATUS = '0'
+    </select>
+
+	 <update id="updateReport" parameterType="com.spring.dto.PatrolReportVO">
+	    UPDATE PATROL_REPORT
+	    SET 
+	        REPORT_DATE        = #{reportDate},
+	        TOTAL_FLIGHT_TIME  = #{totalFlightTime},
+	        TOTAL_DETECT_COUNT = #{totalDetectCount},
+	        COMPLETION_RATE    = #{completionRate},
+	        CONFIRM_STATUS     = #{confirmStatus},
+	        PATROL_DATE        = #{patrolDate},
+	        
+	        
+	        MOD_DATE           = #{modDate, jdbcType=TIMESTAMP},
+	        
+	        MEMBER_ID          = #{memberId},
+	        ACTION_TAKEN       = #{actionTaken, jdbcType=VARCHAR},
+	        REMARK             = #{remark, jdbcType=VARCHAR}
+	    WHERE REPORT_ID = #{reportId}
+	 </update>
+
+    <update id="updateConfirmStatus" parameterType="map">
+        UPDATE PATROL_REPORT SET CONFIRM_STATUS = #{confirmStatus} WHERE REPORT_ID = #{reportId}
+    </update>
+
+    <delete id="deletePdfCachesByReportId" parameterType="int">
+        DELETE FROM PDF_CACHE WHERE REPORT_ID = #{reportId}
+    </delete>
+
+    
+    <delete id="deleteReport" parameterType="int">
+        DELETE FROM PATROL_REPORT WHERE REPORT_ID = #{reportId}
+    </delete>
+
+</mapper>

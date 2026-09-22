@@ -1,0 +1,56 @@
+﻿<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="LoginLog-Mapper">
+
+    
+    <sql id="search">
+        <if test="searchType != null and keyword != null and keyword != ''">
+            <if test="searchType == 'm'.toString()">
+                AND MEMBER_ID LIKE '%' || #{keyword} || '%'
+            </if>
+            <if test="searchType == 's'.toString()">
+                AND LOGIN_STATUS LIKE '%' || #{keyword} || '%'
+            </if>
+        </if>
+    </sql>
+
+    
+    <select id="selectLoginLogList" resultType="com.spring.dto.LoginLogVO">
+        SELECT 
+            LOG_ID as logId,
+            LOGIN_IP as loginIp,
+            LOGIN_STATUS as loginStatus,
+            LOGIN_DATE as loginDate,
+            MEMBER_ID as memberId
+        FROM (
+            SELECT 
+                ROWNUM AS RNUM, A.*
+            FROM (
+                SELECT 
+                    LOG_ID, LOGIN_IP, LOGIN_STATUS, LOGIN_DATE, MEMBER_ID
+                FROM 
+                    MEMBER_LOG
+                WHERE 
+                    LOG_ID &gt; 0
+                    <include refid="search" />
+                ORDER BY 
+                    LOGIN_DATE DESC, LOG_ID DESC
+            ) A
+            WHERE ROWNUM &lt;= #{page} * #{perPageNum}
+        )
+        WHERE RNUM &gt; (#{page} - 1) * #{perPageNum}
+    </select>
+
+    
+    <select id="selectLoginLogListCount" resultType="int">
+        SELECT 
+            COUNT(*)
+        FROM 
+            MEMBER_LOG
+        WHERE 
+            LOG_ID &gt; 0
+            <include refid="search" />
+    </select>
+
+</mapper>

@@ -1,0 +1,135 @@
+﻿<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="Drone-Mapper">
+
+    <resultMap id="droneMap" type="com.spring.dto.DroneVO">
+        <id property="droneId" column="DRONE_ID" />
+        <result property="memberId" column="MEMBER_ID" />
+        <result property="camera" column="CAMERA" />
+        <result property="batteryCapacity" column="BATTERY_CAPACITY" />
+        <result property="droneLength" column="DRONE_LENGTH" />
+        <result property="droneWidth" column="DRONE_WIDTH" />
+        <result property="brand" column="BRAND" />
+        <result property="maintenanceCount" column="MAINTENANCE_COUNT" />
+    </resultMap>
+
+    <sql id="searchCondition">
+        <where>
+            <if test="searchType == 'd'.toString()
+                      and keyword != null and keyword != ''">
+                AND DRONE_ID LIKE '%' || #{keyword} || '%'
+            </if>
+
+            <if test="searchType == 'm'.toString()
+                      and keyword != null and keyword != ''">
+                AND MEMBER_ID LIKE '%' || #{keyword} || '%'
+            </if>
+        </where>
+    </sql>
+
+    <insert id="insertDrone" parameterType="com.spring.dto.DroneVO">
+        INSERT INTO DRONE (
+            DRONE_ID,
+            MEMBER_ID,
+            CAMERA,
+            BATTERY_CAPACITY,
+            DRONE_LENGTH,
+            DRONE_WIDTH,
+            BRAND,
+            MAINTENANCE_COUNT
+        ) VALUES (
+            #{droneId},
+            #{memberId, jdbcType=VARCHAR},
+            #{camera, jdbcType=VARCHAR},
+            #{batteryCapacity, jdbcType=NUMERIC},
+            #{droneLength, jdbcType=NUMERIC},
+            #{droneWidth, jdbcType=NUMERIC},
+            #{brand, jdbcType=VARCHAR},
+            #{maintenanceCount, jdbcType=NUMERIC}
+        )
+    </insert>
+
+    <select id="selectDroneList"
+            resultMap="droneMap"
+            parameterType="com.spring.cmd.PageMaker">
+
+        SELECT *
+        FROM (
+            SELECT ROWNUM AS rn, a.*
+            FROM (
+                SELECT
+                    DRONE_ID,
+                    MEMBER_ID,
+                    CAMERA,
+                    BATTERY_CAPACITY,
+                    DRONE_LENGTH,
+                    DRONE_WIDTH,
+                    BRAND,
+                    MAINTENANCE_COUNT
+                FROM DRONE
+
+                <include refid="searchCondition" />
+
+                ORDER BY DRONE_ID ASC
+            ) a
+            WHERE ROWNUM &lt;= #{endRow}
+        )
+        WHERE rn &gt;= #{startRow}
+
+    </select>
+ 
+    <select id="selectDroneCount"
+            resultType="int"
+            parameterType="com.spring.cmd.PageMaker">
+
+        SELECT COUNT(*)
+        FROM DRONE
+
+        <include refid="searchCondition" />
+
+    </select>
+
+    <select id="selectDroneById"
+            resultMap="droneMap"
+            parameterType="string">
+
+        SELECT
+            DRONE_ID,
+            MEMBER_ID,
+            CAMERA,
+            BATTERY_CAPACITY,
+            DRONE_LENGTH,
+            DRONE_WIDTH,
+            BRAND,
+            MAINTENANCE_COUNT
+        FROM DRONE
+        WHERE DRONE_ID = #{droneId}
+
+    </select>
+
+    <update id="updateDrone"
+            parameterType="com.spring.dto.DroneVO">
+
+        UPDATE DRONE
+        SET
+            MEMBER_ID = #{memberId, jdbcType=VARCHAR},
+            CAMERA = #{camera, jdbcType=VARCHAR},
+            BATTERY_CAPACITY = #{batteryCapacity, jdbcType=NUMERIC},
+            DRONE_LENGTH = #{droneLength, jdbcType=NUMERIC},
+            DRONE_WIDTH = #{droneWidth, jdbcType=NUMERIC},
+            BRAND = #{brand, jdbcType=VARCHAR},
+            MAINTENANCE_COUNT = #{maintenanceCount, jdbcType=NUMERIC}
+        WHERE DRONE_ID = #{droneId}
+
+    </update>
+
+    <delete id="deleteDrone" parameterType="string">
+
+        DELETE FROM DRONE
+        WHERE DRONE_ID = #{droneId}
+
+    </delete>
+
+</mapper>

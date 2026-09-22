@@ -1,0 +1,70 @@
+﻿<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="AnimalCounter-Mapper">
+
+	<resultMap id="animalCounterMap" type="com.spring.dto.AnimalCounterVO">
+        <id property="counterId" column="COUNTER_ID" />
+        <result property="currentCount" column="CURRENT_COUNT" />
+        <result property="lastUpdate" column="LAST_UPDATE" />
+    </resultMap>
+
+	
+    <sql id="counterSearch">
+        <where>
+			
+            <if test="searchType == 'c'.toString() and keyword != null and keyword != ''">
+                AND COUNTER_ID = #{keyword}
+            </if>
+            <if test="searchType == 'k'.toString() and keyword != null and keyword != ''">
+                AND COUNTER_ID LIKE '%' || #{keyword} || '%'
+            </if>
+        </where>
+    </sql>
+
+	
+    <select id="selectAnimalCounterList" resultMap="animalCounterMap" parameterType="com.spring.cmd.PageMaker">
+        SELECT * FROM (
+            SELECT ROWNUM AS rn, a.* FROM (
+                SELECT 
+                    COUNTER_ID, 
+                    CURRENT_COUNT, 
+                    LAST_UPDATE
+                FROM ANIMAL_COUNTER
+                <include refid="counterSearch" />
+                ORDER BY COUNTER_ID ASC
+            ) a WHERE ROWNUM &lt;= #{endRow}
+        ) WHERE rn &gt;= #{startRow}
+    </select>
+
+	
+    <select id="selectAnimalCounterCount" resultType="int" parameterType="com.spring.cmd.PageMaker">
+        SELECT COUNT(*) 
+        FROM ANIMAL_COUNTER
+        <include refid="counterSearch" />
+    </select>
+
+	
+	
+	
+	<update id="updateAnimalCount" parameterType="map">
+	    UPDATE ANIMAL_COUNTER
+	    SET 
+	        CURRENT_COUNT = CASE 
+	            WHEN (CURRENT_COUNT + #{countDiff, jdbcType=INTEGER}) &lt; 0 THEN 0
+	            ELSE (CURRENT_COUNT + #{countDiff, jdbcType=INTEGER})
+	        END,
+	        LAST_UPDATE = SYSDATE
+	    WHERE COUNTER_ID = #{counterId, jdbcType=VARCHAR}
+	</update>
+
+
+	
+    <insert id="insertNewCounter" parameterType="com.spring.dto.AnimalCounterVO">
+        INSERT INTO ANIMAL_COUNTER (
+            COUNTER_ID, CURRENT_COUNT, LAST_UPDATE
+        ) VALUES (
+            #{counterId}, 0, SYSDATE
+        )
+    </insert>
+</mapper>

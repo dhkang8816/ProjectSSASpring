@@ -1,0 +1,134 @@
+﻿<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+
+<mapper namespace="DangerLog-Mapper">
+
+    
+    <resultMap id="dangerLogMap" type="com.spring.dto.DangerLogVO">
+        <id property="danlogId" column="DANLOG_ID" />
+        <result property="dangerType" column="DANGER_TYPE" />
+        <result property="dangerTime" column="DANGER_TIME" />
+        <result property="dactionStatus" column="DACTION_STATUS" />
+        <result property="dactionReason" column="DACTION_REASON" />
+        <result property="dsnapshotPath" column="DSNAPSHOT_PATH" />
+        <result property="dangerDate" column="DANGER_DATE" />
+        <result property="droneId" column="DRONE_ID" />
+    </resultMap>
+
+    
+    <sql id="searchCondition">
+        <where>
+            <if test="searchType == 't'.toString() and keyword != null and keyword != ''">
+                AND DANGER_TYPE = #{keyword}
+            </if>
+            <if test="searchType == 'd'.toString() and keyword != null and keyword != ''">
+                AND DRONE_ID LIKE '%' || #{keyword} || '%'
+            </if>
+            <if test="searchType == 's'.toString() and keyword != null and keyword != ''">
+                AND DACTION_STATUS = #{keyword}
+            </if>
+        </where>
+    </sql>
+
+
+	
+	<insert id="insertDangerLog" parameterType="com.spring.dto.DangerLogVO">
+	    <selectKey keyProperty="danlogId" resultType="int" order="BEFORE">
+	        SELECT DANGER_LOG_SEQ.NEXTVAL FROM DUAL
+	    </selectKey>
+	    INSERT INTO DANGER_LOG (
+	        DANLOG_ID, 
+	        DANGER_TYPE, 
+	        DANGER_TIME, 
+	        DACTION_STATUS, 
+	        DACTION_REASON, 
+	        DSNAPSHOT_PATH, 
+	        DANGER_DATE, 
+	        DRONE_ID
+	    )
+	    SELECT 
+	        #{danlogId, jdbcType=INTEGER},
+	        #{dangerType, jdbcType=INTEGER},
+	        CURRENT_TIMESTAMP, -- 밀리초 단위를 위해 TIMESTAMP 표준 적용
+	        '0', -- 최초 포착 시 기본값 '0'(미확인) 적재
+	        #{dactionReason, jdbcType=VARCHAR},
+	        
+	        
+	        NVL(#{dsnapshotPath, jdbcType=VARCHAR}, 'NONE'), 
+	        
+	        SYSDATE,
+	        #{droneId, jdbcType=VARCHAR}
+	    FROM DUAL
+	    
+	    WHERE EXISTS (
+	        SELECT 1 FROM DRONE WHERE DRONE_ID = #{droneId, jdbcType=VARCHAR}
+	    )
+	</insert>
+
+
+
+    
+    <select id="selectDangerLogList" resultMap="dangerLogMap" parameterType="com.spring.cmd.PageMaker">
+        SELECT * FROM (
+            SELECT ROWNUM AS rn, a.* FROM (
+                SELECT 
+                    DANLOG_ID, 
+                    DANGER_TYPE, 
+                    DANGER_TIME, 
+                    DACTION_STATUS, 
+                    DACTION_REASON, 
+                    DSNAPSHOT_PATH, 
+                    DANGER_DATE, 
+                    DRONE_ID
+                FROM DANGER_LOG
+                <include refid="searchCondition" />
+                
+                ORDER BY DANLOG_ID DESC
+            ) a WHERE ROWNUM &lt;= #{endRow}
+        ) WHERE rn &gt;= #{startRow}
+    </select>
+
+    
+    <select id="selectDangerLogCount" resultType="int" parameterType="com.spring.cmd.PageMaker">
+        SELECT COUNT(*) 
+        FROM DANGER_LOG
+        <include refid="searchCondition" />
+    </select>
+
+    
+    <select id="selectDangerLogById" resultMap="dangerLogMap" parameterType="int">
+        SELECT 
+            DANLOG_ID, 
+            DANGER_TYPE, 
+            DANGER_TIME, 
+            DACTION_STATUS, 
+            DACTION_REASON, 
+            DSNAPSHOT_PATH, 
+            DANGER_DATE, 
+            DRONE_ID
+        FROM DANGER_LOG
+        WHERE DANLOG_ID = #{danlogId}
+    </select>
+
+    
+    <update id="updateDactionStatus" parameterType="com.spring.dto.DangerLogVO">
+        UPDATE DANGER_LOG
+        SET 
+            DACTION_STATUS = #{dactionStatus},
+            DACTION_REASON = #{dactionReason, jdbcType=VARCHAR}
+        WHERE DANLOG_ID = #{danlogId}
+    </update>
+    
+    
+	<select id="selectTodayDangerStats" resultType="java.util.HashMap">
+	    SELECT 
+	        COUNT(*) AS "TOTAL_COUNT",
+	        COUNT(CASE WHEN DACTION_STATUS = '2' THEN 1 END) AS "COMPLETE_COUNT"
+	    FROM DANGER_LOG
+	    WHERE DANGER_DATE &gt;= TRUNC(SYSDATE)
+	      AND DANGER_DATE &lt; TRUNC(SYSDATE) + 1
+	</select>
+
+
+</mapper>

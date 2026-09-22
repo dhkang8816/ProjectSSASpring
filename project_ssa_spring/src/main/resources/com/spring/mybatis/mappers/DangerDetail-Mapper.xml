@@ -1,0 +1,90 @@
+﻿<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+
+<mapper namespace="DangerDetail-Mapper">
+
+    
+    <resultMap id="dangerDetailMap" type="com.spring.dto.DangerDetailVO">
+        <id property="dangerId" column="DANGER_ID" />
+        <result property="dangerName" column="DANGER_NAME" />
+        <result property="dangerDate" column="DANGER_DATE" />
+    </resultMap>
+
+    
+    <sql id="searchCondition">
+        <where>
+            <if test="searchType == 'n'.toString() and keyword != null and keyword != ''">
+                AND DANGER_NAME LIKE '%' || #{keyword} || '%'
+            </if>
+        </where>
+    </sql>
+
+    
+   <insert id="insertDanger" parameterType="com.spring.dto.DangerDetailVO">
+        INSERT INTO DANGER_DETAIL (
+            DANGER_ID, 
+            DANGER_NAME, 
+            DANGER_DATE
+        ) VALUES (
+            (SELECT NVL(MAX(DANGER_ID), 0) + 1 FROM DANGER_DETAIL), 
+            #{dangerName},
+            SYSDATE
+        )
+    </insert>
+
+   
+    <select id="selectDangerList" resultMap="dangerDetailMap" parameterType="com.spring.cmd.PageMaker">
+        SELECT * FROM (
+            SELECT ROWNUM AS rn, a.* FROM (
+                
+                SELECT 
+                    DANGER_NAME,
+                    MIN(DANGER_ID) AS DANGER_ID,
+                    MAX(DANGER_DATE) AS DANGER_DATE
+                FROM DANGER_DETAIL
+                <where>
+                    <if test="searchType == 'n'.toString() and keyword != null and keyword != ''">
+                        AND DANGER_NAME LIKE '%' || #{keyword} || '%'
+                    </if>
+                </where>
+                GROUP BY DANGER_NAME
+                ORDER BY DANGER_ID DESC
+            ) a WHERE ROWNUM &lt;= #{endRow}
+        ) WHERE rn &gt;= #{startRow}
+    </select>
+
+    
+    <select id="selectDangerCount" resultType="int" parameterType="com.spring.cmd.PageMaker">
+        SELECT COUNT(DISTINCT DANGER_NAME) 
+        FROM DANGER_DETAIL
+        <where>
+            <if test="searchType == 'n'.toString() and keyword != null and keyword != ''">
+                AND DANGER_NAME LIKE '%' || #{keyword} || '%'
+            </if>
+        </where>
+    </select>
+
+    
+    <select id="selectDangerById" resultMap="dangerDetailMap" parameterType="int">
+        SELECT 
+            DANGER_ID, DANGER_NAME, DANGER_DATE
+        FROM DANGER_DETAIL
+        WHERE DANGER_ID = #{dangerId}
+    </select>
+
+    
+    <update id="updateDanger" parameterType="com.spring.dto.DangerDetailVO">
+        UPDATE DANGER_DETAIL
+        SET 
+            DANGER_NAME = #{dangerName}
+        WHERE DANGER_ID = #{dangerId}
+    </update>
+
+    
+    <delete id="deleteDanger" parameterType="int">
+        DELETE FROM DANGER_DETAIL
+        WHERE DANGER_ID = #{dangerId}
+    </delete>
+
+</mapper>

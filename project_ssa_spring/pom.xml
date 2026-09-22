@@ -1,0 +1,271 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+	<groupId>project_ssa_spring</groupId>
+	<artifactId>project_ssa_spring</artifactId>
+	<version>0.0.1-SNAPSHOT</version>
+	<packaging>war</packaging>
+
+	<repositories>
+		<repository>
+			<id>oracle driver</id>
+			<url>https://www.datanucleus.org/downloads/maven2/</url>
+		</repository>
+	</repositories>
+
+	<properties>
+	    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+   		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+		<maven.compiler.encoding>UTF-8</maven.compiler.encoding>
+		
+		<org.springframework-version>6.2.19</org.springframework-version>
+
+		<org.springframework.security-version>6.2.8</org.springframework.security-version>
+
+		<oracle.ojdbc6-version>11.2.0.3</oracle.ojdbc6-version>
+		<com.zaxxer.HikariCP-version>5.1.0</com.zaxxer.HikariCP-version>
+
+		<org.mybatis-version>3.5.19</org.mybatis-version>
+		<org.mybatis.spring-version>3.0.5</org.mybatis.spring-version>
+
+		<org.junit.jupiter-version>5.14.4</org.junit.jupiter-version>
+		<org.mockito-version>5.20.0</org.mockito-version>
+
+		<org.apache.logging.log4j-version>2.25.5</org.apache.logging.log4j-version>
+		<org.lazyluke.log4jdbc.remix-version>0.2.7</org.lazyluke.log4jdbc.remix-version>
+
+		<org.projectlombok.lombok-version>1.18.46</org.projectlombok.lombok-version>
+
+		<jakarta.servlet.jsp.jstl.api-version>3.0.2</jakarta.servlet.jsp.jstl.api-version>
+		<jakarta.servlet.jsp.jstl-version>3.0.1</jakarta.servlet.jsp.jstl-version>
+
+		<jakarta.servlet-version>6.1.0</jakarta.servlet-version>
+		<jakarta.servlet.jsp-api-version>4.0.0</jakarta.servlet.jsp-api-version>
+
+		<org.aspectj.aspectjweaver-version>1.9.25</org.aspectj.aspectjweaver-version>
+
+		<commons.fileupload-version>1.6.0</commons.fileupload-version>
+
+		<com.fasterxml.jackson.core-version>2.17.2</com.fasterxml.jackson.core-version>
+
+		<html.XSS.filter-version>1.0</html.XSS.filter-version>
+	</properties>
+
+	<dependencies>
+		<!-- spring-core -->
+		<dependency>
+			<groupId>org.springframework</groupId>
+			<artifactId>spring-core</artifactId>
+			<version>${org.springframework-version}</version>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework</groupId>
+			<artifactId>spring-context</artifactId>
+			<version>${org.springframework-version}</version>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework</groupId>
+			<artifactId>spring-webmvc</artifactId>
+			<version>${org.springframework-version}</version>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework</groupId>
+			<artifactId>spring-jdbc</artifactId>
+			<version>${org.springframework-version}</version>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework</groupId>
+			<artifactId>spring-test</artifactId>
+			<version>${org.springframework-version}</version>
+		</dependency>
+
+		<!-- spring-security-config -->
+		<dependency>
+			<groupId>org.springframework.security</groupId>
+			<artifactId>spring-security-config</artifactId>
+			<version>${org.springframework.security-version}</version>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework.security</groupId>
+			<artifactId>spring-security-web</artifactId>
+			<version>${org.springframework.security-version}</version>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework.security</groupId>
+			<artifactId>spring-security-taglibs</artifactId>
+			<version>${org.springframework.security-version}</version>
+		    <exclusions>
+		        <exclusion>
+		            <groupId>org.springframework</groupId>
+		            <artifactId>spring-jdbc</artifactId>
+		        </exclusion>
+		        <exclusion>
+		            <groupId>org.springframework</groupId>
+		            <artifactId>spring-tx</artifactId>
+		        </exclusion>
+		    </exclusions>
+		</dependency>
+
+		<!-- ojdbc6 -->
+		<dependency>
+			<groupId>oracle</groupId>
+			<artifactId>ojdbc6</artifactId>
+			<version>${oracle.ojdbc6-version}</version>
+		</dependency>
+
+		<!--HikariCP -->
+		<dependency>
+			<groupId>com.zaxxer</groupId>
+			<artifactId>HikariCP</artifactId>
+			<version>${com.zaxxer.HikariCP-version}</version>
+		</dependency>
+
+		<!-- mybatis -->
+		<dependency>
+			<groupId>org.mybatis</groupId>
+			<artifactId>mybatis</artifactId>
+			<version>${org.mybatis-version}</version>
+		</dependency>
+		<!-- mybatis-spring -->
+		<dependency>
+			<groupId>org.mybatis</groupId>
+			<artifactId>mybatis-spring</artifactId>
+			<version>${org.mybatis.spring-version}</version>
+		</dependency>
+
+		<!-- junit-jupiter-api -->
+		<dependency>
+			<groupId>org.junit.jupiter</groupId>
+			<artifactId>junit-jupiter-api</artifactId>
+			<version>${org.junit.jupiter-version}</version>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.junit.jupiter</groupId>
+			<artifactId>junit-jupiter-engine</artifactId>
+			<version>${org.junit.jupiter-version}</version>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.mockito</groupId>
+			<artifactId>mockito-core</artifactId>
+			<version>${org.mockito-version}</version>
+			<scope>test</scope>
+		</dependency>
+
+		<!-- log4j-core -->
+		<dependency>
+			<groupId>org.apache.logging.log4j</groupId>
+			<artifactId>log4j-core</artifactId>
+			<version>${org.apache.logging.log4j-version}</version>
+		</dependency>
+		<!--log4j-slf4j-impl -->
+		<dependency>
+			<groupId>org.apache.logging.log4j</groupId>
+			<artifactId>log4j-slf4j-impl</artifactId>
+			<version>${org.apache.logging.log4j-version}</version>
+		</dependency>
+		<!-- log4jdbc-remix -->
+		<dependency>
+			<groupId>org.lazyluke</groupId>
+			<artifactId>log4jdbc-remix</artifactId>
+			<version>${org.lazyluke.log4jdbc.remix-version}</version>
+		</dependency>
+
+		<!-- lombok -->
+		<dependency>
+			<groupId>org.projectlombok</groupId>
+			<artifactId>lombok</artifactId>
+			<version>${org.projectlombok.lombok-version}</version>
+		</dependency>
+
+		<!-- commons-fileupload -->
+		<dependency>
+			<groupId>commons-fileupload</groupId>
+			<artifactId>commons-fileupload</artifactId>
+			<version>${commons.fileupload-version}</version>
+		</dependency>
+
+		<!--html-filter-->
+		<dependency>
+			<groupId>html.filter</groupId>
+			<artifactId>XSS.filter</artifactId>
+			<version>${html.XSS.filter-version}</version>
+		</dependency>
+
+		<!-- jackson-databind -->
+		<dependency>
+			<groupId>com.fasterxml.jackson.core</groupId>
+			<artifactId>jackson-databind</artifactId>
+			<version>${com.fasterxml.jackson.core-version}</version>
+		</dependency>
+
+		<!-- jakarta.servlet-api -->
+		<dependency>
+			<groupId>jakarta.servlet</groupId>
+			<artifactId>jakarta.servlet-api</artifactId>
+			<version>${jakarta.servlet-version}</version>
+			<scope>provided</scope>
+		</dependency>
+		<!-- jakarta.servlet.jsp-api -->
+		<dependency>
+			<groupId>jakarta.servlet.jsp</groupId>
+			<artifactId>jakarta.servlet.jsp-api</artifactId>
+			<version>${jakarta.servlet.jsp-api-version}</version>
+			<scope>provided</scope>
+		</dependency>
+		<!-- jstl-api -->
+		<dependency>
+			<groupId>jakarta.servlet.jsp.jstl</groupId>
+			<artifactId>jakarta.servlet.jsp.jstl-api</artifactId>
+			<version>${jakarta.servlet.jsp.jstl.api-version}</version>
+		</dependency>
+		<dependency>
+			<groupId>org.glassfish.web</groupId>
+			<artifactId>jakarta.servlet.jsp.jstl</artifactId>
+			<version>${jakarta.servlet.jsp.jstl-version}</version>
+		</dependency>
+
+		<!-- aspectjweaver -->
+		<dependency>
+			<groupId>org.aspectj</groupId>
+			<artifactId>aspectjweaver</artifactId>
+			<version>${org.aspectj.aspectjweaver-version}</version>
+		</dependency>
+		
+		<!--<dependency>
+			<groupId>spring_application</groupId>
+			<artifactId>spring_application</artifactId>
+			<version>0.0.1-SNAPSHOT</version>
+		</dependency>-->
+	</dependencies>
+
+	<build>
+	    <plugins>
+	
+	        <plugin>
+	            <groupId>org.apache.maven.plugins</groupId>
+	            <artifactId>maven-compiler-plugin</artifactId>
+	            <version>3.13.0</version>
+	            <configuration>
+	                <release>17</release>
+	                <compilerArgs>
+	                    <arg>-parameters</arg>
+	                </compilerArgs>
+	            </configuration>
+	        </plugin>
+	
+	        <plugin>
+	            <artifactId>maven-war-plugin</artifactId>
+	            <version>3.2.3</version>
+	        </plugin>
+	
+	        <plugin>
+	            <artifactId>maven-surefire-plugin</artifactId>
+	            <version>3.5.4</version>
+	        </plugin>
+	
+	    </plugins>
+	</build>
+</project>

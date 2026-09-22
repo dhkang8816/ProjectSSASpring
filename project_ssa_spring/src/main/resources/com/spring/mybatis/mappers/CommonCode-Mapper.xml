@@ -1,0 +1,128 @@
+﻿<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="CommonCode-Mapper">
+
+    
+    <resultMap id="commonCodeMap" type="com.spring.dto.CommonCodeVO">
+        <id property="grpCode" column="GRP_CODE" />
+        <id property="code" column="CODE" />
+        <result property="codeName" column="CODE_NAME" />
+        <result property="sortSeq" column="SORT_SEQ" />
+        <result property="useYn" column="USE_YN" />
+        <result property="codeDate" column="CODE_DATE" />
+    </resultMap>
+
+    
+    <sql id="searchCondition">
+        <where>
+            <if test="searchGrpCode != null and searchGrpCode != ''">
+                AND GRP_CODE = #{searchGrpCode}
+            </if>
+            <if test="searchKeyword != null and searchKeyword != ''">
+                AND CODE_NAME LIKE '%' || #{searchKeyword} || '%'
+            </if>
+            <if test="searchUseYn != null and searchUseYn != ''">
+                AND USE_YN = #{searchUseYn}
+            </if>
+        </where>
+    </sql>
+
+    
+    <select id="selectCommonCodeList" parameterType="com.spring.cmd.PageMaker" resultMap="commonCodeMap">
+        SELECT * FROM (
+            SELECT 
+                ROWNUM AS RNUM,
+                GRP_CODE,
+                CODE,
+                CODE_NAME,
+                SORT_SEQ,
+                USE_YN,
+                CODE_DATE
+            FROM (
+                SELECT 
+                    GRP_CODE,
+                    CODE,
+                    CODE_NAME,
+                    SORT_SEQ,
+                    USE_YN,
+                    CODE_DATE
+                FROM COMMON_CODE
+                <include refid="searchCondition" />
+                ORDER BY GRP_CODE ASC, SORT_SEQ ASC
+            )
+        )
+        WHERE RNUM BETWEEN #{startRow} AND #{endRow}
+    </select>
+
+    
+    <select id="selectCommonCodeCount" parameterType="com.spring.cmd.PageMaker" resultType="int">
+        SELECT COUNT(*) 
+        FROM COMMON_CODE
+        <include refid="searchCondition" />
+    </select>
+
+    
+    <select id="selectCommonCodeDetail" parameterType="map" resultMap="commonCodeMap">
+        SELECT 
+            GRP_CODE,
+            CODE,
+            CODE_NAME,
+            SORT_SEQ,
+            USE_YN,
+            CODE_DATE
+        FROM COMMON_CODE
+        WHERE GRP_CODE = #{grpCode} AND CODE = #{code}
+    </select>
+    
+    
+    <select id="selectCommonCodeListByGroup" parameterType="string" resultMap="commonCodeMap">
+        SELECT 
+            GRP_CODE,
+            CODE,
+            CODE_NAME,
+            SORT_SEQ,
+            USE_YN,
+            CODE_DATE
+        FROM COMMON_CODE
+        WHERE GRP_CODE = #{grpCode}
+          AND USE_YN = 'Y'
+        ORDER BY SORT_SEQ ASC
+    </select>
+
+    
+    <insert id="insertCommonCode" parameterType="com.spring.dto.CommonCodeVO">
+        INSERT INTO COMMON_CODE (
+            GRP_CODE,
+            CODE,
+            CODE_NAME,
+            SORT_SEQ,
+            USE_YN,
+            CODE_DATE
+        ) VALUES (
+            #{grpCode},
+            #{code},
+            #{codeName},
+            #{sortSeq},
+            #{useYn},
+            SYSDATE
+        )
+    </insert>
+
+    
+    <update id="updateCommonCode" parameterType="com.spring.dto.CommonCodeVO">
+        UPDATE COMMON_CODE
+        <set>
+            CODE_NAME = #{codeName},
+            SORT_SEQ = #{sortSeq},
+            USE_YN = #{useYn}
+        </set>
+        WHERE GRP_CODE = #{grpCode} AND CODE = #{code}
+    </update>
+
+    
+    <delete id="deleteCommonCode" parameterType="map">
+        DELETE FROM COMMON_CODE
+        WHERE GRP_CODE = #{grpCode} AND CODE = #{code}
+    </delete>
+
+</mapper>

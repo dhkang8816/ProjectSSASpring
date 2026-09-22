@@ -1,0 +1,27 @@
+﻿<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="VideoDrone-Mapper">
+
+    <resultMap id="videoDroneMap" type="com.spring.dto.VideoDroneMapVO">
+        <id property="sourceKey" column="SOURCE_KEY" />
+        <result property="droneId" column="DRONE_ID" />
+    </resultMap>
+
+    
+    <select id="selectAllMappings" resultMap="videoDroneMap">
+        SELECT SOURCE_KEY, DRONE_ID FROM VIDEO_DRONE_MAP
+    </select>
+
+    
+    <select id="getDroneIdBySource" parameterType="string" resultType="string">
+        SELECT DRONE_ID FROM VIDEO_DRONE_MAP WHERE SOURCE_KEY = #{sourceKey}
+    </select>
+
+    
+    <update id="updateDroneMapping" parameterType="com.spring.dto.VideoDroneMapVO">
+        UPDATE VIDEO_DRONE_MAP
+        SET DRONE_ID = #{droneId}
+        WHERE SOURCE_KEY = #{sourceKey}
+    </update>
+</mapper>

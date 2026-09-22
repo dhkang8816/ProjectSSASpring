@@ -1,0 +1,103 @@
+﻿<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:security="http://www.springframework.org/schema/security"
+	xmlns:context="http://www.springframework.org/schema/context"
+	xmlns:mvc="http://www.springframework.org/schema/mvc"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+						http://www.springframework.org/schema/security http://www.springframework.org/schema/security/spring-security.xsd
+						http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context.xsd
+						http://www.springframework.org/schema/mvc http://www.springframework.org/schema/mvc/spring-mvc.xsd">
+
+	<mvc:annotation-driven />
+
+	
+	
+	
+	
+	<bean id="multipartResolver" class="org.springframework.web.multipart.support.StandardServletMultipartResolver" />
+	
+
+	
+	<bean id="encoder"
+		class="org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder" />
+
+	<bean id="customProvider"
+		class="com.spring.security.CustomAuthenticationProvider">
+		<constructor-arg name="memberDAO" ref="memberDAO" />
+		<constructor-arg name="encoder" ref="encoder" />
+	</bean>
+
+	<bean id="loginSuccessHandler" class="com.spring.security.LoginSuccessHandler" />
+	<bean id="loginFailureHandler" class="com.spring.security.LoginFailureHandler" />
+	<bean id="customDeniedHandler" class="com.spring.security.CustomDeniedHandler" />
+
+	
+	
+	
+	
+	<security:http pattern="/yolo/apiyolo/api/**" security="none" />
+	<security:http pattern="/api/event/**" security="none" />
+	<security:http pattern="/api/user/**" security="none" />
+	
+	
+	
+	<security:http auto-config="false" use-expressions="true">
+	    
+	    <security:csrf disabled="true" />
+	    
+	    <security:intercept-url pattern="/login" access="permitAll" />
+	    <security:intercept-url pattern="/workflow/**" access="hasAuthority('ROLE_ADMIN')" />
+	    <security:intercept-url pattern="/patrolreport/legacy/**" access="denyAll" />
+	    <security:intercept-url pattern="/patrolreport/register" access="isAuthenticated()" />
+	    <security:intercept-url pattern="/patrolreport/createInstantReport" access="isAuthenticated()" />
+	    <security:intercept-url pattern="/" access="permitAll" />
+	    <security:intercept-url pattern="/main" access="permitAll" />
+	    <security:intercept-url pattern="/guest/waiting" access="permitAll" />
+	    
+	    <security:intercept-url pattern="/admin/**" access="hasAuthority('ROLE_ADMIN')" />
+	    <security:intercept-url pattern="/member/list" access="hasAuthority('ROLE_ADMIN')" />
+	    <security:intercept-url pattern="/member/registForm" access="hasAuthority('ROLE_ADMIN')" />
+	    <security:intercept-url pattern="/member/regist" access="hasAuthority('ROLE_ADMIN')" />
+	    <security:intercept-url pattern="/member/modifyForm" access="hasAuthority('ROLE_ADMIN')" />
+	    <security:intercept-url pattern="/member/modify" access="hasAuthority('ROLE_ADMIN')" />
+	    <security:intercept-url pattern="/loginlog/**" access="hasAuthority('ROLE_ADMIN')" />
+	    <security:intercept-url pattern="/commoncode/**" access="hasAuthority('ROLE_ADMIN')" />
+	    <security:intercept-url pattern="/member/**" access="permitAll" />
+	    <security:intercept-url pattern="/animal/**" access="permitAll" />
+	    <security:intercept-url pattern="/danger/**" access="permitAll" />
+	    <security:intercept-url pattern="/drone/**" access="permitAll" />
+	    <security:intercept-url pattern="/detection/**" access="permitAll" />
+	    <security:intercept-url pattern="/dangerlog/**" access="permitAll" />
+	    <security:intercept-url pattern="/api/event/**" access="permitAll" />
+        <security:intercept-url pattern="/dashboard/**" access="permitAll" />
+	    <security:intercept-url pattern="/flighthistory/**" access="permitAll" />
+	    <security:intercept-url pattern="/patrolreport/**" access="isAuthenticated()" />
+	    <security:intercept-url pattern="/api/**" access="permitAll" />
+	    
+	    <security:intercept-url pattern="/**" access="permitAll" />
+	    
+	    
+	    <security:form-login
+	        login-page="/login"
+	        username-parameter="memberId"
+	        password-parameter="password"
+	        authentication-success-handler-ref="loginSuccessHandler"
+	        authentication-failure-handler-ref="loginFailureHandler" />
+	        
+	    <security:logout 
+	        logout-url="/logout"
+	        logout-success-url="/login?logout=true"
+	        invalidate-session="true"
+	        delete-cookies="JSESSIONID" />
+	        
+	    <security:access-denied-handler ref="customDeniedHandler" />
+	</security:http>
+
+	
+	<security:authentication-manager>
+		<security:authentication-provider ref="customProvider" />
+	</security:authentication-manager>
+
+	<context:component-scan base-package="com.spring.security" />
+</beans>

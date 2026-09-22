@@ -1,0 +1,177 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="Environment-Mapper">
+
+    <!-- =========================================================
+         ResultMap
+         ========================================================= -->
+    <resultMap id="environmentResultMap"
+               type="com.spring.dto.EnvironmentVO">
+
+        <id property="environmentId"
+            column="ENVIRONMENT_ID" />
+
+        <result property="locationName"
+                column="LOCATION_NAME" />
+
+        <result property="address"
+                column="ADDRESS" />
+
+        <result property="latitude"
+                column="LATITUDE" />
+
+        <result property="longitude"
+                column="LONGITUDE" />
+
+        <result property="timezone"
+                column="TIMEZONE" />
+
+        <result property="useYn"
+                column="USE_YN" />
+
+        <result property="updateDate"
+                column="UPDATE_DATE" />
+
+    </resultMap>
+
+
+    <!-- =========================================================
+         현재 사용중인 관제지역 조회
+         ========================================================= -->
+    <select id="selectEnvironment"
+            resultMap="environmentResultMap">
+
+        SELECT *
+        FROM (
+            SELECT
+                ENVIRONMENT_ID,
+                LOCATION_NAME,
+                ADDRESS,
+                LATITUDE,
+                LONGITUDE,
+                TIMEZONE,
+                USE_YN,
+                UPDATE_DATE
+            FROM ENVIRONMENT
+            WHERE USE_YN = 'Y'
+            ORDER BY UPDATE_DATE DESC
+        )
+        WHERE ROWNUM = 1
+
+    </select>
+
+
+    <!-- =========================================================
+         관제지역 전체 목록
+         ========================================================= -->
+    <select id="selectEnvironmentList"
+            resultMap="environmentResultMap">
+
+        SELECT
+            ENVIRONMENT_ID,
+            LOCATION_NAME,
+            ADDRESS,
+            LATITUDE,
+            LONGITUDE,
+            TIMEZONE,
+            USE_YN,
+            UPDATE_DATE
+        FROM ENVIRONMENT
+        ORDER BY UPDATE_DATE DESC
+
+    </select>
+
+
+    <!-- =========================================================
+         기존 활성 관제지역 비활성화
+         ========================================================= -->
+    <update id="disableEnvironment">
+
+        UPDATE ENVIRONMENT
+        SET
+            USE_YN = 'N',
+            UPDATE_DATE = SYSDATE
+        WHERE USE_YN = 'Y'
+
+    </update>
+
+
+    <!-- =========================================================
+         새로운 관제지역 등록
+         ========================================================= -->
+    <insert id="insertEnvironment"
+            parameterType="com.spring.dto.EnvironmentVO">
+
+        INSERT INTO ENVIRONMENT (
+            ENVIRONMENT_ID,
+            LOCATION_NAME,
+            ADDRESS,
+            LATITUDE,
+            LONGITUDE,
+            TIMEZONE,
+            USE_YN,
+            UPDATE_DATE
+        )
+        VALUES (
+            SEQ_ENVIRONMENT.NEXTVAL,
+            #{locationName},
+            #{address},
+            #{latitude},
+            #{longitude},
+            NVL(#{timezone}, 'Asia/Seoul'),
+            'Y',
+            SYSDATE
+        )
+
+    </insert>
+
+
+    <!-- =========================================================
+         기존 관제지역 수정
+         ========================================================= -->
+    <update id="updateEnvironment"
+            parameterType="com.spring.dto.EnvironmentVO">
+
+        UPDATE ENVIRONMENT
+        SET
+            LOCATION_NAME = #{locationName},
+            ADDRESS       = #{address},
+            LATITUDE      = #{latitude},
+            LONGITUDE     = #{longitude},
+            TIMEZONE      = NVL(#{timezone}, 'Asia/Seoul'),
+            UPDATE_DATE   = SYSDATE
+        WHERE ENVIRONMENT_ID = #{environmentId}
+
+    </update>
+
+
+    <!-- =========================================================
+         특정 관제지역 활성화
+         ========================================================= -->
+    <update id="activateEnvironment"
+            parameterType="int">
+
+        UPDATE ENVIRONMENT
+        SET
+            USE_YN = 'Y',
+            UPDATE_DATE = SYSDATE
+        WHERE ENVIRONMENT_ID = #{value}
+
+    </update>
+
+
+    <!-- =========================================================
+         특정 관제지역 삭제
+         필요 없으면 제거 가능
+         ========================================================= -->
+    <delete id="deleteEnvironment"
+            parameterType="int">
+
+        DELETE FROM ENVIRONMENT
+        WHERE ENVIRONMENT_ID = #{value}
+
+    </delete>
+
+</mapper>

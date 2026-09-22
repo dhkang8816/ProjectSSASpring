@@ -1,0 +1,89 @@
+body.popup-page {
+    min-height: 100vh;
+    margin: 0;
+    background: #080d18;
+    color: #dbe5f3;
+    font-family: "Segoe UI", "Noto Sans KR", sans-serif;
+    box-sizing: border-box;
+}
+
+body.popup-page *, body.popup-page *::before, body.popup-page *::after {
+    box-sizing: border-box;
+}
+
+body.popup-page .panel,
+body.popup-page .detail-panel,
+body.popup-page .form-panel,
+body.popup-page .reg-container {
+    max-width: min(100%, 900px);
+}
+
+body.popup-page .panel > h1,
+body.popup-page .panel > h2,
+body.popup-page .detail-panel > h1,
+body.popup-page .detail-panel > h2,
+body.popup-page .form-panel > h1,
+body.popup-page .form-panel > h2,
+body.popup-page .reg-container > h1,
+body.popup-page .reg-container > h2 {
+    margin-top: 0;
+    padding-bottom: 16px;
+    border-bottom: 1px solid #243248;
+    color: #f8fafc;
+    font-size: 20px;
+    font-weight: 700;
+    line-height: 1.35;
+}
+
+body.popup-page label {
+    color: #9fb0c6;
+    font-size: 13px;
+    font-weight: 700;
+}
+
+body.popup-page input:not([type="checkbox"]):not([type="radio"]),
+body.popup-page select,
+body.popup-page textarea {
+    min-height: 40px;
+    border-radius: 7px;
+}
+
+body.popup-page textarea {
+    min-height: 120px;
+    resize: vertical;
+}
+
+body.popup-page .btn-group,
+body.popup-page .button-group,
+body.popup-page .action-bar,
+body.popup-page .btn-back-container,
+body.popup-page .form-actions {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: 8px;
+    margin-top: 24px;
+}
+
+body.popup-page table {
+    width: 100%;
+}
+
+@media (max-width: 640px) {
+    body.popup-page .panel,
+    body.popup-page .detail-panel,
+    body.popup-page .form-panel,
+    body.popup-page .reg-container {
+        width: calc(100% - 24px);
+        margin-left: 12px;
+        margin-right: 12px;
+    }
+
+    body.popup-page .btn-group,
+    body.popup-page .button-group,
+    body.popup-page .action-bar,
+    body.popup-page .btn-back-container,
+    body.popup-page .form-actions {
+        justify-content: stretch;
+    }
+}

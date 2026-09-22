@@ -1,0 +1,221 @@
+﻿<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="Member-Mapper">
+
+	
+	<resultMap id="memberMap" type="com.spring.dto.MemberVO">
+		<id property="memberId" column="MEMBER_ID" />
+		<result property="name" column="NAME" />
+		<result property="department" column="DEPARTMENT" />
+		<result property="password" column="PASSWORD" />
+		<result property="status" column="STATUS" />
+		<result property="failCount" column="FAIL_COUNT" />
+		<result property="pwdChgDate" column="PWD_CHG_DATE" />
+		<result property="lastLongDate" column="LAST_LONG_DATE" />
+		<result property="regDate" column="REG_DATE" />
+		<result property="phone" column="PHONE" />
+		<result property="email" column="EMAIL" />
+		<result property="picture" column="PICTURE" />
+	</resultMap>
+	
+
+	
+	<select id="selectMemberById" parameterType="string" resultMap="memberMap">
+		SELECT
+		MEMBER_ID,
+		NAME,
+		DEPARTMENT,
+		PASSWORD,
+		STATUS,
+		FAIL_COUNT,
+		PWD_CHG_DATE,
+		LAST_LONG_DATE,
+		REG_DATE,
+		PHONE,
+		EMAIL,
+		PICTURE
+		FROM MEMBER
+		WHERE MEMBER_ID = #{memberId}
+	</select>
+
+	
+	<update id="incrementFailCount" parameterType="string">
+		UPDATE MEMBER
+		SET FAIL_COUNT = FAIL_COUNT + 1
+		WHERE MEMBER_ID = #{memberId}
+	</update>
+
+	
+	<update id="resetFailCount" parameterType="string">
+		UPDATE MEMBER
+		SET FAIL_COUNT = 0
+		WHERE MEMBER_ID = #{memberId}
+	</update>
+
+	
+	<update id="updateLastLogDate" parameterType="string">
+		UPDATE MEMBER
+		SET LAST_LONG_DATE = SYSDATE
+		WHERE MEMBER_ID = #{memberId}
+	</update>
+
+	<update id="updateMemberStatus" parameterType="com.spring.dto.MemberVO">
+		UPDATE MEMBER
+		SET STATUS = #{status}
+		WHERE MEMBER_ID = #{memberId}
+	</update>
+
+	
+	<insert id="insertMember" parameterType="com.spring.dto.MemberVO">
+		INSERT INTO MEMBER (
+		MEMBER_ID,
+		NAME,
+		DEPARTMENT,
+		PASSWORD,
+		STATUS,
+		FAIL_COUNT,
+		PWD_CHG_DATE,
+		LAST_LONG_DATE,
+		REG_DATE,
+		PHONE,
+		EMAIL,
+		PICTURE
+		) VALUES (
+		#{memberId},
+		#{name},
+		#{department},
+		#{password},
+		'0',
+		0,
+		SYSDATE,
+		NULL,
+		SYSDATE,
+		#{phone, jdbcType=VARCHAR},
+		#{email},
+		#{picture}
+		)
+	</insert>
+
+	
+	<select id="selectMemberRoles" parameterType="string"
+		resultType="com.spring.dto.MemberRoleVO">
+		SELECT
+		ROLE_ID,
+		ROLE_CODE,
+		MEMBER_ID
+		FROM MEMBER_ROLE
+		WHERE MEMBER_ID = #{memberId}
+	</select>
+
+	<select id="selectAdminMembers" resultMap="memberMap">
+		SELECT DISTINCT M.MEMBER_ID, M.NAME, M.DEPARTMENT, M.STATUS
+		FROM MEMBER M
+		INNER JOIN MEMBER_ROLE MR ON MR.MEMBER_ID = M.MEMBER_ID
+		WHERE MR.ROLE_CODE = 'ROLE_ADMIN'
+		ORDER BY M.NAME, M.MEMBER_ID
+	</select>
+
+	<select id="countAdminMember" parameterType="string" resultType="int">
+		SELECT COUNT(*)
+		FROM MEMBER_ROLE
+		WHERE MEMBER_ID = #{memberId}
+		  AND ROLE_CODE = 'ROLE_ADMIN'
+	</select>
+
+	
+	<insert id="insertMemberRole" parameterType="com.spring.dto.MemberRoleVO">
+		INSERT INTO MEMBER_ROLE (
+			ROLE_ID,
+			ROLE_CODE,
+			MEMBER_ID
+		) VALUES (
+			(SELECT NVL(MAX(ROLE_ID), 0) + 1 FROM MEMBER_ROLE), 
+			#{roleCode},
+			#{memberId}
+		)
+	</insert>
+
+
+	
+	<insert id="insertMemberLog" parameterType="map">
+		INSERT INTO MEMBER_LOG (
+			LOG_ID,
+			LOGIN_IP,
+			LOGIN_STATUS,
+			LOGIN_DATE,
+			MEMBER_ID
+		) VALUES (
+			(SELECT NVL(MAX(LOG_ID), 0) + 1 FROM MEMBER_LOG), 
+			#{loginIp},
+			#{loginStatus},
+			SYSDATE,
+			#{memberId}
+		)
+	</insert>
+
+
+	
+	<select id="selectMemberList" parameterType="com.spring.cmd.PageMaker" resultMap="memberMap">
+	    SELECT * FROM (
+	        SELECT ROWNUM AS RNUM, M.* FROM (
+	            SELECT 
+	                MEMBER_ID,
+	                NAME,
+	                DEPARTMENT,
+	                PASSWORD,
+	                STATUS,
+	                FAIL_COUNT,
+	                PWD_CHG_DATE,
+	                LAST_LONG_DATE,
+	                REG_DATE,
+	                PHONE,
+	                EMAIL,
+	                PICTURE
+	            FROM MEMBER
+	            <where>
+	                <if test="keyword != null and keyword != ''">
+	                    <if test="searchType == 't'.toString()">
+	                        NAME LIKE '%' || #{keyword} || '%'
+	                    </if>
+	                    <if test="searchType == 'c'.toString()">
+	                        MEMBER_ID LIKE '%' || #{keyword} || '%'
+	                    </if>
+	                </if>
+	            </where>
+	            ORDER BY REG_DATE DESC
+	        ) M
+	    )
+	    WHERE RNUM BETWEEN #{startRow} AND #{startRow} + #{perPageNum} - 1
+	</select>
+	
+	
+	<select id="selectMemberListCount" parameterType="com.spring.cmd.PageMaker" resultType="int">
+		SELECT COUNT(*)
+		FROM MEMBER
+		<where>
+			<if test="keyword != null and keyword != ''">
+				<if test="searchType == 't'.toString()">
+					NAME LIKE '%' || #{keyword} || '%'
+				</if>
+				<if test="searchType == 'c'.toString()">
+					MEMBER_ID LIKE '%' || #{keyword} || '%'
+				</if>
+			</if>
+		</where>
+	</select>
+
+	
+	<update id="updateMember" parameterType="com.spring.dto.MemberVO">
+		UPDATE MEMBER
+		SET
+			NAME = #{name},
+			DEPARTMENT = #{department},
+			PHONE = #{phone, jdbcType=VARCHAR},
+			EMAIL = #{email},
+			STATUS = #{status},
+			PICTURE = #{picture}   
+		WHERE MEMBER_ID = #{memberId}
+	</update>
+
+</mapper>

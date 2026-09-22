@@ -1,0 +1,93 @@
+﻿<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="AnimalDetail-Mapper">
+
+    
+    <resultMap id="animalDetailMap" type="com.spring.dto.AnimalDetailVO">
+        <id property="animalId" column="ANIMAL_ID" />
+        <result property="animalType" column="ANIMAL_TYPE" />
+        <result property="animalBreed" column="ANIMAL_BREED" />
+        <result property="animalName" column="ANIMAL_NAME" />
+        <result property="entranceDate" column="ENTRANCE_DATE" />
+        <result property="animalStatus" column="ANIMAL_STATUS" />
+    </resultMap>
+
+    
+    <sql id="searchCondition">
+        <where>
+            
+            <if test="searchType == 't'.toString() and keyword != null and keyword != ''">
+                AND ANIMAL_TYPE = #{keyword}
+            </if>
+            <if test="searchType == 'b'.toString() and keyword != null and keyword != ''">
+                AND ANIMAL_BREED LIKE '%' || #{keyword} || '%'
+            </if>
+            <if test="searchType == 'n'.toString() and keyword != null and keyword != ''">
+                AND ANIMAL_NAME LIKE '%' || #{keyword} || '%'
+            </if>
+            <if test="searchType == 's'.toString() and keyword != null and keyword != ''">
+                AND ANIMAL_STATUS = #{keyword}
+            </if>
+        </where>
+    </sql>
+
+    
+    <insert id="insertAnimal" parameterType="com.spring.dto.AnimalDetailVO">
+        INSERT INTO ANIMAL_DETAIL (
+            ANIMAL_ID, ANIMAL_TYPE, ANIMAL_BREED, ANIMAL_NAME, ENTRANCE_DATE, ANIMAL_STATUS
+        ) VALUES (
+            (SELECT NVL(MAX(ANIMAL_ID), 0) + 1 FROM ANIMAL_DETAIL), 
+            #{animalType},
+            #{animalBreed},
+            #{animalName},
+            SYSDATE,
+            #{animalStatus}
+        )
+    </insert>
+
+    
+    <select id="selectAnimalList" resultMap="animalDetailMap" parameterType="com.spring.cmd.PageMaker">
+        SELECT * FROM (
+            SELECT ROWNUM AS rn, a.* FROM (
+                SELECT 
+                    ANIMAL_ID, ANIMAL_TYPE, ANIMAL_BREED, ANIMAL_NAME, ENTRANCE_DATE, ANIMAL_STATUS
+                FROM ANIMAL_DETAIL
+                <include refid="searchCondition" />
+                ORDER BY ANIMAL_ID DESC
+            ) a WHERE ROWNUM &lt;= #{endRow}
+        ) WHERE rn &gt;= #{startRow}
+    </select>
+
+    
+    <select id="selectAnimalCount" resultType="int" parameterType="com.spring.cmd.PageMaker">
+        SELECT COUNT(*) 
+        FROM ANIMAL_DETAIL
+        <include refid="searchCondition" />
+    </select>
+
+    
+    <select id="selectAnimalById" resultMap="animalDetailMap" parameterType="int">
+        SELECT 
+            ANIMAL_ID, ANIMAL_TYPE, ANIMAL_BREED, ANIMAL_NAME, ENTRANCE_DATE, ANIMAL_STATUS
+        FROM ANIMAL_DETAIL
+        WHERE ANIMAL_ID = #{animalId}
+    </select>
+
+    
+    <update id="updateAnimal" parameterType="com.spring.dto.AnimalDetailVO">
+        UPDATE ANIMAL_DETAIL
+        SET 
+            ANIMAL_TYPE = #{animalType},
+            ANIMAL_BREED = #{animalBreed},
+            ANIMAL_NAME = #{animalName},
+            ANIMAL_STATUS = #{animalStatus}
+        WHERE ANIMAL_ID = #{animalId}
+    </update>
+
+    
+    <delete id="deleteAnimal" parameterType="int">
+        DELETE FROM ANIMAL_DETAIL
+        WHERE ANIMAL_ID = #{animalId}
+    </delete>
+
+</mapper>

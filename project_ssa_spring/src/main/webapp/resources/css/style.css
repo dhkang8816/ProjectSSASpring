@@ -1,0 +1,841 @@
+@charset "utf-8";
+
+
+/* =========================================================
+   GLOBAL RESET
+   ========================================================= */
+
+* {
+	box-sizing: border-box;
+}
+
+html,
+body {
+	margin: 0;
+	padding: 0;
+	min-width: 0;
+}
+
+ul,
+li {
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+
+a {
+	color: inherit;
+	text-decoration: none;
+}
+
+body {
+	background: #0b0f19;
+	color: #e2e8f0;
+
+	font-family:
+		"Segoe UI",
+		Roboto,
+		"Malgun Gothic",
+		Arial,
+		sans-serif;
+
+	overflow-x: hidden;
+}
+
+
+/* =========================================================
+   HEADER
+   ========================================================= */
+
+#ssaHeader {
+	position: fixed;
+
+	top: 0;
+	left: 0;
+
+	width: 100%;
+	height: 80px;
+
+	z-index: 10000;
+
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+
+	padding: 0 30px;
+
+	background: #111827;
+
+	border-bottom: 1px solid #1e293b;
+
+	box-shadow:
+		0 4px 20px rgba(0, 0, 0, 0.3);
+}
+
+
+#ssaHeader .system-title {
+	margin: 0;
+
+	font-size: 20px;
+	font-weight: 800;
+
+	letter-spacing: -0.03em;
+}
+
+
+#ssaHeader #util-box {
+	position: absolute;
+	right: 30px;
+}
+
+
+/* =========================================================
+   SIDEBAR
+   ========================================================= */
+
+#ssaSidebar {
+	position: fixed;
+
+	top: 80px;
+	left: 0;
+
+	width: 200px !important;
+	height: calc(100vh - 80px);
+
+	display: flex;
+	flex-direction: column;
+
+	background: #111827;
+
+	border-right: 1px solid #1e293b;
+
+	box-shadow:
+		4px 0 20px rgba(0, 0, 0, 0.25);
+
+	overflow: visible;
+
+	z-index: 900;
+}
+
+
+/* =========================================================
+   MINI CONTROL
+   ========================================================= */
+
+#ssaSidebar .mini-control-box {
+	width: 200px;
+
+	padding: 10px;
+
+	background: #0f172a;
+
+	border-bottom: 1px solid #1e293b;
+
+	box-sizing: border-box;
+}
+
+
+/* LIVE MONITOR + CLOCK */
+#ssaSidebar .mini-control-header-bar {
+	width: 100%;
+	height: 30px;
+
+	display: flex !important;
+	align-items: center;
+	justify-content: center !important;
+
+	padding: 0 0 6px 0 !important;
+	margin: 0 !important;
+
+	box-sizing: border-box;
+
+	text-align: center !important;
+}
+
+#ssaSidebar #sidebarClock {
+    display: block !important;
+
+    width: auto !important;
+    min-width: 0 !important;
+
+    margin: 0 !important;
+    padding: 0 !important;
+
+    text-align: center !important;
+
+    position: static !important;
+    left: auto !important;
+    right: auto !important;
+
+    transform: none !important;
+
+    color: #38bdf8 !important;
+
+    font-family: Consolas, "Courier New", monospace !important;
+    font-size: 11px !important;
+    font-weight: 700 !important;
+
+    white-space: nowrap !important;
+}
+#ssaSidebar .mini-live-title {
+	display: flex;
+	align-items: center;
+
+	gap: 5px;
+
+	color: #94a3b8;
+
+	font-size: 10px;
+	font-weight: 700;
+
+	line-height: 1;
+
+	letter-spacing: 0.03em;
+
+	white-space: nowrap;
+}
+
+
+#ssaSidebar .mini-live-dot {
+	display: inline-block;
+
+	width: 6px;
+	height: 6px;
+
+	flex: 0 0 6px;
+
+	border-radius: 50%;
+
+	background: #ef4444;
+
+	box-shadow:
+		0 0 6px rgba(239, 68, 68, 0.75);
+}
+
+
+#ssaSidebar #sidebarClock {
+	display: inline-block !important;
+
+	min-width: 55px !important;
+
+	flex: 0 0 auto !important;
+
+	color: #38bdf8 !important;
+
+	font-family:
+		Consolas,
+		"Courier New",
+		monospace !important;
+
+	font-size: 14px !important;
+	font-weight: 700 !important;
+
+	line-height: 1 !important;
+
+	text-align: right !important;
+
+	font-variant-numeric: tabular-nums;
+
+	letter-spacing: 0 !important;
+
+	white-space: nowrap !important;
+
+	visibility: visible !important;
+	opacity: 1 !important;
+
+	position: static !important;
+
+	transform: none !important;
+
+	overflow: visible !important;
+}
+
+
+/* =========================================================
+   MINI VIDEO
+   ========================================================= */
+
+#ssaSidebar .mini-video-display {
+	position: relative;
+
+	width: 100%;
+
+	aspect-ratio: 16 / 9;
+
+	background: #000;
+
+	border: 1px solid #334155;
+	border-radius: 6px;
+
+	overflow: hidden;
+
+	box-sizing: border-box;
+
+	cursor: pointer;
+}
+
+
+#ssaSidebar .mini-streaming-frame {
+	display: block;
+
+	width: 100%;
+	height: 100%;
+
+	object-fit: cover;
+}
+
+
+#ssaSidebar .mini-video-display.stream-off .mini-streaming-frame,
+#ssaSidebar .mini-video-display.stream-error .mini-streaming-frame {
+	visibility: hidden;
+}
+
+
+#ssaSidebar .mini-video-display.stream-off::after {
+	content: "탐지 중지";
+
+	position: absolute;
+
+	inset: 0;
+
+	display: flex;
+
+	align-items: center;
+	justify-content: center;
+
+	color: #64748b;
+
+	font-size: 11px;
+	font-weight: 600;
+
+	z-index: 1;
+}
+
+
+#ssaSidebar .mini-video-display.stream-error::after {
+	content: "연결 오류";
+
+	position: absolute;
+
+	inset: 0;
+
+	display: flex;
+
+	align-items: center;
+	justify-content: center;
+
+	color: #ef4444;
+
+	font-size: 11px;
+	font-weight: 700;
+
+	z-index: 1;
+}
+
+
+/* =========================================================
+   MINI VIDEO FOOTER
+   ========================================================= */
+
+#ssaSidebar .mini-video-footer {
+	position: absolute;
+
+	left: 0;
+	right: 0;
+	bottom: 0;
+
+	padding: 5px 7px;
+
+	background:
+		linear-gradient(
+			to top,
+			rgba(0, 0, 0, 0.85),
+			rgba(0, 0, 0, 0)
+		);
+
+	box-sizing: border-box;
+
+	z-index: 2;
+}
+
+
+#ssaSidebar .mini-channel-title {
+	color: #38bdf8;
+
+	font-size: 10px;
+	font-weight: 700;
+
+	line-height: 1;
+}
+
+
+/* =========================================================
+   MINI CHANNEL BUTTONS
+   ========================================================= */
+
+#ssaSidebar .mini-drone-buttons {
+	display: grid;
+
+	grid-template-columns:
+		repeat(4, minmax(0, 1fr));
+
+	gap: 4px;
+
+	margin-top: 8px;
+}
+
+
+#ssaSidebar .btn-mini-tab {
+	width: 100% !important;
+	height: 22px !important;
+
+	margin: 0 !important;
+	padding: 0 !important;
+
+	background: #1e293b !important;
+
+	color: #94a3b8 !important;
+
+	border: 1px solid #334155 !important;
+
+	border-radius: 4px !important;
+
+	font-family:
+		"Segoe UI",
+		"Malgun Gothic",
+		Arial,
+		sans-serif !important;
+
+	font-size: 10px !important;
+	font-weight: 600 !important;
+
+	line-height: 20px !important;
+
+	text-align: center !important;
+
+	cursor: pointer !important;
+
+	box-sizing: border-box;
+
+	transition:
+		background 0.15s ease,
+		color 0.15s ease,
+		border-color 0.15s ease;
+}
+
+
+#ssaSidebar .btn-mini-tab:hover {
+	color: #ffffff !important;
+
+	background: #334155 !important;
+}
+
+
+#ssaSidebar .btn-mini-tab.active {
+	color: #ffffff !important;
+
+	background: #0ea5e9 !important;
+
+	border-color: #38bdf8 !important;
+}
+
+
+/* =========================================================
+   SIDEBAR LIST
+   ========================================================= */
+
+#ssaSidebar .sidebar-list {
+	flex: 1;
+
+	width: 100%;
+
+	padding: 10px 0;
+
+	margin: 0;
+}
+
+
+#ssaSidebar .sidebar-list > li {
+	position: relative;
+
+	width: 100%;
+
+	padding: 0;
+
+	margin: 0;
+}
+
+
+#ssaSidebar .sidebar-list > li > a {
+	display: block !important;
+
+	padding: 14px 14px !important;
+
+	color: #94a3b8 !important;
+
+	font-size: 14px !important;
+	font-weight: 600 !important;
+
+	border-left:
+		4px solid transparent;
+
+	box-sizing: border-box;
+
+	cursor: pointer;
+}
+
+
+#ssaSidebar .sidebar-list > li:hover > a {
+	color: #38bdf8 !important;
+
+	background:
+		linear-gradient(
+			90deg,
+			rgba(14, 165, 233, 0.15) 0%,
+			rgba(14, 165, 233, 0) 100%
+		) !important;
+
+	border-left:
+		4px solid #38bdf8 !important;
+}
+
+
+/* =========================================================
+   ADMIN MENU
+   ========================================================= */
+
+#ssaSidebar .sidebar-admin-row {
+	display: flex;
+
+	align-items: center;
+
+	width: 100%;
+
+	min-height: 46px;
+
+	padding: 12px 14px;
+
+	border-left:
+		4px solid transparent;
+
+	box-sizing: border-box;
+
+	cursor: pointer;
+}
+
+
+#ssaSidebar .sidebar-admin-title {
+	color: #94a3b8 !important;
+
+	font-size: 14px !important;
+	font-weight: 600 !important;
+
+	white-space: nowrap;
+}
+
+
+#ssaSidebar .sidebar-list > li:hover .sidebar-admin-row {
+	background:
+		linear-gradient(
+			90deg,
+			rgba(14, 165, 233, 0.15) 0%,
+			rgba(14, 165, 233, 0) 100%
+		);
+
+	border-left-color:
+		#38bdf8;
+}
+
+
+#ssaSidebar .sidebar-list > li:hover .sidebar-admin-title {
+	color: #38bdf8 !important;
+}
+
+
+/* =========================================================
+   SUBMENU
+   ========================================================= */
+
+#ssaSidebar .submenu {
+	display: none;
+
+	position: absolute;
+
+	top: 0;
+	left: 199px;
+
+	width: 170px;
+
+	padding: 6px 0;
+
+	margin: 0;
+
+	background: #1e293b;
+
+	border: 1px solid #334155;
+
+	border-radius:
+		0 8px 8px 0;
+
+	box-shadow:
+		6px 6px 20px rgba(0, 0, 0, 0.4);
+
+	z-index: 9999;
+}
+
+
+#ssaSidebar .sidebar-list > li:hover .submenu {
+	display: block;
+}
+
+
+#ssaSidebar .submenu li {
+	padding: 0;
+
+	margin: 0;
+}
+
+
+#ssaSidebar .submenu li a {
+	display: block !important;
+
+	padding: 10px 16px !important;
+
+	color: #cbd5e1 !important;
+
+	font-size: 13px !important;
+	font-weight: 500 !important;
+
+	white-space: nowrap;
+
+	box-sizing: border-box;
+}
+
+
+#ssaSidebar .submenu li a:hover {
+	color: #ffffff !important;
+
+	background: #0ea5e9 !important;
+
+	font-weight: 600 !important;
+}
+
+
+/* =========================================================
+   CONTENT LAYOUT
+   ========================================================= */
+
+.control-content-wrapper,
+.patrol-list-content,
+.control-page-content,
+.content-area {
+	left: 200px !important;
+
+	width:
+		calc(100% - 200px) !important;
+}
+
+
+/* =========================================================
+   CSV BUTTON
+   ========================================================= */
+
+.csv-download-btn {
+	display: inline-flex !important;
+
+	align-items: center !important;
+	justify-content: center !important;
+
+	padding: 9px 16px !important;
+
+	margin: 0 0 16px 0 !important;
+
+	border: 0 !important;
+
+	border-radius: 8px !important;
+
+	background: #0f766e !important;
+
+	color: #ffffff !important;
+
+	font-size: 13.5px !important;
+	font-weight: 700 !important;
+
+	cursor: pointer !important;
+
+	box-shadow:
+		0 4px 12px
+		rgba(15, 118, 110, 0.2) !important;
+
+	transition:
+		all 0.15s ease !important;
+
+	float: right !important;
+}
+
+
+.csv-download-btn:hover {
+	background: #0d9488 !important;
+}
+
+
+.btn-register + .csv-download-btn,
+button[class*="register"] + .csv-download-btn {
+	margin-left: 8px !important;
+
+	margin-bottom: 0 !important;
+
+	float: none !important;
+}
+
+
+/* =========================================================
+   CSV NEON
+   ========================================================= */
+
+button.csv-download-btn.neon-theme {
+	appearance: none !important;
+
+	-webkit-appearance: none !important;
+
+	display: inline-flex !important;
+
+	align-items: center !important;
+	justify-content: center !important;
+
+	gap: 8px !important;
+
+	padding: 8px 16px !important;
+
+	background:
+		rgba(56, 189, 248, 0.08) !important;
+
+	color: #38bdf8 !important;
+
+	border:
+		1px solid
+		rgba(56, 189, 248, 0.4) !important;
+
+	border-radius: 6px !important;
+
+	font-size: 13px !important;
+
+	font-weight: 700 !important;
+
+	cursor: pointer !important;
+
+	letter-spacing: -0.02em !important;
+
+	line-height: 1 !important;
+
+	box-shadow:
+		0 0 12px
+		rgba(56, 189, 248, 0.05) !important;
+
+	transition:
+		all 0.25s
+		cubic-bezier(
+			0.4,
+			0,
+			0.2,
+			1
+		) !important;
+
+	float: none !important;
+
+	margin: 0 !important;
+}
+
+
+button.csv-download-btn.neon-theme:hover {
+	background: #38bdf8 !important;
+
+	color: #0b0f19 !important;
+
+	border-color: #38bdf8 !important;
+
+	box-shadow:
+		0 0 18px
+		rgba(56, 189, 248, 0.5) !important;
+
+	transform:
+		translateY(-1px) !important;
+}
+
+
+button.csv-download-btn.neon-theme:active {
+	transform:
+		translateY(1px) !important;
+}
+
+
+/* =========================================================
+   MOBILE
+   ========================================================= */
+
+@media (max-width: 760px) {
+
+	#ssaHeader {
+		height: 64px;
+
+		padding: 0 15px;
+	}
+
+
+	#ssaHeader .system-title {
+		font-size: 18px;
+	}
+
+
+	#ssaHeader #util-box {
+		right: 14px;
+	}
+
+
+	#ssaSidebar {
+		top: 64px;
+
+		width: 100%;
+
+		height:
+			calc(100vh - 64px);
+
+		overflow-y: auto;
+	}
+
+
+	#ssaSidebar .mini-control-box {
+		width: 100%;
+	}
+
+
+	#ssaSidebar .submenu {
+		position: relative;
+
+		top: auto;
+
+		left: 0;
+
+		width: 100%;
+
+		margin: 0;
+
+		padding: 0;
+
+		border: none;
+
+		border-radius: 0;
+
+		box-shadow: none;
+	}
+
+
+	.control-content-wrapper,
+	.patrol-list-content,
+	.control-page-content,
+	.content-area {
+		left: 0 !important;
+
+		width: 100% !important;
+	}
+}
