@@ -1,30 +1,55 @@
 package com.spring.controller;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.nio.file.Files;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
+import org.apache.commons.io.IOUtils;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+import org.springframework.web.multipart.MultipartFile;
+
+import jakarta.servlet.http.HttpServletRequest;
 
 import com.spring.cmd.PageMaker;
 import com.spring.dto.AnimalCounterVO;
 import com.spring.dto.AnimalDetailVO;
 import com.spring.dto.CommonCodeVO;
+import com.spring.exception.EmptyMultipartFileException;
 import com.spring.service.AnimalCounterService;
 import com.spring.service.AnimalDetailService;
 import com.spring.service.CommonCodeService;
+import com.spring.util.MultipartFileUpload;
 
 import lombok.AllArgsConstructor;
+import lombok.extern.log4j.Log4j2;
 
 @Controller
 @RequestMapping("/animal")
 @AllArgsConstructor
+@Log4j2
 public class AnimalDetailController {
+
+    private static final String ANIMAL_UPLOAD_PATH = "C:" + File.separator + "upload" + File.separator + "animals";
+    private static final String DEFAULT_IMAGE_NAME = "noImage.jpg";
 
     private final AnimalDetailService animalDetailService;
     private final AnimalCounterService animalCounterService;
@@ -56,8 +81,16 @@ public class AnimalDetailController {
     }
     @PostMapping("/register")
     public String register(AnimalDetailVO vo, RedirectAttributes rttr,
-            @RequestParam(value = "popup", defaultValue = "false") boolean popup) {
-        animalDetailService.registerAnimal(vo);
+            @RequestParam(value = "popup", defaultValue = "false") boolean popup,
+            HttpServletRequest request) {
+        String uploadedPicture = normalizeUploadedPicture(vo.getAnimalPicture(), request);
+        vo.setAnimalPicture(uploadedPicture);
+        try {
+            animalDetailService.registerAnimal(vo);
+        } catch (RuntimeException e) {
+            deleteUploadedAnimalPicture(uploadedPicture, request);
+            throw e;
+        }
         rttr.addFlashAttribute("msg", "REGISTER_SUCCESS");
         return popup ? "redirect:/animal/list?popupSaved=true" : "redirect:/animal/list";
     }
@@ -76,8 +109,26 @@ public class AnimalDetailController {
     }
     @PostMapping("/modify")
     public String modify(AnimalDetailVO vo, PageMaker pageMaker, RedirectAttributes rttr,
-            @RequestParam(value = "popup", defaultValue = "false") boolean popup) {
-        animalDetailService.modifyAnimal(vo);
+            @RequestParam(value = "popup", defaultValue = "false") boolean popup,
+            HttpServletRequest request) {
+        AnimalDetailVO oldAnimal = animalDetailService.getAnimalById(vo.getAnimalId());
+        String oldPicture = oldAnimal == null ? null : oldAnimal.getAnimalPicture();
+        String uploadedPicture = normalizeUploadedPicture(vo.getAnimalPicture(), request);
+
+        // A modify form without a new upload must never clear ANIMAL_PICTURE.
+        vo.setAnimalPicture(uploadedPicture == null ? oldPicture : uploadedPicture);
+        try {
+            animalDetailService.modifyAnimal(vo);
+        } catch (RuntimeException e) {
+            if (uploadedPicture != null && !uploadedPicture.equals(oldPicture)) {
+                deleteUploadedAnimalPicture(uploadedPicture, request);
+            }
+            throw e;
+        }
+
+        if (uploadedPicture != null && !uploadedPicture.equals(oldPicture)) {
+            deleteUploadedAnimalPicture(oldPicture, request);
+        }
         rttr.addAttribute("page", pageMaker.getPage());
         rttr.addAttribute("searchType", pageMaker.getSearchType());
         rttr.addAttribute("keyword", pageMaker.getKeyword());
@@ -96,6 +147,53 @@ public class AnimalDetailController {
         
         return popup ? "redirect:/animal/list?popupSaved=true" : "redirect:/animal/list";
     }
+
+    @PostMapping(value = "/uploadPicture", produces = MediaType.APPLICATION_JSON_VALUE)
+    @ResponseBody
+    public ResponseEntity<Map<String, Object>> uploadPicture(
+            @RequestParam("pictureFile") MultipartFile pictureFile,
+            HttpServletRequest request) {
+        try {
+            String fileName = MultipartFileUpload.saveImageFile(getAnimalUploadPath(request), pictureFile);
+            Map<String, Object> response = new LinkedHashMap<>();
+            response.put("success", true);
+            response.put("fileName", fileName);
+            return ResponseEntity.ok(response);
+        } catch (EmptyMultipartFileException | IllegalArgumentException e) {
+            return uploadError(HttpStatus.BAD_REQUEST, e.getMessage());
+        } catch (Exception e) {
+            log.error("Animal image upload failed", e);
+            return uploadError(HttpStatus.INTERNAL_SERVER_ERROR, "이미지 업로드에 실패했습니다. 다시 시도하세요.");
+        }
+    }
+
+    @GetMapping("/image/{fileName:.+}")
+    @ResponseBody
+    public ResponseEntity<byte[]> getAnimalImage(@PathVariable String fileName, HttpServletRequest request) {
+        if (!isSafeAnimalPictureName(fileName)) {
+            return ResponseEntity.badRequest().build();
+        }
+        try {
+            File imageFile = getStoredAnimalPicture(fileName, request);
+            if (imageFile == null || !imageFile.isFile()) {
+                imageFile = getStoredAnimalPicture(DEFAULT_IMAGE_NAME, request);
+            }
+            if (imageFile == null || !imageFile.isFile()) {
+                return ResponseEntity.notFound().build();
+            }
+
+            MediaType mediaType = imageFile.getName().toLowerCase().endsWith(".png")
+                    ? MediaType.IMAGE_PNG : MediaType.IMAGE_JPEG;
+            return ResponseEntity.ok()
+                    .header(HttpHeaders.CACHE_CONTROL, "no-store")
+                    .contentType(mediaType)
+                    .body(Files.readAllBytes(imageFile.toPath()));
+        } catch (IOException e) {
+            log.warn("Animal image could not be read");
+            return ResponseEntity.notFound().build();
+        }
+    }
+
     @GetMapping("/counterList")
     public String animalCounterList(@ModelAttribute("pageMaker") PageMaker pageMaker, Model model) {
         List<AnimalCounterVO> counterList = animalCounterService.getAnimalCounterList(pageMaker);
@@ -106,6 +204,74 @@ public class AnimalDetailController {
 
     private List<CommonCodeVO> getActiveCodes(String groupCode) throws Exception {
         return commonCodeService.getCodeListByGroup(groupCode);
+    }
+
+    private ResponseEntity<Map<String, Object>> uploadError(HttpStatus status, String message) {
+        Map<String, Object> response = new LinkedHashMap<>();
+        response.put("success", false);
+        response.put("message", message);
+        return ResponseEntity.status(status).body(response);
+    }
+
+    private String getAnimalUploadPath(HttpServletRequest request) {
+        File uploadDirectory = new File(ANIMAL_UPLOAD_PATH);
+        if (!uploadDirectory.exists() && !uploadDirectory.mkdirs()) {
+            log.warn("Animal upload directory could not be created");
+        }
+
+        File defaultImage = new File(uploadDirectory, DEFAULT_IMAGE_NAME);
+        if (!defaultImage.exists()) {
+            String resourcePath = request.getServletContext().getRealPath("/resources/images/noImage.jpg");
+            if (resourcePath != null) {
+                File sourceImage = new File(resourcePath);
+                if (sourceImage.isFile()) {
+                    try (InputStream input = new FileInputStream(sourceImage);
+                            FileOutputStream output = new FileOutputStream(defaultImage)) {
+                        IOUtils.copy(input, output);
+                    } catch (IOException e) {
+                        log.warn("Animal default image could not be initialized");
+                    }
+                }
+            }
+        }
+        return uploadDirectory.getPath();
+    }
+
+    private String normalizeUploadedPicture(String pictureName, HttpServletRequest request) {
+        if (pictureName == null || pictureName.trim().isEmpty()) {
+            return null;
+        }
+        String normalizedName = pictureName.trim();
+        File file = getStoredAnimalPicture(normalizedName, request);
+        return file != null && file.isFile() && !DEFAULT_IMAGE_NAME.equals(normalizedName) ? normalizedName : null;
+    }
+
+    private File getStoredAnimalPicture(String fileName, HttpServletRequest request) {
+        if (!isSafeAnimalPictureName(fileName)) {
+            return null;
+        }
+        try {
+            File uploadDirectory = new File(getAnimalUploadPath(request)).getCanonicalFile();
+            File candidate = new File(uploadDirectory, fileName).getCanonicalFile();
+            return candidate.getParentFile().equals(uploadDirectory) ? candidate : null;
+        } catch (IOException e) {
+            return null;
+        }
+    }
+
+    private boolean isSafeAnimalPictureName(String fileName) {
+        return DEFAULT_IMAGE_NAME.equals(fileName)
+                || (fileName != null && fileName.matches("(?i)^[0-9a-f]{32}\\.(jpg|jpeg|png)$"));
+    }
+
+    private void deleteUploadedAnimalPicture(String fileName, HttpServletRequest request) {
+        if (fileName == null || DEFAULT_IMAGE_NAME.equals(fileName)) {
+            return;
+        }
+        File file = getStoredAnimalPicture(fileName, request);
+        if (file != null && file.isFile() && !file.delete()) {
+            log.warn("Unused animal image could not be deleted");
+        }
     }
 
 }

@@ -4,6 +4,21 @@
 <%@ taglib prefix="fmt" uri="jakarta.tags.fmt"%>
 <%@ taglib prefix="form" uri="http://www.springframework.org/tags/form"%>
 
+<script>
+    (function () {
+        const faviconUrl = '<c:url value="/resources/images/KakaoTalk_20260923_120441893.png?v=2"/>';
+        let favicon = document.querySelector('link[rel~="icon"]');
+
+        if (!favicon) {
+            favicon = document.createElement('link');
+            favicon.rel = 'icon';
+            favicon.type = 'image/png';
+            document.head.appendChild(favicon);
+        }
+
+        favicon.href = faviconUrl;
+    })();
+</script>
 <link rel="stylesheet"
 	href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
 <link rel="stylesheet"
@@ -384,8 +399,10 @@ $(document).ready(function() {
         sm: { width: 560, height: 480 },
         md: { width: 860, height: 760 },
         lg: { width: 1200, height: 820 },
+        memberProfile: { width: 680, height: 960 },
         droneForm: { width: 640, height: 860 },
-        droneDetail: { width: 640, height: 640 }
+        droneDetail: { width: 640, height: 640 },
+        alertTemplateSettings: { width: 860, height: 700 }
     };
 
     const POPUP_PROFILE = {
@@ -397,8 +414,8 @@ $(document).ready(function() {
         codeDetail: 'md',
         animalRegister: 'md',
         animalDetail: 'md',
-        memberDetail: 'md',
-        memberRegister: 'md',
+        memberDetail: 'memberProfile',
+        memberRegister: 'memberProfile',
         alertDetail: 'md',
         flightHistoryDetail: 'md',
         detectionDetail: 'lg',
@@ -406,7 +423,8 @@ $(document).ready(function() {
         animalCounterList: 'lg',
         patrolReportDetail: 'lg',
         patrolReportRegister: 'lg',
-        workFlowDetail: 'lg'
+        workFlowDetail: 'lg',
+        alertTemplateSettings: 'alertTemplateSettings'
     };
 
     function openPopup(url, windowName, sizeKey) {

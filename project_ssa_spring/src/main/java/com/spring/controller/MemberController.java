@@ -5,6 +5,7 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.List;
+import java.util.Map;
 
 import jakarta.servlet.http.HttpServletRequest; // Tomcat 10 사양 준수
 
@@ -12,6 +13,9 @@ import org.apache.commons.io.IOUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -24,6 +28,7 @@ import org.springframework.web.multipart.MultipartFile;
 import com.spring.cmd.PageMaker;
 import com.spring.dto.CommonCodeVO;
 import com.spring.dto.MemberVO;
+import com.spring.security.CustomUser;
 import com.spring.service.CommonCodeService;
 import com.spring.service.MemberService;
 import com.spring.util.MultipartFileUpload; // 유틸리티 연동
@@ -40,6 +45,34 @@ public class MemberController {
     
     @Autowired
     private CommonCodeService commonCodeService;
+
+    private boolean isCurrentAdmin() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        return authentication != null && authentication.isAuthenticated()
+                && authentication.getAuthorities().stream()
+                        .anyMatch(authority -> "ROLE_ADMIN".equals(authority.getAuthority()));
+    }
+
+    private String getCurrentMemberId() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null || !authentication.isAuthenticated()
+                || "anonymousUser".equals(authentication.getPrincipal())) {
+            throw new AccessDeniedException("Authentication is required.");
+        }
+
+        Object principal = authentication.getPrincipal();
+        if (principal instanceof CustomUser && ((CustomUser) principal).getMember() != null) {
+            return ((CustomUser) principal).getMember().getMemberId();
+        }
+        return authentication.getName();
+    }
+
+    private void validateMemberAccess(String memberId) {
+        if (!isCurrentAdmin() && !getCurrentMemberId().equals(memberId)) {
+            throw new AccessDeniedException("A member may edit only their own profile.");
+        }
+    }
+
     private String getUploadPath(HttpServletRequest request) {
         String path = "C:" + File.separator + "upload" + File.separator + "member";
         File uploadDir = new File(path);
@@ -134,24 +167,33 @@ public class MemberController {
         List<MemberVO> memberList = memberService.getMemberList(pageMaker);
         model.addAttribute("memberList", memberList);
         model.addAttribute("pageMaker", pageMaker);
+        model.addAttribute("statusList", commonCodeService.getCodeListByGroup("ACCOUNT_STATUS"));
+        model.addAttribute("roleList", commonCodeService.getCodeListByGroup("USER_ROLE"));
+        model.addAttribute("currentMemberId", getCurrentMemberId());
         
         return "member/memberList";
     }
     @GetMapping("/detail")
     public String getMemberDetail(@RequestParam("memberId") String memberId, Model model) throws Exception {
+        validateMemberAccess(memberId);
         MemberVO member = memberService.getRequiredMemberById(memberId);
+        model.addAttribute("canManageAccount", isCurrentAdmin());
         model.addAttribute("member", member);
         return "member/memberDetail"; 
     }
     @GetMapping("/modifyForm")
     public String modifyForm(@RequestParam("memberId") String memberId, Model model) throws Exception {
+        validateMemberAccess(memberId);
         MemberVO member = memberService.getRequiredMemberById(memberId);
-        
-        List<CommonCodeVO> statusList = commonCodeService.getCodeListByGroup("ACCOUNT_STATUS"); 
-        List<CommonCodeVO> roleList = commonCodeService.getCodeListByGroup("USER_ROLE");
-        
-        model.addAttribute("statusList", statusList); 
-        model.addAttribute("roleList", roleList);
+
+        boolean canManageAccount = isCurrentAdmin();
+        if (canManageAccount) {
+            List<CommonCodeVO> statusList = commonCodeService.getCodeListByGroup("ACCOUNT_STATUS");
+            List<CommonCodeVO> roleList = commonCodeService.getCodeListByGroup("USER_ROLE");
+            model.addAttribute("statusList", statusList);
+            model.addAttribute("roleList", roleList);
+        }
+        model.addAttribute("canManageAccount", canManageAccount);
         model.addAttribute("member", member);
         
         return "member/memberModify";
@@ -167,6 +209,8 @@ public class MemberController {
         
         log.info("직원 정보 수정 요청 최종 진입: 사번 = {}, 사진삭제플래그 = {}", member.getMemberId(), deleteOldPicture);
         
+        validateMemberAccess(member.getMemberId());
+        boolean canManageAccount = isCurrentAdmin();
         MemberVO oldMember = memberService.getRequiredMemberById(member.getMemberId());
         String oldPictureName = oldMember.getPicture();
         String uploadPath = getUploadPath(request);
@@ -191,7 +235,11 @@ public class MemberController {
             log.info("기존 파일명 유지: {}", oldPictureName);
         }
 
-        int result = memberService.modifyMember(member);
+        // A user-edit request is deliberately sent through a SQL statement that
+        // has no STATUS or role columns, even if those values are forged in POST data.
+        int result = canManageAccount
+                ? memberService.modifyMember(member)
+                : memberService.modifyMemberProfile(member);
         if (result > 0) {
             return popup ? "redirect:/member/list?popupSaved=true"
                     : "redirect:/member/detail?memberId=" + member.getMemberId();
@@ -199,5 +247,22 @@ public class MemberController {
             return "redirect:/member/modifyForm?memberId=" + member.getMemberId()
                     + "&error=true" + (popup ? "&popup=true" : "");
         }
+    }
+
+    @PostMapping("/admin/account")
+    @ResponseBody
+    public ResponseEntity<Map<String, Object>> updateMemberAccount(
+            @RequestParam("memberId") String memberId,
+            @RequestParam("status") String status,
+            @RequestParam("roleCode") String roleCode) throws Exception {
+        if (!isCurrentAdmin()) {
+            throw new AccessDeniedException("Administrator permission is required.");
+        }
+
+        memberService.updateMemberAccount(memberId, status, roleCode, getCurrentMemberId());
+        log.info("Administrator account setting updated. targetMemberId={}", memberId);
+        return ResponseEntity.ok(Map.of(
+                "success", true,
+                "message", "계정 상태와 권한을 저장했습니다. 권한은 대상 사용자의 다음 로그인부터 적용됩니다."));
     }
 }

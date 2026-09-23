@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="AlertMessageTemplate-Mapper">
+
+    <resultMap id="alertMessageTemplateMap" type="com.spring.dto.AlertMessageTemplateVO">
+        <id property="templateKey" column="TEMPLATE_KEY" />
+        <result property="templateName" column="TEMPLATE_NAME" />
+        <result property="templateText" column="TEMPLATE_TEXT" />
+        <result property="updatedBy" column="UPDATED_BY" />
+        <result property="updatedAt" column="UPDATED_AT" />
+    </resultMap>
+
+    <select id="selectAlertMessageTemplates" resultMap="alertMessageTemplateMap">
+        SELECT TEMPLATE_KEY, TEMPLATE_NAME, TEMPLATE_TEXT, UPDATED_BY, UPDATED_AT
+        FROM ALERT_MESSAGE_TEMPLATE
+        ORDER BY TEMPLATE_KEY ASC
+    </select>
+
+    <update id="mergeAlertMessageTemplate" parameterType="com.spring.dto.AlertMessageTemplateVO">
+        MERGE INTO ALERT_MESSAGE_TEMPLATE target
+        USING (
+            SELECT #{templateKey} AS TEMPLATE_KEY FROM DUAL
+        ) source
+        ON (target.TEMPLATE_KEY = source.TEMPLATE_KEY)
+        WHEN MATCHED THEN
+            UPDATE SET
+                target.TEMPLATE_NAME = #{templateName},
+                target.TEMPLATE_TEXT = #{templateText},
+                target.UPDATED_BY = #{updatedBy},
+                target.UPDATED_AT = SYSTIMESTAMP
+        WHEN NOT MATCHED THEN
+            INSERT (TEMPLATE_KEY, TEMPLATE_NAME, TEMPLATE_TEXT, UPDATED_BY, UPDATED_AT)
+            VALUES (#{templateKey}, #{templateName}, #{templateText}, #{updatedBy}, SYSTIMESTAMP)
+    </update>
+</mapper>

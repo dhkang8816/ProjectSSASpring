@@ -4,6 +4,7 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
+<link rel="icon" type="image/png" href="<c:url value='/resources/images/KakaoTalk_20260923_120441893.png?v=1'/>">
 <meta charset="UTF-8">
 <title>관제</title>
 <link rel="stylesheet" href="<c:url value='/resources/css/style.css'/>">

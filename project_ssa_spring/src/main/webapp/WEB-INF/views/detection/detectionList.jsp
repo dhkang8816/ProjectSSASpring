@@ -6,6 +6,7 @@
 <!DOCTYPE html>
 <html>
 <head>
+<link rel="icon" type="image/png" href="<c:url value='/resources/images/KakaoTalk_20260923_120441893.png?v=1'/>">
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>관제 탐지 이력</title>
@@ -211,14 +212,14 @@ body {
 }
 
 
-.badge-status.status-complete {
+#detectionListPage .badge-status.status-complete {
     background-color: rgba(16, 185, 129, 0.15) !important;
     color: #10b981 !important;
     border: 1px solid rgba(16, 185, 129, 0.3) !important;
 }
 
 
-.badge-none {
+#detectionListPage .badge-status.badge-none {
     background-color: rgba(30, 41, 59, 0.5) !important;
     color: #64748b !important;
     border: 1px solid #1e293b !important;
@@ -365,7 +366,20 @@ body {
                                 
                                 
                                 <td>
-                <span class="badge-status badge-none"><c:out value="${empty actionStatusNames[detection.actionStatus] ? detection.actionStatus : actionStatusNames[detection.actionStatus]}" /></span>
+                                    <c:choose>
+                                        <c:when test="${detection.actionStatus eq '0'}">
+                                            <span class="badge-status status-unverified"><c:out value="${empty actionStatusNames[detection.actionStatus] ? detection.actionStatus : actionStatusNames[detection.actionStatus]}" /></span>
+                                        </c:when>
+                                        <c:when test="${detection.actionStatus eq '1'}">
+                                            <span class="badge-status status-progress"><c:out value="${empty actionStatusNames[detection.actionStatus] ? detection.actionStatus : actionStatusNames[detection.actionStatus]}" /></span>
+                                        </c:when>
+                                        <c:when test="${detection.actionStatus eq '2'}">
+                                            <span class="badge-status status-complete"><c:out value="${empty actionStatusNames[detection.actionStatus] ? detection.actionStatus : actionStatusNames[detection.actionStatus]}" /></span>
+                                        </c:when>
+                                        <c:otherwise>
+                                            <span class="badge-status badge-none"><c:out value="${empty actionStatusNames[detection.actionStatus] ? detection.actionStatus : actionStatusNames[detection.actionStatus]}" /></span>
+                                        </c:otherwise>
+                                    </c:choose>
                                 </td>
                             </tr>
                         </c:forEach>

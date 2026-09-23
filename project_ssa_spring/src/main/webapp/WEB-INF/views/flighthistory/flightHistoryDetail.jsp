@@ -6,6 +6,7 @@
 <!DOCTYPE html>
 <html>
 <head>
+<link rel="icon" type="image/png" href="${pageContext.request.contextPath}/resources/images/KakaoTalk_20260923_120441893.png?v=1">
 <link rel="stylesheet" href="${pageContext.request.contextPath}/resources/css/popup.css">
 <meta charset="UTF-8">
 <title>비행 이력 상세 정보</title>
@@ -181,7 +182,7 @@ button.btn-list:hover {
                 </tr>
                 <tr>
                     <th>총 누적 비행 시간</th>
-                    <td>${flightHistory.flightDuration} 시간</td>
+                    <td>${flightHistory.flightDurationText}</td>
                 </tr>
                 <tr>
                     <th>시작 배터리</th>

@@ -20,4 +20,6 @@ public interface MemberService {
     void loginFailure(String memberId, String ip) throws Exception;
     
     int modifyMember(MemberVO member) throws Exception;
+    int modifyMemberProfile(MemberVO member) throws Exception;
+    void updateMemberAccount(String memberId, String status, String roleCode, String currentAdminId) throws Exception;
 }

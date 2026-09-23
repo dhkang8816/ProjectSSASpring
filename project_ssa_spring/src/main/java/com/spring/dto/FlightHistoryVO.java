@@ -26,4 +26,14 @@ public class FlightHistoryVO {
     private Date flightDate;            // 데이터등록일시 
     private String droneId;             // 드론 기체 ID 
 
+    /**
+     * DB에는 기존 호환성을 위해 시간을 단위로 저장하고, 화면에서는 분/초로 표시한다.
+     */
+    public String getFlightDurationText() {
+        long totalSeconds = Math.max(0L, Math.round(flightDuration * 3600));
+        long minutes = totalSeconds / 60;
+        long seconds = totalSeconds % 60;
+        return minutes + "분 " + String.format("%02d", seconds) + "초";
+    }
+
 }

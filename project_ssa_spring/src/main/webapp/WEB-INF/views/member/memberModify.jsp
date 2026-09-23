@@ -6,6 +6,7 @@
 <!DOCTYPE html>
 <html>
 <head>
+<link rel="icon" type="image/png" href="${pageContext.request.contextPath}/resources/images/KakaoTalk_20260923_120441893.png?v=1">
 <link rel="stylesheet" href="${pageContext.request.contextPath}/resources/css/popup.css">
 <meta charset="UTF-8">
 <title>직원 정보 수정</title>
@@ -259,24 +260,25 @@ button:active { transform: translateY(0); }
             </div>
             
             
-            <div class="form-row">
-                <span class="form-label">보안 권한</span>
-                <div class="form-value-slot">
-                    <form:select path="role">
-                        <form:options items="${roleList}" itemValue="code" itemLabel="codeName" />
-                    </form:select>
+            <c:if test="${canManageAccount}">
+                <div class="form-row">
+                    <span class="form-label">보안 권한</span>
+                    <div class="form-value-slot">
+                        <form:select path="role">
+                            <form:options items="${roleList}" itemValue="code" itemLabel="codeName" />
+                        </form:select>
+                    </div>
                 </div>
-            </div>
-            
-            
-            <div class="form-row">
-                <span class="form-label">계정 상태</span>
-                <div class="form-value-slot">
-                    <form:select path="status">
-                        <form:options items="${statusList}" itemValue="code" itemLabel="codeName" />
-                    </form:select>
+
+                <div class="form-row">
+                    <span class="form-label">계정 상태</span>
+                    <div class="form-value-slot">
+                        <form:select path="status">
+                            <form:options items="${statusList}" itemValue="code" itemLabel="codeName" />
+                        </form:select>
+                    </div>
                 </div>
-            </div>
+            </c:if>
         </div> 
         
         

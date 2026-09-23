@@ -6,6 +6,7 @@
 <!DOCTYPE html>
 <html>
 <head>
+<link rel="icon" type="image/png" href="<c:url value='/resources/images/KakaoTalk_20260923_120441893.png?v=1'/>">
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>드론 비행 이력 목록</title>
@@ -321,8 +322,7 @@ body {
 									<td><fmt:formatDate value="${history.endTime}"
 											pattern="yyyy-MM-dd HH:mm:ss" /></td>
 									
-									<td style="text-align: right; padding-right: 20px !important;">${history.flightDuration}
-										시간&nbsp;</td>
+									<td style="text-align: right; padding-right: 20px !important;">${history.flightDurationText}</td>
 									<td><c:choose>
 											<c:when test="${empty history.batteryConsumption}">측정 없음</c:when>
 											<c:otherwise>${history.batteryConsumption} %</c:otherwise>

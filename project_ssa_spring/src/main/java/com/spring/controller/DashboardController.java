@@ -115,8 +115,11 @@ public class DashboardController {
 	        todayTotalFlightHours = 0.0;
 	    }
 
+	    long todayTotalFlightSeconds = Math.max(0L, Math.round(todayTotalFlightHours * 3600));
 	    String formattedFlightHours = String.format("%.2f", todayTotalFlightHours);
-	    resultMap.put("flightHours", Double.parseDouble(formattedFlightHours)); // 당일 총 비행시간
+	    // 기존 클라이언트 호환용 시간 값은 유지하고, 화면 표시용 초 단위 값을 함께 제공한다.
+	    resultMap.put("flightHours", Double.parseDouble(formattedFlightHours));
+	    resultMap.put("flightDurationSeconds", todayTotalFlightSeconds);
 	    resultMap.put("todayDetectCount", totalTodayDetectCount);                // 당일 탐지 총 건수
 	    resultMap.put("actionCompleteRate", Math.round(actionCompleteRate * 100) / 100.0); // 당일 조치 완료율(소수점 둘째자리 반올림)
 	    int realTimeDangerCount = (int) dangerTotal;   // 오늘 발생한 위험객체 건수

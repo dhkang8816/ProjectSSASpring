@@ -35,6 +35,9 @@
 	<bean id="AlertLogDAO" class="com.spring.dao.AlertLogDAOImpl">
 		<constructor-arg ref="sqlSession" />
 	</bean>
+	<bean id="alertMessageTemplateDAO" class="com.spring.dao.AlertMessageTemplateDAOImpl">
+		<constructor-arg ref="sqlSession" />
+	</bean>
 	<bean id="LoginLogDAO" class="com.spring.dao.LoginLogDAOImpl">
 		<constructor-arg ref="sqlSession" />
 	</bean>
@@ -91,6 +94,10 @@
 		class="com.spring.service.AlertLogServiceImpl">
 		<constructor-arg ref="AlertLogDAO" />
 	</bean>
+	<bean id="alertMessageTemplateService"
+		class="com.spring.service.AlertMessageTemplateServiceImpl" init-method="reloadFromDatabase">
+		<constructor-arg ref="alertMessageTemplateDAO" />
+	</bean>
 	<bean id="PatrolReportService"
 		class="com.spring.service.PatrolReportServiceImpl">
 		<constructor-arg ref="PatrolReportDAO" />
@@ -99,6 +106,7 @@
 	</bean>
 	<bean id="AIStreamBridgeService" class="com.spring.yolo.AIStreamBridgeService">
 	    <constructor-arg ref="VideoDroneMapDAO" />
+	    <constructor-arg ref="alertMessageTemplateService" />
 	</bean>
 	<bean id="VideoDroneMapService" class="com.spring.service.VideoDroneMapServiceImpl">
 	    <constructor-arg ref="VideoDroneMapDAO" />
@@ -127,5 +135,8 @@
 		class="com.spring.service.SystemDiagnosticsService">
 		<constructor-arg ref="dataSourceSpied" />
 		<constructor-arg ref="EnvironmentService" />
+	</bean>
+	<bean id="AlertMessageTemplateService"
+	      class="com.spring.service.AlertMessageTemplateServiceImpl">
 	</bean>
 </beans>

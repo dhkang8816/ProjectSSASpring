@@ -130,6 +130,16 @@ def process_animal_detection_logic(detected_names, frame, source_key=None, boxes
             target_count = int(TARGET_ANIMALS.get(code_id, 0))
             current_count = detected_names.count(label)
 
+            # A frame with no instance of this animal is an unknown/non-detect
+            # condition, not proof that the shelter has zero animals.  Start
+            # or continue a shortage timer only after YOLO has actually found
+            # this same animal label in the current frame.  Clearing here also
+            # prevents a stale timer from firing after detection is lost.
+            if current_count == 0:
+                under_target[code_id] = None
+                recovery[code_id] = None
+                continue
+
             if current_count < target_count:
                 recovery[code_id] = None
                 if under_target.get(code_id) is None:

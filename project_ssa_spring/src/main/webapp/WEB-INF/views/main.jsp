@@ -5,6 +5,7 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
+<link rel="icon" type="image/png" href="<c:url value='/resources/images/KakaoTalk_20260923_120441893.png?v=1'/>">
 <meta charset="UTF-8">
 <title>유기동물 관제 시스템</title>
 <link rel="stylesheet" href="<c:url value='/resources/css/style.css'/>">
@@ -48,11 +49,11 @@ body {
 }
 
 .c2-main-card {
-	background: rgba(20, 26, 42, 0.85);
+	background: #141a2a;
 	border: 1px solid #1e293b;
 	border-radius: 16px;
 	padding: 16px;
-	box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4);
+	box-shadow: none;
 	width: 100%;
 	max-width: none;
 	display: flex;
@@ -103,6 +104,7 @@ body {
 	padding: 16px;
 	min-width: 0;
 	overflow: hidden;
+	box-shadow: none;
 }
 
 .main-dashboard-heading {
@@ -114,13 +116,6 @@ body {
 	font-size: 15px;
 	font-weight: 700;
 	color: #e2e8f0;
-}
-
-.main-dashboard-link {
-	color: #38bdf8;
-	font-size: 13px;
-	font-weight: 600;
-	text-decoration: none;
 }
 
 .main-dashboard-metrics {
@@ -135,6 +130,7 @@ body {
 	border-radius: 8px;
 	padding: 11px 12px;
 	background: #0f172a;
+	box-shadow: none;
 }
 
 .main-dashboard-metric-label {
@@ -175,6 +171,7 @@ body {
 	background: #0f172a;
 	border: 1px solid #263449;
 	border-radius: 9px;
+	box-shadow: none;
 }
 
 .main-dashboard-chart-title {
@@ -212,6 +209,7 @@ body {
 	background: #111827;
 	border: 1px solid #263449;
 	border-radius: 12px;
+	box-shadow: none;
 }
 
 .main-alert-log-heading {
@@ -225,11 +223,29 @@ body {
 	color: #e2e8f0;
 }
 
+.main-alert-log-actions {
+	display: inline-flex;
+	align-items: center;
+	gap: 12px;
+}
+
 .main-alert-log-link {
 	color: #38bdf8;
 	font-size: 12px;
 	font-weight: 600;
 	text-decoration: none;
+}
+
+.main-alert-template-link {
+	color: #cbd5e1;
+	font-size: 12px;
+	font-weight: 600;
+	text-decoration: none;
+}
+
+.main-alert-template-link:hover,
+.main-alert-log-link:hover {
+	color: #7dd3fc;
 }
 
 .main-alert-log-list {
@@ -711,74 +727,52 @@ body {
 }
 
 .top-alarm-toggle-wrapper {
-	position: absolute;
-	top: 8px;
-	right: 16px;
-	z-index: 100;
+	flex: 0 0 auto;
+	margin-left: auto;
+	z-index: 1;
 }
 
-.alarm-circle-btn {
+.alarm-sound-btn {
 	display: flex;
 	align-items: center;
-	gap: 8px;
+	gap: 7px;
 	background: rgba(17, 24, 39, 0.85);
 	border: 1px solid #334155;
-	padding: 4px 12px;
-	border-radius: 30px;
+	padding: 7px 11px;
+	border-radius: 7px;
+	color: #dbeafe;
 	cursor: pointer;
+	font-size: 12px;
+	font-weight: 700;
 	box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
 	backdrop-filter: blur(4px);
 	transition: all 0.2s ease;
 }
 
-.alarm-circle-btn:hover {
+.alarm-sound-btn:hover:not(:disabled) {
 	border-color: #38bdf8;
 	background: rgba(30, 41, 59, 0.9);
+	box-shadow: 0 0 14px rgba(56, 189, 248, 0.24);
 }
 
-.alarm-icon-circle {
-	width: 26px;
-	height: 26px;
-	background-color: #1e293b;
-	border: 1px solid #475569;
-	border-radius: 50%;
-	display: flex;
-	align-items: center;
-	justify-content: center;
+.alarm-sound-btn.is-muted {
+	color: #fca5a5;
+	border-color: rgba(248, 113, 113, 0.46);
+	background: rgba(69, 10, 10, 0.45);
+}
+
+.alarm-sound-btn:disabled {
+	cursor: wait;
+	opacity: 0.6;
+}
+
+.alarm-sound-icon {
 	font-size: 13px;
-}
-
-.alarm-switch-container {
-	position: relative;
-	width: 36px;
-	height: 20px;
-	background-color: #475569;
-	border-radius: 20px;
-	transition: background-color 0.2s ease;
-}
-
-.alarm-switch-container::before {
-	content: "";
-	position: absolute;
-	top: 2px;
-	left: 2px;
-	width: 16px;
-	height: 16px;
-	background-color: #ffffff;
-	border-radius: 50%;
-	transition: transform 0.2s ease;
+	line-height: 1;
 }
 
 .alarm-checkbox {
 	display: none;
-}
-
-.alarm-checkbox:checked+.alarm-switch-container {
-	background-color: #06b6d4;
-}
-
-.alarm-checkbox:checked+.alarm-switch-container::before {
-	transform: translateX(16px);
 }
 </style>
 </head>
@@ -791,21 +785,13 @@ body {
 		<div class="main-control-layout">
 			<div class="c2-main-card">
 
-				<div class="top-alarm-toggle-wrapper">
-					<label class="alarm-circle-btn" title="알람 소리 설정">
-					    <span class="alarm-icon-circle">🔔</span> 
-					    <input type="checkbox" id="topAlarmToggle" class="alarm-checkbox" checked>
-					    <span class="alarm-switch-container"></span>
-					</label>
-				</div>
-
 				<div class="video-grid-container">
 
 					<!-- 동영상 1번 박스 -->
 					<div class="video-display-box stream-off" id="box_video_1">
 						<div class="flight-timer-overlay" id="flightTimer_video_1">
 							<span class="flight-timer-dot"></span><span
-								class="flight-timer-value">--:--:--</span>
+								class="flight-timer-value">--분 --초</span>
 						</div>
 						<div class="battery-hud is-unavailable" id="batteryHud_video_1" title="DISCONNECTED">
 							<span class="battery-hud-label">BAT</span><span class="battery-hud-value">N/A</span>
@@ -831,7 +817,7 @@ body {
 					<div class="video-display-box stream-off" id="box_video_2">
 						<div class="flight-timer-overlay" id="flightTimer_video_2">
 							<span class="flight-timer-dot"></span><span
-								class="flight-timer-value">--:--:--</span>
+								class="flight-timer-value">--분 --초</span>
 						</div>
 						<div class="battery-hud is-unavailable" id="batteryHud_video_2" title="DISCONNECTED">
 							<span class="battery-hud-label">BAT</span><span class="battery-hud-value">N/A</span>
@@ -857,7 +843,7 @@ body {
 					<div class="video-display-box stream-off" id="box_video_3">
 						<div class="flight-timer-overlay" id="flightTimer_video_3">
 							<span class="flight-timer-dot"></span><span
-								class="flight-timer-value">--:--:--</span>
+								class="flight-timer-value">--분 --초</span>
 						</div>
 						<div class="battery-hud is-unavailable" id="batteryHud_video_3" title="DISCONNECTED">
 							<span class="battery-hud-label">BAT</span><span class="battery-hud-value">N/A</span>
@@ -883,7 +869,7 @@ body {
 					<div class="video-display-box stream-off" id="box_esp32">
 						<div class="flight-timer-overlay" id="flightTimer_esp32">
 							<span class="flight-timer-dot"></span><span
-								class="flight-timer-value">--:--:--</span>
+								class="flight-timer-value">--분 --초</span>
 						</div>
 						<div class="battery-hud is-unavailable" id="batteryHud_esp32" title="DISCONNECTED">
 							<span class="battery-hud-label">BAT</span><span class="battery-hud-value">N/A</span>
@@ -971,8 +957,13 @@ body {
 
 			<aside class="main-dashboard-summary" aria-label="당일 관제 요약">
 				<div class="main-dashboard-heading">
-					<span>당일 관제 요약</span> <a class="main-dashboard-link"
-						href="${pageContext.request.contextPath}/dashboard/main">상세</a>
+					<span>당일 관제 요약</span>
+					<div class="top-alarm-toggle-wrapper">
+						<button type="button" id="topAlarmButton" class="alarm-sound-btn" aria-pressed="true">
+							<span class="alarm-sound-icon">🔔</span><span class="alarm-sound-label">소리 끄기</span>
+						</button>
+						<input type="checkbox" id="topAlarmToggle" class="alarm-checkbox" checked>
+					</div>
 				</div>
 				<div class="main-dashboard-metrics">
 					<div class="main-dashboard-metric" style="--metric-color: #ef4444;">
@@ -1018,10 +1009,27 @@ body {
 				</div>
 			</aside>
 
+			<c:set var="mainIsAdmin" value="false" scope="page" />
+			<c:if test="${not empty sessionScope.SPRING_SECURITY_CONTEXT}">
+				<c:forEach var="mainAuthority" items="${sessionScope.SPRING_SECURITY_CONTEXT.authentication.authorities}">
+					<c:if test="${mainAuthority.authority eq 'ROLE_ADMIN'}">
+						<c:set var="mainIsAdmin" value="true" scope="page" />
+					</c:if>
+				</c:forEach>
+			</c:if>
+
 			<section class="main-alert-log-panel" aria-label="감지 경보 이력">
 				<div class="main-alert-log-heading">
-					<span>감지 · 경보 이력</span><a class="main-alert-log-link"
-						href="${pageContext.request.contextPath}/alert/list">전체 이력</a>
+					<span>감지 · 경보 이력</span>
+					<div class="main-alert-log-actions">
+						<c:if test="${mainIsAdmin}">
+							<a class="main-alert-template-link" data-detail-popup
+								data-popup-name="alertTemplateSettings"
+								href="${pageContext.request.contextPath}/admin/alert-templates?popup=true">문구 설정</a>
+						</c:if>
+						<a class="main-alert-log-link"
+							href="${pageContext.request.contextPath}/alert/list">전체 이력</a>
+					</div>
 				</div>
 				<div class="main-alert-log-list" id="mainAlertLogList">
 					<c:choose>
@@ -1077,12 +1085,16 @@ body {
 
 		function formatElapsed(ms) {
 			const totalSeconds = Math.max(0, Math.floor(ms / 1000));
-			const hours = Math.floor(totalSeconds / 3600);
-			const minutes = Math.floor((totalSeconds % 3600) / 60);
+			const minutes = Math.floor(totalSeconds / 60);
 			const seconds = totalSeconds % 60;
-			return [ hours, minutes, seconds ].map(function(value) {
-				return String(value).padStart(2, '0');
-			}).join(':');
+			return minutes + '분 ' + String(seconds).padStart(2, '0') + '초';
+		}
+
+		function formatFlightDuration(seconds) {
+			const totalSeconds = Math.max(0, Math.round(Number(seconds) || 0));
+			const minutes = Math.floor(totalSeconds / 60);
+			const remainingSeconds = totalSeconds % 60;
+			return minutes + '분 ' + String(remainingSeconds).padStart(2, '0') + '초';
 		}
 
 		function renderFlightTimers() {
@@ -1100,7 +1112,7 @@ body {
 						if (value)
 							value.textContent = running ? formatElapsed(Date
 									.now()
-									- status.startTime) : '--:--:--';
+									- status.startTime) : '--분 --초';
 					});
 		}
 
@@ -1343,6 +1355,21 @@ body {
 		var mainAnimalChart = null;
 		var mainDangerTypeChart = null;
 
+		function createMainChartGradient(context, startColor, endColor, horizontal) {
+			var chart = context.chart;
+			var chartArea = chart.chartArea;
+			if (!chartArea) {
+				return startColor;
+			}
+
+			var gradient = horizontal ? chart.ctx.createLinearGradient(chartArea.left, chartArea.top,
+					chartArea.right, chartArea.top) : chart.ctx.createLinearGradient(chartArea.left,
+					chartArea.top, chartArea.left, chartArea.bottom);
+			gradient.addColorStop(0, startColor);
+			gradient.addColorStop(1, endColor);
+			return gradient;
+		}
+
 		function renderMainDashboardCharts(res) {
 			if (typeof Chart === 'undefined')
 				return;
@@ -1363,12 +1390,16 @@ body {
 						datasets : [ {
 							label : '\uC704\uD5D8\uAC1D\uCCB4',
 							data : res.dangerTimeData || [],
-							backgroundColor : '#f97316',
+							backgroundColor : function(context) {
+								return createMainChartGradient(context, '#fb7185', 'rgba(244, 63, 94, 0.34)');
+							},
 							borderRadius : 3
 						}, {
 							label : '\uAC1C\uCCB4\uBBF8\uB2EC',
 							data : res.detectTimeData || [],
-							backgroundColor : '#38bdf8',
+							backgroundColor : function(context) {
+								return createMainChartGradient(context, '#67e8f9', 'rgba(14, 165, 233, 0.34)');
+							},
 							borderRadius : 3
 						} ]
 					},
@@ -1428,9 +1459,13 @@ body {
 						labels : res.animalLabels || [],
 						datasets : [ {
 							data : res.animalData || [],
-							backgroundColor : [ '#38bdf8', '#f59e0b',
-									'#a78bfa', '#22c55e' ],
-							borderWidth : 0
+							backgroundColor : function(context) {
+								var colors = [ [ '#67e8f9', '#2563eb' ], [ '#fde68a', '#f97316' ], [ '#c4b5fd', '#7c3aed' ], [ '#6ee7b7', '#059669' ] ];
+								var palette = colors[context.dataIndex % colors.length];
+								return createMainChartGradient(context, palette[0], palette[1], true);
+							},
+							borderColor : 'rgba(226, 232, 240, 0.15)',
+							borderWidth : 1
 						} ]
 					},
 					options : {
@@ -1465,9 +1500,11 @@ body {
 								datasets : [ {
 									label : '\uD3EC\uCC29 \uAC74\uC218',
 									data : res.dangerTypeData || [],
-									backgroundColor : [ '#ef4444', '#f97316',
-											'#eab308', '#a855f7', '#ec4899',
-											'#14b8a6' ],
+									backgroundColor : function(context) {
+										var colors = [ [ '#fb7185', 'rgba(244, 63, 94, 0.34)' ], [ '#fb923c', 'rgba(249, 115, 22, 0.34)' ], [ '#fde047', 'rgba(234, 179, 8, 0.34)' ], [ '#c084fc', 'rgba(168, 85, 247, 0.34)' ], [ '#f9a8d4', 'rgba(236, 72, 153, 0.34)' ], [ '#5eead4', 'rgba(20, 184, 166, 0.34)' ] ];
+										var palette = colors[context.dataIndex % colors.length];
+										return createMainChartGradient(context, palette[0], palette[1], true);
+									},
 									borderRadius : 3
 								} ]
 							},
@@ -1567,8 +1604,9 @@ body {
 												|| 0)
 												+ '%');
 								$('#mainFlightHours').text(
-										Number(res && res.flightHours || 0)
-												+ '시간');
+										formatFlightDuration(res && res.flightDurationSeconds !== undefined
+												? res.flightDurationSeconds
+												: Number(res && res.flightHours || 0) * 3600));
 							})
 					.fail(
 							function() {
@@ -1636,6 +1674,18 @@ body {
 			appendMainAlertLog(event.detail);
 		});
 
+		function renderTopAlarmButton(enabled) {
+			var $button = $('#topAlarmButton');
+			if (!$button.length) {
+				return;
+			}
+
+			$button.toggleClass('is-muted', !enabled).attr('aria-pressed', String(enabled))
+					.attr('title', enabled ? '알람 소리 켜짐' : '알람 소리 꺼짐')
+					.find('.alarm-sound-icon').text(enabled ? '🔔' : '🔕').end()
+					.find('.alarm-sound-label').text(enabled ? '소리 끄기' : '소리 켜기');
+		}
+
 		function loadTopAlarmSoundState() {
 			var $toggle = $('#topAlarmToggle');
 			if (!$toggle.length) {
@@ -1649,8 +1699,17 @@ body {
 			}).done(function(response) {
 				var enabled = !!(response && response.enabled);
 				$toggle.prop('checked', enabled).data('lastEnabled', enabled);
+				renderTopAlarmButton(enabled);
 			});
 		}
+
+		$('#topAlarmButton').on('click', function() {
+			var $toggle = $('#topAlarmToggle');
+			if ($toggle.prop('disabled')) {
+				return;
+			}
+			$toggle.prop('checked', !$toggle.prop('checked')).trigger('change');
+		});
 
 		$('#topAlarmToggle').on('change', function() {
 			var toggle = this;
@@ -1661,6 +1720,8 @@ body {
 			}
 
 			$(toggle).prop('disabled', true);
+			$('#topAlarmButton').prop('disabled', true);
+			renderTopAlarmButton(requested);
 			$.ajax({
 				url : yoloContextPath + '/yolo/buzzer/enabled',
 				type : 'POST',
@@ -1669,11 +1730,14 @@ body {
 			}).done(function(response) {
 				var enabled = !!(response && response.enabled);
 				$(toggle).prop('checked', enabled).data('lastEnabled', enabled);
+				renderTopAlarmButton(enabled);
 			}).fail(function() {
 				$(toggle).prop('checked', previous).data('lastEnabled', previous);
+				renderTopAlarmButton(previous);
 				window.alert('알람 소리 상태 변경에 실패했습니다.');
 			}).always(function() {
 				$(toggle).prop('disabled', false);
+				$('#topAlarmButton').prop('disabled', false);
 			});
 		});
 

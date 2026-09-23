@@ -6,6 +6,7 @@
 <!DOCTYPE html>
 <html>
 <head>
+<link rel="icon" type="image/png" href="<c:url value='/resources/images/KakaoTalk_20260923_120441893.png?v=1'/>">
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>보호 동물 목록</title>
@@ -212,6 +213,17 @@
     border: 1px solid rgba(148, 163, 184, 0.3) !important;
 }
 
+#animalListPage .animal-list-thumbnail {
+    width: 42px;
+    height: 42px;
+    object-fit: cover;
+    border-radius: 50%;
+    border: 1px solid #334155;
+    background: #111827;
+    display: block;
+    margin: 0 auto;
+}
+
 
 #animalListPage .pagination {
     display: flex;
@@ -294,6 +306,7 @@
         <table data-csv-export data-csv-filename="animal-list">
             <thead>
                 <tr>
+                    <th>사진</th>
                     <th>식별번호</th>
                     <th>축종</th>
                     <th>품종</th>
@@ -306,7 +319,7 @@
                 <c:choose>
                     <c:when test="${empty animalList}">
                         <tr>
-                            <td colspan="6" class="no-data">등록된 보호 동물이 없습니다.</td>
+                            <td colspan="7" class="no-data">등록된 보호 동물이 없습니다.</td>
                         </tr>
                     </c:when>
                     <c:otherwise>
@@ -314,6 +327,21 @@
                             
                             <tr style="cursor: pointer;"
                                 onclick="return openDetailPopup('${pageContext.request.contextPath}/animal/detail?animalId=${animal.animalId}&page=${pageMaker.page}&searchType=${pageMaker.searchType}&keyword=${pageMaker.keyword}', 'animalDetail');">
+                                <td>
+                                    <c:choose>
+                                        <c:when test="${not empty animal.animalPicture}">
+                                            <img class="animal-list-thumbnail"
+                                                 src="${pageContext.request.contextPath}/animal/image/<c:out value='${animal.animalPicture}'/>"
+                                                 alt="${animal.animalName} 사진"
+                                                 onerror="this.src='${pageContext.request.contextPath}/resources/images/noImage.jpg';" />
+                                        </c:when>
+                                        <c:otherwise>
+                                            <img class="animal-list-thumbnail"
+                                                 src="${pageContext.request.contextPath}/resources/images/noImage.jpg"
+                                                 alt="사진 없음" />
+                                        </c:otherwise>
+                                    </c:choose>
+                                </td>
                                 <td style="font-weight: bold;">${animal.animalId}</td>
                                 <td>
                                     <c:set var="animalTypeName" value="${animal.animalType}" />

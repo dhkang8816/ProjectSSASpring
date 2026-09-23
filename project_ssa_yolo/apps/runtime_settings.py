@@ -38,20 +38,22 @@ ESP32_STREAM_URL = _text("SSA_ESP32_STREAM_URL", "http://192.168.137.72:80/strea
 ESP32_COM_PORT = _text("SSA_ESP32_COM_PORT", "COM6")
 
 # Battery telemetry is produced by the existing ESP32 sensor polling command;
-# it never opens another serial connection.  Updated board code receives these
-# values inside that same command, while an older board simply keeps its local
-# defaults and reports DISCONNECTED until it is deployed.
+# it never opens another serial connection.  The values below match the ESP32-S3
+# board circuit: GPIO2 receives VBAT through a 40.2k / 10k divider, so the
+# physical VBAT restoration ratio is (40.2 + 10) / 10 = 5.02.  The 1.0V raw
+# scale preserves the board vendor's validated formula:
+# raw / 4095 * 5.02 * 0.96.
 BATTERY_ENABLED = _bool("SSA_BATTERY_ENABLED", True)
 BATTERY_SOURCE_KEY = _text("SSA_BATTERY_SOURCE_KEY", "esp32")
 if BATTERY_SOURCE_KEY not in {"video_1", "video_2", "video_3", "esp32"}:
     BATTERY_SOURCE_KEY = "esp32"
 BATTERY_ADC_PIN = _int("SSA_BATTERY_ADC_PIN", 2, minimum=0)
-BATTERY_ADC_REFERENCE_VOLTAGE = _float("SSA_BATTERY_ADC_REFERENCE_VOLTAGE", 3.3, minimum=0.1)
+BATTERY_ADC_REFERENCE_VOLTAGE = _float("SSA_BATTERY_ADC_REFERENCE_VOLTAGE", 1.0, minimum=0.1)
 BATTERY_MIN_VOLTAGE = _float("SSA_BATTERY_MIN_VOLTAGE", 3.0, minimum=0.1)
-BATTERY_MAX_VOLTAGE = _float("SSA_BATTERY_MAX_VOLTAGE", 4.2, minimum=0.1)
+BATTERY_MAX_VOLTAGE = _float("SSA_BATTERY_MAX_VOLTAGE", 4.25, minimum=0.1)
 if BATTERY_MAX_VOLTAGE <= BATTERY_MIN_VOLTAGE:
-    BATTERY_MIN_VOLTAGE, BATTERY_MAX_VOLTAGE = 3.0, 4.2
-BATTERY_DIVIDER_RATIO = _float("SSA_BATTERY_DIVIDER_RATIO", 1.52, minimum=0.01)
+    BATTERY_MIN_VOLTAGE, BATTERY_MAX_VOLTAGE = 3.0, 4.25
+BATTERY_DIVIDER_RATIO = _float("SSA_BATTERY_DIVIDER_RATIO", 5.02, minimum=0.01)
 BATTERY_CALIBRATION = _float("SSA_BATTERY_CALIBRATION", 0.96, minimum=0.01)
 BATTERY_SAMPLE_COUNT = _int("SSA_BATTERY_SAMPLE_COUNT", 8, minimum=1)
 BATTERY_LOW_PERCENT = _float("SSA_BATTERY_LOW_PERCENT", 25.0, minimum=0.0)
@@ -60,6 +62,8 @@ if BATTERY_CRITICAL_PERCENT > BATTERY_LOW_PERCENT:
     BATTERY_CRITICAL_PERCENT, BATTERY_LOW_PERCENT = 10.0, 25.0
 BATTERY_MOCK_ENABLED = _bool("SSA_BATTERY_MOCK_ENABLED", False)
 BATTERY_MOCK_PERCENT = min(100.0, _float("SSA_BATTERY_MOCK_PERCENT", 80.0, minimum=0.0))
+BATTERY_DEBUG = _bool("SSA_BATTERY_DEBUG", False)
+BATTERY_DEBUG_INTERVAL_SECONDS = _float("SSA_BATTERY_DEBUG_INTERVAL_SECONDS", 30.0, minimum=1.0)
 BUZZER_STARTUP_SOUND_ENABLED = _bool("SSA_BUZZER_STARTUP_SOUND_ENABLED", True)
 YOLO_MODEL_PATH = _text(
     "SSA_YOLO_MODEL_PATH",

@@ -25,17 +25,20 @@ DANGER_DISTANCE_CM = 10
 WARNING_DISTANCE_CM = 20
 CAUTION_DISTANCE_CM = 30
 
-# Battery ADC configuration.  These defaults express the earlier experimental
-# 4095 * 5.02 * 0.96 calculation as independently adjustable values:
-# 3.3V ADC reference * 1.52 divider ratio * 0.96 calibration ~= 4.82V.
-# Confirm the physical divider and pin before changing these values on a board.
+# Battery ADC configuration for the board's actual GPIO2 divider:
+# VBAT -- 40.2k -- GPIO2 -- 10k -- GND
+# Restoring GPIO2 to VBAT therefore requires (40.2 + 10) / 10 = 5.02.
+# Keep the vendor-validated ADC formula intact:
+# raw / 4095 * 1.0 * 5.02 * 0.96.
+# No attenuation is configured here; the board reference program uses only
+# ADC(Pin(2)) and the divided battery input remains below the ADC's 1.1V range.
 BATTERY_ENABLED = True
 BATTERY_ADC_PIN = 2
-BATTERY_ADC_REFERENCE_VOLTAGE = 3.3
-BATTERY_DIVIDER_RATIO = 1.52
+BATTERY_ADC_REFERENCE_VOLTAGE = 1.0
+BATTERY_DIVIDER_RATIO = 5.02
 BATTERY_CALIBRATION = 0.96
 BATTERY_MIN_VOLTAGE = 3.0
-BATTERY_MAX_VOLTAGE = 4.2
+BATTERY_MAX_VOLTAGE = 4.25
 BATTERY_SAMPLE_COUNT = 8
 BATTERY_LOW_PERCENT = 25
 BATTERY_CRITICAL_PERCENT = 10
@@ -76,10 +79,6 @@ def _initialize_battery_sensor():
         return
     try:
         battery_sensor = ADC(Pin(BATTERY_ADC_PIN))
-        try:
-            battery_sensor.atten(ADC.ATTN_11DB)
-        except AttributeError:
-            pass
     except Exception:
         battery_sensor = None
 
@@ -352,25 +351,31 @@ def read_battery_status():
         if raw_value <= 0:
             return _battery_disconnected()
 
-        voltage = (
-            raw_value / 4095
-            * BATTERY_ADC_REFERENCE_VOLTAGE
+        adc_ratio = raw_value / 4095
+        adc_voltage = adc_ratio * BATTERY_ADC_REFERENCE_VOLTAGE
+        battery_voltage = (
+            adc_voltage
             * BATTERY_DIVIDER_RATIO
             * BATTERY_CALIBRATION
         )
-        if voltage <= 0 or BATTERY_MAX_VOLTAGE <= BATTERY_MIN_VOLTAGE:
+        if battery_voltage <= 0 or BATTERY_MAX_VOLTAGE <= BATTERY_MIN_VOLTAGE:
             return _battery_disconnected()
 
-        percent = (voltage - BATTERY_MIN_VOLTAGE) / (
+        percent = (battery_voltage - BATTERY_MIN_VOLTAGE) / (
             BATTERY_MAX_VOLTAGE - BATTERY_MIN_VOLTAGE
         ) * 100
         percent = max(0, min(100, percent))
 
         return {
             "available": True,
-            "voltage": round(voltage, 2),
+            # "voltage" is always the final restored VBAT value, not GPIO2.
+            "voltage": round(battery_voltage, 2),
             "percent": round(percent, 1),
-            "status": _battery_status_for_percent(percent)
+            "status": _battery_status_for_percent(percent),
+            # These diagnostics are retained only in the ESP32 payload.  The
+            # Flask public API keeps its established response shape.
+            "raw": round(raw_value, 1),
+            "adcVoltage": round(adc_voltage, 3)
         }
     except Exception:
         return _battery_disconnected()

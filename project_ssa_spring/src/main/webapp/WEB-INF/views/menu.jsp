@@ -98,6 +98,9 @@
 
 				<li><a href="<c:url value='/admin/diagnostics'/>"> 진단페이지 </a></li>
 
+				<li><a data-detail-popup data-popup-name="alertTemplateSettings"
+					href="<c:url value='/admin/alert-templates?popup=true'/>"> 경보 문구 설정 </a></li>
+
 			</ul>
 
 			</li>
@@ -161,6 +164,14 @@
 			</ul></li>
 
 	</ul>
+
+	<div class="sidebar-discord">
+		<a class="sidebar-discord-link" href="${discordInviteUrl}" target="_blank"
+			rel="noopener noreferrer" title="디스코드 서버 열기">
+			<i class="fa-brands fa-discord" aria-hidden="true"></i>
+			<span>디스코드 열기</span>
+		</a>
+	</div>
 
 </nav>
 

@@ -6,6 +6,7 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
+<link rel="icon" type="image/png" href="<c:url value='/resources/images/KakaoTalk_20260923_120441893.png?v=1'/>">
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>직원관리</title>
@@ -159,7 +160,7 @@ body {
 
 .staff-table {
     width: 100%;
-    min-width: 850px;
+    min-width: 1080px;
     border-collapse: separate !important;
     border-spacing: 0 !important;
     background-color: transparent !important;
@@ -232,6 +233,59 @@ body {
     border: 1px solid rgba(148, 163, 184, 0.3) !important;
 } 
 
+#memberListPage .account-cell {
+    cursor: default;
+}
+
+#memberListPage .account-select {
+    min-width: 92px;
+    padding: 6px 28px 6px 9px;
+    color: #cbd5e1;
+    background: #111827;
+    border: 1px solid #334155;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 700;
+    outline: none;
+}
+
+#memberListPage .account-select:focus {
+    border-color: #38bdf8;
+    box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.16);
+}
+
+#memberListPage .account-status-select[data-status="0"] { color: #34d399; }
+#memberListPage .account-status-select[data-status="1"] { color: #fb7185; }
+#memberListPage .account-status-select[data-status="2"] { color: #94a3b8; }
+
+#memberListPage .account-role-control {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+}
+
+#memberListPage .account-save-btn {
+    padding: 6px 9px;
+    color: #ffffff;
+    background: #0ea5e9;
+    border: 1px solid #38bdf8;
+    border-radius: 6px;
+    font-size: 11px;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+#memberListPage .account-save-btn:hover:not(:disabled) {
+    background: #0284c7;
+}
+
+#memberListPage .account-save-btn:disabled {
+    color: #64748b;
+    background: #1e293b;
+    border-color: #334155;
+    cursor: not-allowed;
+}
 
 .pagination {
     display: flex;
@@ -324,13 +378,14 @@ body {
                         <th>휴대전화 번호</th> 
                         <th>가입일</th>
                         <th style="width: 110px;">상태</th>
+                        <th style="width: 190px;">권한</th>
                     </tr>
                 </thead>
                 <tbody>
                     <c:choose>
                         <c:when test="${empty memberList}">
                             <tr>
-                                <td colspan="8" style="color: #64748b; padding: 60px; font-size: 14px;">등록된 직원이 없습니다.</td>
+                                <td colspan="9" style="color: #64748b; padding: 60px; font-size: 14px;">등록된 직원이 없습니다.</td>
                             </tr>
                         </c:when>
                         <c:otherwise>
@@ -349,21 +404,30 @@ body {
                                     <td>${member.email}</td>
                                     <td>${member.phone}</td>
                                     <td><fmt:formatDate value="${member.regDate}" pattern="yyyy-MM-dd" /></td>
-                                    <td>
-                                        <c:choose>
-                                            <c:when test="${member.status == '0'}">
-                                                <span class="badge-status status-online">정상</span>
-                                            </c:when>
-                                            <c:when test="${member.status == '1'}">
-                                                <span class="badge-status status-stop">정지</span>
-                                            </c:when>
-                                            <c:when test="${member.status == '2'}">
-                                                <span class="badge-status status-dormant">휴면</span>
-                                            </c:when>
-                                            <c:otherwise>
-                                                <span class="badge-status" style="background: #334155; color: #94a3b8;">${member.status}</span>
-                                            </c:otherwise>
-                                        </c:choose>
+                                    <c:set var="isMyAccount" value="${member.memberId eq currentMemberId}" />
+                                    <td class="account-cell" onclick="event.stopPropagation();">
+                                        <select class="account-select account-status-select"
+                                            data-original="${member.status}" data-status="${member.status}"
+                                            aria-label="${member.memberId} 계정 상태"
+                                            <c:if test="${isMyAccount}">disabled="disabled" title="본인 계정 상태는 목록에서 변경할 수 없습니다."</c:if>>
+                                            <c:forEach var="statusCode" items="${statusList}">
+                                                <option value="${statusCode.code}" ${statusCode.code eq member.status ? 'selected' : ''}>${statusCode.codeName}</option>
+                                            </c:forEach>
+                                        </select>
+                                    </td>
+                                    <td class="account-cell" onclick="event.stopPropagation();">
+                                        <div class="account-role-control">
+                                            <select class="account-select account-role-select"
+                                                data-original="${member.role}" aria-label="${member.memberId} 권한"
+                                                <c:if test="${isMyAccount}">disabled="disabled" title="본인 권한은 목록에서 변경할 수 없습니다."</c:if>>
+                                                <c:forEach var="roleCode" items="${roleList}">
+                                                    <option value="${roleCode.code}" ${roleCode.code eq member.role ? 'selected' : ''}>${roleCode.codeName}</option>
+                                                </c:forEach>
+                                            </select>
+                                            <button type="button" class="account-save-btn" disabled="disabled"
+                                                data-member-id="${member.memberId}"
+                                                <c:if test="${isMyAccount}">title="본인 계정은 목록에서 변경할 수 없습니다."</c:if>>저장</button>
+                                        </div>
                                     </td>
                                 </tr>
                             </c:forEach>
@@ -406,6 +470,80 @@ body {
 </script>
 <script src="${pageContext.request.contextPath}/resources/js/jquery-1.12.3.js"></script>
 <script src="${pageContext.request.contextPath}/resources/js/script.js"></script>
+<script>
+(function () {
+    function syncAccountSaveState(row) {
+        var statusSelect = row.querySelector('.account-status-select');
+        var roleSelect = row.querySelector('.account-role-select');
+        var saveButton = row.querySelector('.account-save-btn');
+        if (!statusSelect || !roleSelect || !saveButton) {
+            return;
+        }
+
+        statusSelect.dataset.status = statusSelect.value;
+        var hasChanges = statusSelect.value !== statusSelect.dataset.original
+                || roleSelect.value !== roleSelect.dataset.original;
+        saveButton.disabled = statusSelect.disabled || roleSelect.disabled || !hasChanges;
+    }
+
+    document.querySelectorAll('#memberListPage .account-select').forEach(function (select) {
+        select.addEventListener('click', function (event) {
+            event.stopPropagation();
+        });
+        select.addEventListener('change', function (event) {
+            event.stopPropagation();
+            syncAccountSaveState(select.closest('tr'));
+        });
+    });
+
+    document.querySelectorAll('#memberListPage .account-save-btn').forEach(function (button) {
+        button.addEventListener('click', async function (event) {
+            event.stopPropagation();
+            var row = button.closest('tr');
+            var statusSelect = row.querySelector('.account-status-select');
+            var roleSelect = row.querySelector('.account-role-select');
+            var statusLabel = statusSelect.options[statusSelect.selectedIndex].text;
+            var roleLabel = roleSelect.options[roleSelect.selectedIndex].text;
+
+            if (!window.confirm('[' + button.dataset.memberId + '] 계정을 ' + statusLabel
+                    + ' / ' + roleLabel + ' 권한으로 변경하시겠습니까?')) {
+                return;
+            }
+
+            button.disabled = true;
+            button.textContent = '저장 중';
+
+            try {
+                var response = await fetch(contextPath + '/member/admin/account', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8',
+                        'Accept': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest'
+                    },
+                    body: new URLSearchParams({
+                        memberId: button.dataset.memberId,
+                        status: statusSelect.value,
+                        roleCode: roleSelect.value
+                    }).toString()
+                });
+                var payload = await response.json().catch(function () { return {}; });
+                if (!response.ok || !payload.success) {
+                    throw new Error(payload.message || '계정 설정을 저장하지 못했습니다.');
+                }
+
+                statusSelect.dataset.original = statusSelect.value;
+                roleSelect.dataset.original = roleSelect.value;
+            } catch (error) {
+                window.alert(error.message || '계정 설정을 저장하지 못했습니다.');
+            } finally {
+                button.textContent = '저장';
+                syncAccountSaveState(row);
+            }
+        });
+    });
+})();
+</script>
 </body>
 </html>
 

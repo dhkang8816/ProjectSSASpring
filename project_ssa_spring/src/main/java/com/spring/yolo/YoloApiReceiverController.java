@@ -12,6 +12,7 @@ import jakarta.servlet.http.HttpSession;
 import com.spring.dto.DangerLogVO;
 import com.spring.dto.DetectionLogVO;
 import com.spring.dto.AlertLogVO;
+import com.spring.service.AlertMessageTemplateService;
 import lombok.extern.log4j.Log4j2;
 
 @Log4j2
@@ -21,6 +22,9 @@ public class YoloApiReceiverController {
 
     @Autowired
     private AlertLinkingService alertLinkingService;
+
+    @Autowired
+    private AlertMessageTemplateService alertMessageTemplateService;
     
     @Autowired
     private HttpSession session; 
@@ -39,7 +43,7 @@ public class YoloApiReceiverController {
                     
                     AlertLogVO avo = AlertLogVO.builder()
                          .alertType("0") // 공통코드 규칙: '0' (동물미달)
-                         .alertMsg("관제 구역 내 " + animalName + " 보유 마리수 기준치 미달 현상 지속 감지!")
+                         .alertMsg(alertMessageTemplateService.formatAnimalShortage(animalName))
                          .sendStatus("1") // 공통코드 규칙: '1' (성공)
                          .dlogId(vo.getDlogId() != 0 ? vo.getDlogId() : null) 
                          .firstSendTime(new Timestamp(System.currentTimeMillis()))
@@ -80,7 +84,7 @@ public class YoloApiReceiverController {
                     
                     AlertLogVO avo = AlertLogVO.builder()
                          .alertType("1") // 공통코드 규칙: '1' (이상개체)
-                         .alertMsg("관제 구역 내 위험 이상객체 [" + dangerName + "] 실시간 출현! 즉시 대피 요망.")
+                         .alertMsg(alertMessageTemplateService.formatDangerObject(dangerName))
                          .sendStatus("1") // 공통코드 규칙: '1' (성공)
                          .danlogId(vo.getDanlogId() != 0 ? vo.getDanlogId() : null) 
                          .firstSendTime(new Timestamp(System.currentTimeMillis()))

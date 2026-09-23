@@ -20,6 +20,7 @@ COLLISION_DANGER_CM = 10.0
 _sensor_lock = threading.Lock()
 _sensor_thread = None
 _sensor_shutdown_event = threading.Event()
+_last_battery_debug_log_at = 0.0
 _latest_status = {
     "temperature": 0,
     "humidity": 0,
@@ -118,6 +119,38 @@ def _normalize_battery_state(payload):
     }
 
 
+def _log_battery_debug(payload):
+    """Log board-side stages sparingly without changing the public API."""
+    global _last_battery_debug_log_at
+    if not runtime_settings.BATTERY_DEBUG or not isinstance(payload, dict):
+        return
+
+    now = time.monotonic()
+    if now - _last_battery_debug_log_at < runtime_settings.BATTERY_DEBUG_INTERVAL_SECONDS:
+        return
+
+    raw = _optional_finite_number(payload.get("raw"))
+    adc_voltage = _optional_finite_number(payload.get("adcVoltage"))
+    vbat = _optional_finite_number(payload.get("voltage"))
+    percent = _optional_finite_number(payload.get("percent"))
+    if raw is None or adc_voltage is None or vbat is None or percent is None:
+        return
+
+    _last_battery_debug_log_at = now
+    print(
+        "[battery] raw={:.1f} adc_voltage={:.3f}V divider_ratio={:.2f} "
+        "calibration={:.2f} vbat={:.2f}V percent={:.1f}% status={}".format(
+            raw,
+            adc_voltage,
+            runtime_settings.BATTERY_DIVIDER_RATIO,
+            runtime_settings.BATTERY_CALIBRATION,
+            vbat,
+            percent,
+            _battery_level(percent),
+        )
+    )
+
+
 def _mock_battery_state():
     percent = min(100.0, max(0.0, runtime_settings.BATTERY_MOCK_PERCENT))
     voltage = runtime_settings.BATTERY_MIN_VOLTAGE + (
@@ -169,6 +202,7 @@ def _read_from_esp32():
     )
     completed = buzzer_helper.run_mpremote(command, timeout=5, capture_output=True)
     payload = _parse_sensor_output(completed.stdout)
+    _log_battery_debug(payload.get("battery"))
     return {
         "temperature": _numeric_value(payload, "temperature"),
         "humidity": _numeric_value(payload, "humidity"),

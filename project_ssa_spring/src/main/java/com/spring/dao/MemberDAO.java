@@ -15,14 +15,17 @@ public interface MemberDAO {
 	void resetFailCount(String memberId) throws Exception;
 	void updateLastLogDate(String memberId) throws Exception;
 	List<MemberRoleVO> selectMemberRoles(String memberId) throws Exception;
+	int countActiveAdminMembers() throws Exception;
 
 	List<MemberVO> selectAdminMembers() throws Exception;
 
 	boolean isAdminMember(String memberId) throws Exception;
 	void insertMember(MemberVO member) throws Exception;
 	void insertMemberRole(MemberRoleVO memberRole) throws Exception;
+	void deleteMemberRoles(String memberId) throws Exception;
 	void insertMemberLog(String memberId, String loginIp, String loginStatus) throws Exception;
 
 	int updateMember(MemberVO member) throws Exception;
+	int updateMemberProfile(MemberVO member) throws Exception;
     int updateMemberStatus(MemberVO member) throws Exception;
 }

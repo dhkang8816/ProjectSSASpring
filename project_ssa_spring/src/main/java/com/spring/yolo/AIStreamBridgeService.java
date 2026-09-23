@@ -18,6 +18,7 @@ import com.spring.service.AlertLogService;
 import com.spring.service.AnimalCounterService;
 import com.spring.service.DangerLogService;
 import com.spring.service.DetectionLogService;
+import com.spring.service.AlertMessageTemplateService;
 
 public class AIStreamBridgeService {
 
@@ -28,6 +29,7 @@ public class AIStreamBridgeService {
 	private AnimalCounterService animalCounterService;
 
 	private AlertLogService alertLogService;
+	private final AlertMessageTemplateService alertMessageTemplateService;
 	
 	private VideoDroneMapDAO videoDroneMapDAO;
 	private final Map<String, String> videoDroneCache = new ConcurrentHashMap<>();
@@ -40,8 +42,10 @@ public class AIStreamBridgeService {
 	private final Map<Integer, Long> lastInsertTimeMap = new ConcurrentHashMap<>();
 	private final long ALARM_COOLDOWN_MS = 10000;
 
-    public AIStreamBridgeService(VideoDroneMapDAO videoDroneMapDAO) {
+    public AIStreamBridgeService(VideoDroneMapDAO videoDroneMapDAO,
+            AlertMessageTemplateService alertMessageTemplateService) {
         this.videoDroneMapDAO = videoDroneMapDAO;
+		this.alertMessageTemplateService = alertMessageTemplateService;
         System.out.println("✈ [인프라 도킹 완료] XML 설정을 통해 순수 클래스 기반으로 AI 중계 서비스 가동!");
     }
 	
@@ -134,7 +138,7 @@ public class AIStreamBridgeService {
 					try {
 						Integer finalDlogId = (nvo.getDlogId() > 0) ? nvo.getDlogId() : null;
 						AlertLogVO avo = AlertLogVO.builder().alertType("0")
-								.alertMsg("⚠ [관제 경보] 모니터링 구역 내 기본 반려견 개체수 부족 현상 발생!").sendStatus("1")
+								.alertMsg(alertMessageTemplateService.formatAnimalShortage("반려견(dog)")).sendStatus("1")
 								.dlogId(finalDlogId).firstSendTime(new Timestamp(System.currentTimeMillis())).build();
 						alertLogService.registerAlertLog(avo);
 						System.out.println(" [10초 쿨다운] '반려견 미달(0)' 동적 드론 [" + currentActiveDroneId + "] 연동 성공!");
@@ -159,7 +163,7 @@ public class AIStreamBridgeService {
 					try {
 						Integer finalDlogId = (nvo.getDlogId() > 0) ? nvo.getDlogId() : null;
 						AlertLogVO avo = AlertLogVO.builder().alertType("0")
-								.alertMsg("⚠ [관제 경보] 모니터링 구역 내 기본 고양이 개체수 부족 현상 발생!").sendStatus("1")
+								.alertMsg(alertMessageTemplateService.formatAnimalShortage("고양이(cat)")).sendStatus("1")
 								.dlogId(finalDlogId).firstSendTime(new Timestamp(System.currentTimeMillis())).build();
 						alertLogService.registerAlertLog(avo);
 						System.out.println(" [10초 쿨다운] '고양이 미달(1)' 동적 드론 [" + currentActiveDroneId + "] 연동 성공!");
@@ -198,7 +202,7 @@ public class AIStreamBridgeService {
 					try {
 						Integer finalDanlogId = (dvo.getDanlogId() > 0) ? dvo.getDanlogId() : null;
 						AlertLogVO avo = AlertLogVO.builder().alertType("1")
-								.alertMsg(" [비상 경보] 관제 구역 내 위험 이상객체 [" + dangerName + "] 실시간 출현! 대피 요망.")
+								.alertMsg(alertMessageTemplateService.formatDangerObject(dangerName))
 								.sendStatus("1").danlogId(finalDanlogId)
 								.firstSendTime(new Timestamp(System.currentTimeMillis())).build();
 						alertLogService.registerAlertLog(avo);

@@ -6,6 +6,7 @@
 <!DOCTYPE html>
 <html>
 <head>
+<link rel="icon" type="image/png" href="${pageContext.request.contextPath}/resources/images/KakaoTalk_20260923_120441893.png?v=1">
 <link rel="stylesheet" href="${pageContext.request.contextPath}/resources/css/popup.css">
 <meta charset="UTF-8">
 <title>직원 상세 정보</title>
@@ -200,19 +201,23 @@ button:active { transform: translateY(0); }
             <span class="info-label">이메일</span>
             <span class="info-value">${member.email}</span>
         </div>
-        <div class="info-row">
-            <span class="info-label">계정 상태</span>
-            <c:choose>
-                <c:when test="${member.status == '0'}"><span class="badge-status status-0">정상</span></c:when>
-                <c:when test="${member.status == '1'}"><span class="badge-status status-1">정지</span></c:when>
-                <c:when test="${member.status == '2'}"><span class="badge-status status-2">휴면</span></c:when>
-                <c:otherwise><span class="badge-status" style="background: #334155; color: #94a3b8;">${member.status}</span></c:otherwise>
-            </c:choose>
-        </div>
-        <div class="info-row">
-            <span class="info-label">비밀번호 실패</span>
-            <span class="info-value" style="${member.failCount >= 5 ? 'color: #ef4444; font-weight: 700;' : ''}">${member.failCount} 회</span>
-        </div>
+        <c:if test="${canManageAccount}">
+            <div class="info-row">
+                <span class="info-label">계정 상태</span>
+                <c:choose>
+                    <c:when test="${member.status == '0'}"><span class="badge-status status-0">정상</span></c:when>
+                    <c:when test="${member.status == '1'}"><span class="badge-status status-1">정지</span></c:when>
+                    <c:when test="${member.status == '2'}"><span class="badge-status status-2">휴면</span></c:when>
+                    <c:otherwise><span class="badge-status" style="background: #334155; color: #94a3b8;">${member.status}</span></c:otherwise>
+                </c:choose>
+            </div>
+        </c:if>
+        <c:if test="${canManageAccount}">
+            <div class="info-row">
+                <span class="info-label">비밀번호 실패</span>
+                <span class="info-value" style="${member.failCount >= 5 ? 'color: #ef4444; font-weight: 700;' : ''}">${member.failCount} 회</span>
+            </div>
+        </c:if>
         <div class="info-row">
             <span class="info-label">인프라 등록일</span>
             <span class="info-value" style="color: #94a3b8;"><fmt:formatDate value="${member.regDate}" pattern="yyyy-MM-dd" /></span>

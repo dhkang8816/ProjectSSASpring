@@ -57,6 +57,11 @@ public class MemberDAOImpl implements MemberDAO {
     }
 
     @Override
+    public int countActiveAdminMembers() throws Exception {
+        return sqlSession.selectOne(NAMESPACE + ".countActiveAdminMembers");
+    }
+
+    @Override
     public List<MemberVO> selectAdminMembers() throws Exception {
         return sqlSession.selectList(NAMESPACE + ".selectAdminMembers");
     }
@@ -76,6 +81,11 @@ public class MemberDAOImpl implements MemberDAO {
     public void insertMemberRole(MemberRoleVO memberRole) throws Exception {
         sqlSession.insert(NAMESPACE + ".insertMemberRole", memberRole);
     }
+
+    @Override
+    public void deleteMemberRoles(String memberId) throws Exception {
+        sqlSession.delete(NAMESPACE + ".deleteMemberRoles", memberId);
+    }
     
     @Override
     public void insertMemberLog(String memberId, String loginIp, String loginStatus) throws Exception {
@@ -90,6 +100,11 @@ public class MemberDAOImpl implements MemberDAO {
     @Override
     public int updateMember(MemberVO memberVO) {
         return sqlSession.update("Member-Mapper.updateMember", memberVO);
+    }
+
+    @Override
+    public int updateMemberProfile(MemberVO memberVO) {
+        return sqlSession.update("Member-Mapper.updateMemberProfile", memberVO);
     }
    
     @Override

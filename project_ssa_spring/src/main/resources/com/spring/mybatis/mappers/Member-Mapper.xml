@@ -17,26 +17,32 @@
 		<result property="phone" column="PHONE" />
 		<result property="email" column="EMAIL" />
 		<result property="picture" column="PICTURE" />
+		<result property="role" column="ROLE_CODE" />
 	</resultMap>
 	
 
 	
 	<select id="selectMemberById" parameterType="string" resultMap="memberMap">
 		SELECT
-		MEMBER_ID,
-		NAME,
-		DEPARTMENT,
-		PASSWORD,
-		STATUS,
-		FAIL_COUNT,
-		PWD_CHG_DATE,
-		LAST_LONG_DATE,
-		REG_DATE,
-		PHONE,
-		EMAIL,
-		PICTURE
-		FROM MEMBER
-		WHERE MEMBER_ID = #{memberId}
+		M.MEMBER_ID,
+		M.NAME,
+		M.DEPARTMENT,
+		M.PASSWORD,
+		M.STATUS,
+		M.FAIL_COUNT,
+		M.PWD_CHG_DATE,
+		M.LAST_LONG_DATE,
+		M.REG_DATE,
+		M.PHONE,
+		M.EMAIL,
+		M.PICTURE,
+		CASE
+			WHEN EXISTS (SELECT 1 FROM MEMBER_ROLE MR WHERE MR.MEMBER_ID = M.MEMBER_ID AND MR.ROLE_CODE = 'ROLE_ADMIN') THEN 'ROLE_ADMIN'
+			WHEN EXISTS (SELECT 1 FROM MEMBER_ROLE MR WHERE MR.MEMBER_ID = M.MEMBER_ID AND MR.ROLE_CODE = 'ROLE_USER') THEN 'ROLE_USER'
+			ELSE 'ROLE_GUEST'
+		END AS ROLE_CODE
+		FROM MEMBER M
+		WHERE M.MEMBER_ID = #{memberId}
 	</select>
 
 	
@@ -123,6 +129,14 @@
 		  AND ROLE_CODE = 'ROLE_ADMIN'
 	</select>
 
+	<select id="countActiveAdminMembers" resultType="int">
+		SELECT COUNT(DISTINCT M.MEMBER_ID)
+		FROM MEMBER M
+		INNER JOIN MEMBER_ROLE MR ON MR.MEMBER_ID = M.MEMBER_ID
+		WHERE M.STATUS = '0'
+		  AND MR.ROLE_CODE = 'ROLE_ADMIN'
+	</select>
+
 	
 	<insert id="insertMemberRole" parameterType="com.spring.dto.MemberRoleVO">
 		INSERT INTO MEMBER_ROLE (
@@ -135,6 +149,11 @@
 			#{memberId}
 		)
 	</insert>
+
+	<delete id="deleteMemberRoles" parameterType="string">
+		DELETE FROM MEMBER_ROLE
+		WHERE MEMBER_ID = #{memberId}
+	</delete>
 
 
 	
@@ -159,20 +178,25 @@
 	<select id="selectMemberList" parameterType="com.spring.cmd.PageMaker" resultMap="memberMap">
 	    SELECT * FROM (
 	        SELECT ROWNUM AS RNUM, M.* FROM (
-	            SELECT 
-	                MEMBER_ID,
-	                NAME,
-	                DEPARTMENT,
-	                PASSWORD,
-	                STATUS,
-	                FAIL_COUNT,
-	                PWD_CHG_DATE,
-	                LAST_LONG_DATE,
-	                REG_DATE,
-	                PHONE,
-	                EMAIL,
-	                PICTURE
-	            FROM MEMBER
+	            SELECT
+	                M.MEMBER_ID,
+	                M.NAME,
+	                M.DEPARTMENT,
+	                M.PASSWORD,
+	                M.STATUS,
+	                M.FAIL_COUNT,
+	                M.PWD_CHG_DATE,
+	                M.LAST_LONG_DATE,
+	                M.REG_DATE,
+	                M.PHONE,
+	                M.EMAIL,
+	                M.PICTURE,
+	                CASE
+	                    WHEN EXISTS (SELECT 1 FROM MEMBER_ROLE MR WHERE MR.MEMBER_ID = M.MEMBER_ID AND MR.ROLE_CODE = 'ROLE_ADMIN') THEN 'ROLE_ADMIN'
+	                    WHEN EXISTS (SELECT 1 FROM MEMBER_ROLE MR WHERE MR.MEMBER_ID = M.MEMBER_ID AND MR.ROLE_CODE = 'ROLE_USER') THEN 'ROLE_USER'
+	                    ELSE 'ROLE_GUEST'
+	                END AS ROLE_CODE
+	            FROM MEMBER M
 	            <where>
 	                <if test="keyword != null and keyword != ''">
 	                    <if test="searchType == 't'.toString()">
@@ -183,7 +207,7 @@
 	                    </if>
 	                </if>
 	            </where>
-	            ORDER BY REG_DATE DESC
+	            ORDER BY M.REG_DATE DESC
 	        ) M
 	    )
 	    WHERE RNUM BETWEEN #{startRow} AND #{startRow} + #{perPageNum} - 1
@@ -215,6 +239,19 @@
 			EMAIL = #{email},
 			STATUS = #{status},
 			PICTURE = #{picture}   
+		WHERE MEMBER_ID = #{memberId}
+	</update>
+
+	<!-- Used only for a member editing their own profile. Account status and
+	     authorities are intentionally absent from this statement. -->
+	<update id="updateMemberProfile" parameterType="com.spring.dto.MemberVO">
+		UPDATE MEMBER
+		SET
+			NAME = #{name},
+			DEPARTMENT = #{department},
+			PHONE = #{phone, jdbcType=VARCHAR},
+			EMAIL = #{email},
+			PICTURE = #{picture}
 		WHERE MEMBER_ID = #{memberId}
 	</update>
 

@@ -6,6 +6,7 @@
 <!DOCTYPE html>
 <html>
 <head>
+<link rel="icon" type="image/png" href="${pageContext.request.contextPath}/resources/images/KakaoTalk_20260923_120441893.png?v=1">
 <link rel="stylesheet" href="${pageContext.request.contextPath}/resources/css/popup.css">
 <meta charset="UTF-8">
 <title>보호 동물 상세 정보</title>
@@ -145,20 +146,78 @@ a.main-link:hover {
     color: #7dd3fc !important;
     text-decoration: underline !important;
 }
+
+#animalDetailPage .animal-photo-section {
+    align-items: center;
+}
+
+#animalDetailPage .animal-photo-preview {
+    width: 132px;
+    height: 132px;
+    object-fit: cover;
+    border-radius: 12px;
+    border: 1px solid #334155;
+    background: #111827;
+}
+
+#animalDetailPage .animal-photo-actions {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+#animalDetailPage .animal-photo-upload-button {
+    padding: 8px 12px;
+    background: #1e293b;
+    color: #cbd5e1;
+    border: 1px solid #334155;
+}
+
+#animalDetailPage .animal-photo-status {
+    color: #94a3b8;
+    font-size: 12px;
+}
 </style>
 
 </head>
 <body class="popup-page">
-<div class="panel">
+<div id="animalDetailPage" class="panel">
     <h2>보호 동물 상세</h2>
     
     
-    <form:form id="detailForm" method="post">
+    <form:form id="detailForm" method="post" enctype="multipart/form-data">
         <input type="hidden" name="popup" value="true" />
+        <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}" />
+        <input type="hidden" id="animalPicture" name="animalPicture" value="<c:out value='${animal.animalPicture}'/>" />
         
         <input type="hidden" name="page" value="${pageMaker.page}" />
         <input type="hidden" name="searchType" value="${pageMaker.searchType}" />
         <input type="hidden" name="keyword" value="${pageMaker.keyword}" />
+
+        <div class="form-group animal-photo-section">
+            <label for="animalPictureFile">동물 사진</label>
+            <c:choose>
+                <c:when test="${not empty animal.animalPicture}">
+                    <img id="animalPicturePreview"
+                         class="animal-photo-preview"
+                         src="${pageContext.request.contextPath}/animal/image/<c:out value='${animal.animalPicture}'/>"
+                         alt="현재 동물 사진"
+                         onerror="this.src='${pageContext.request.contextPath}/resources/images/noImage.jpg';" />
+                </c:when>
+                <c:otherwise>
+                    <img id="animalPicturePreview"
+                         class="animal-photo-preview"
+                         src="${pageContext.request.contextPath}/resources/images/noImage.jpg"
+                         alt="등록된 사진 없음" />
+                </c:otherwise>
+            </c:choose>
+            <div class="animal-photo-actions">
+                <input type="file" id="animalPictureFile" accept="image/jpeg,image/png,.jpg,.jpeg,.png" />
+                <button type="button" id="animalPictureUploadButton" class="animal-photo-upload-button">이미지 변경</button>
+            </div>
+            <span id="animalPictureStatus" class="animal-photo-status">새 사진을 등록하지 않으면 기존 사진을 유지합니다.</span>
+        </div>
         
         
         <div class="form-group">
@@ -234,5 +293,72 @@ function fn_goList() {
         + "&searchType=${pageMaker.searchType}"
         + "&keyword=${pageMaker.keyword}");
 }
+
+(function () {
+    const contextPath = '${pageContext.request.contextPath}';
+    const fileInput = document.getElementById('animalPictureFile');
+    const uploadButton = document.getElementById('animalPictureUploadButton');
+    const pictureInput = document.getElementById('animalPicture');
+    const preview = document.getElementById('animalPicturePreview');
+    const status = document.getElementById('animalPictureStatus');
+    let currentPicture = pictureInput.value;
+    const fallbackImage = contextPath + '/resources/images/noImage.jpg';
+
+    fileInput.addEventListener('change', function () {
+        const file = this.files[0];
+        if (!file) {
+            preview.src = currentPicture
+                ? contextPath + '/animal/image/' + encodeURIComponent(currentPicture)
+                : fallbackImage;
+            status.textContent = '새 사진을 등록하지 않으면 기존 사진을 유지합니다.';
+            return;
+        }
+        preview.src = URL.createObjectURL(file);
+        status.textContent = '이미지 변경 버튼을 눌러 저장하세요.';
+    });
+
+    uploadButton.addEventListener('click', function () {
+        const file = fileInput.files[0];
+        if (!file) {
+            status.textContent = '변경할 JPG 또는 PNG 파일을 선택하세요.';
+            return;
+        }
+
+        const formData = new FormData();
+        formData.append('pictureFile', file);
+        formData.append('${_csrf.parameterName}', '${_csrf.token}');
+        uploadButton.disabled = true;
+        status.textContent = '이미지를 등록하고 있습니다...';
+
+        fetch(contextPath + '/animal/uploadPicture', {
+            method: 'POST',
+            headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
+            body: formData
+        })
+        .then(async function (response) {
+            const body = await response.json();
+            if (!response.ok || !body.success) {
+                throw new Error(body.message || '이미지 등록에 실패했습니다.');
+            }
+            return body;
+        })
+        .then(function (body) {
+            currentPicture = body.fileName;
+            pictureInput.value = body.fileName;
+            preview.src = contextPath + '/animal/image/' + encodeURIComponent(body.fileName);
+            status.textContent = '새 이미지 등록이 완료되었습니다. 수정 완료를 눌러 반영하세요.';
+        })
+        .catch(function (error) {
+            pictureInput.value = currentPicture;
+            preview.src = currentPicture
+                ? contextPath + '/animal/image/' + encodeURIComponent(currentPicture)
+                : fallbackImage;
+            status.textContent = error.message;
+        })
+        .finally(function () {
+            uploadButton.disabled = false;
+        });
+    });
+})();
 </script>
 </html>

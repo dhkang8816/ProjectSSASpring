@@ -9,11 +9,25 @@ import org.junit.jupiter.api.Test;
 import org.springframework.dao.DataAccessResourceFailureException;
 import org.springframework.http.ResponseEntity;
 import org.springframework.mock.web.MockHttpServletRequest;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.web.servlet.ModelAndView;
 
 class CommonExceptionAdviceTest {
 
     private final CommonExceptionAdvice advice = new CommonExceptionAdvice();
+
+    @Test
+    void controllerOwnershipFailureReturnsSafeJson403ForAjax() {
+        MockHttpServletRequest request = ajaxRequest("/project_ssa_spring/member/modify");
+
+        ResponseEntity<?> response = assertInstanceOf(ResponseEntity.class,
+                advice.handleAccessDenied(new AccessDeniedException("user02"), request));
+        ErrorResponseVO body = assertInstanceOf(ErrorResponseVO.class, response.getBody());
+
+        assertEquals(403, response.getStatusCode().value());
+        assertEquals("ACCESS_DENIED", body.getCode());
+        assertFalse(body.getMessage().contains("user02"));
+    }
 
     @Test
     void droneNotFoundReturnsSafeJson404ForAjax() {

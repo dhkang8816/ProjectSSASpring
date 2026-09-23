@@ -38,11 +38,17 @@ class CollisionLevelTest(unittest.TestCase):
         self.assertEqual("COM77", run_mpremote.call_args.args[0][1])
 
     def test_sensor_command_configures_battery_inside_the_existing_mpremote_call(self):
-        command = sensor_helper._battery_config_script()
+        with patch.object(runtime_settings, "BATTERY_ADC_REFERENCE_VOLTAGE", 1.0), \
+                patch.object(runtime_settings, "BATTERY_DIVIDER_RATIO", 5.02), \
+                patch.object(runtime_settings, "BATTERY_MAX_VOLTAGE", 4.25):
+            command = sensor_helper._battery_config_script()
 
         self.assertIn("configure_battery", command)
         self.assertIn("read_sensor_status", command)
         self.assertNotIn("serial.Serial", command)
+        self.assertIn("adc_reference_voltage=1.0", command)
+        self.assertIn("divider_ratio=5.02", command)
+        self.assertIn("max_voltage=4.25", command)
 
     def test_battery_normalization_keeps_missing_measurements_disconnected(self):
         with patch.object(runtime_settings, "BATTERY_ENABLED", True):
@@ -64,6 +70,19 @@ class CollisionLevelTest(unittest.TestCase):
         self.assertEqual(3.31, battery["voltage"])
         self.assertEqual(9.8, battery["percent"])
         self.assertEqual("CRITICAL", battery["status"])
+
+    def test_esp32_final_vbat_is_not_scaled_again_in_flask(self):
+        completed = Mock(stdout=(
+            '{"temperature": 0, "humidity": 0, "illumination": 0, '
+            '"distance": 0, "battery": {"available": true, '
+            '"raw": 3398, "adcVoltage": 0.83, "voltage": 4.0, '
+            '"percent": 80.0, "status": "NORMAL"}}'
+        ))
+        with patch.object(sensor_helper.buzzer_helper, "run_mpremote", return_value=completed):
+            values = sensor_helper._read_from_esp32()
+
+        self.assertEqual(4.0, values["battery"]["voltage"])
+        self.assertEqual(80.0, values["battery"]["percent"])
 
     def test_non_physical_source_never_receives_the_esp32_battery_value(self):
         original_status = sensor_helper.get_latest_sensor_status()

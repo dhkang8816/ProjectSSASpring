@@ -16,7 +16,6 @@
 	
 	
 	<bean id="multipartResolver" class="org.springframework.web.multipart.support.StandardServletMultipartResolver" />
-	
 
 	
 	<bean id="encoder"
@@ -37,10 +36,10 @@
 	
 	
 	<!-- Flask/YOLO event callbacks target YoloApiReceiverController (/yolo/api/**). -->
+	<security:http pattern="/resources/**" security="none" />
 	<security:http pattern="/yolo/api/**" security="none" />
 	<security:http pattern="/api/event/**" security="none" />
 	<security:http pattern="/api/user/**" security="none" />
-	
 	
 	
 	<security:http auto-config="false" use-expressions="true">
@@ -58,10 +57,14 @@
 	    
 	    <security:intercept-url pattern="/admin/**" access="hasAuthority('ROLE_ADMIN')" />
 	    <security:intercept-url pattern="/member/list" access="hasAuthority('ROLE_ADMIN')" />
+	    <security:intercept-url pattern="/member/admin/**" access="hasAuthority('ROLE_ADMIN')" />
 	    <security:intercept-url pattern="/member/registForm" access="hasAuthority('ROLE_ADMIN')" />
 	    <security:intercept-url pattern="/member/regist" access="hasAuthority('ROLE_ADMIN')" />
-	    <security:intercept-url pattern="/member/modifyForm" access="hasAuthority('ROLE_ADMIN')" />
-	    <security:intercept-url pattern="/member/modify" access="hasAuthority('ROLE_ADMIN')" />
+	    <!-- A signed-in member may open only their own profile. The controller
+	         enforces ownership; administrators retain access to every profile. -->
+	    <security:intercept-url pattern="/member/detail" access="isAuthenticated()" />
+	    <security:intercept-url pattern="/member/modifyForm" access="isAuthenticated()" />
+	    <security:intercept-url pattern="/member/modify" access="isAuthenticated()" />
 	    <security:intercept-url pattern="/loginlog/**" access="hasAuthority('ROLE_ADMIN')" />
 	    <security:intercept-url pattern="/commoncode/**" access="hasAuthority('ROLE_ADMIN')" />
 	    <security:intercept-url pattern="/member/**" access="permitAll" />

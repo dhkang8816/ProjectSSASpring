@@ -4,6 +4,7 @@
 <!DOCTYPE html>
 <html>
 <head>
+<link rel="icon" type="image/png" href="<c:url value='/resources/images/KakaoTalk_20260923_120441893.png?v=1'/>">
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>관제 대시보드</title>
@@ -59,12 +60,11 @@ body {
 
 
 .ai-briefing-panel {
-	background: rgba(20, 26, 42, 0.85) !important; 
+	background: #141a2a !important;
 	border: 1px solid #1e293b !important;
 	border-radius: 16px !important;
 	padding: 28px !important;
-	box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4) !important;
-	backdrop-filter: blur(4px);
+	box-shadow: none !important;
 	margin-bottom: 30px;
 	position: relative;
 	overflow: hidden;
@@ -138,12 +138,13 @@ body {
 }
 
 
-.print-chart-card {
-	background: rgba(17, 24, 39, 0.6) !important;
+#dashboardPage .print-chart-card {
+	background: #111827 !important;
 	border: 1px solid #1e293b !important;
 	border-radius: 12px !important;
 	padding: 24px !important;
 	box-sizing: border-box;
+	box-shadow: none;
 }
 
 .chart-title {
@@ -155,7 +156,22 @@ body {
 }
 
 
-#aiBriefingContent>div {
+#dashboardPage .dashboard-stat-card {
+	position: relative;
+	overflow: hidden;
+	padding: 20px;
+	border: 1px solid #263449;
+	border-top: 2px solid var(--stat-accent, #38bdf8);
+	border-radius: 10px;
+	background: #111827;
+	box-shadow: none;
+}
+
+#dashboardPage .dashboard-stat-card::before {
+	display: none;
+}
+
+#dashboardPage #aiBriefingContent>div {
 	grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)) !important;
 }
 
@@ -169,7 +185,7 @@ body {
 	width: 100%;
 }
 
-canvas {
+#dashboardPage canvas {
 	width: 100% !important;
 	height: 100% !important;
 }
@@ -230,13 +246,19 @@ rotate
 		left: auto !important;
 		top: auto !important;
 		box-sizing: border-box !important;
+		background: none !important;
 	}
 	.ai-briefing-panel {
 		width: 100% !important;
 		padding: 10px !important;
 		margin: 0 !important;
+		background: rgba(20, 26, 42, 0.85) !important;
+		border-color: #1e293b !important;
 		border-radius: 8px !important;
 		box-shadow: none !important;
+		backdrop-filter: none !important;
+		-webkit-print-color-adjust: exact !important;
+		print-color-adjust: exact !important;
 		box-sizing: border-box !important;
 	}
 	.panel-header {
@@ -253,6 +275,18 @@ rotate
 	#aiBriefingContent>div>div {
 		padding: 7px !important;
 	}
+	#dashboardPage .dashboard-stat-card {
+		background: #222733 !important;
+		border: 1px solid #2c313d !important;
+		border-top: 4px solid var(--stat-accent, #38bdf8) !important;
+		border-radius: 8px !important;
+		box-shadow: none !important;
+		-webkit-print-color-adjust: exact !important;
+		print-color-adjust: exact !important;
+	}
+	#dashboardPage .dashboard-stat-card::before {
+		display: none !important;
+	}
 
 	
 	#dashboardGraphZone>div, .chart-row-zone {
@@ -264,12 +298,15 @@ rotate
 	#dashboardGraphZone, .chart-row-zone {
 		margin-top: 8px !important;
 	}
-	.print-chart-card {
+	#dashboardPage .print-chart-card {
 		padding: 8px !important;
 		box-sizing: border-box !important;
 		break-inside: avoid !important;
 		page-break-inside: avoid !important;
 		background: #222733 !important;
+		border: 1px solid #2c313d !important;
+		box-shadow: none !important;
+		backdrop-filter: none !important;
 		-webkit-print-color-adjust: exact !important;
 		print-color-adjust: exact !important;
 	}
@@ -327,8 +364,7 @@ rotate
 				<div
 					style="width: 100%; display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
 					
-					<div class="print-chart-card"
-						style="background: #222733; padding: 20px; border-radius: 8px; border: 1px solid #2c313d;">
+					<div class="print-chart-card">
 						<div
 							style="font-size: 14px; color: #ffffff; font-weight: 600; margin-bottom: 15px;">
 							<i class="fa-solid fa-calendar-days"
@@ -339,8 +375,7 @@ rotate
 						</div>
 					</div>
 					
-					<div class="print-chart-card"
-						style="background: #222733; padding: 20px; border-radius: 8px; border: 1px solid #2c313d;">
+					<div class="print-chart-card">
 						<div
 							style="font-size: 14px; color: #ffffff; font-weight: 600; margin-bottom: 15px;">
 							<i class="fa-solid fa-clock"
@@ -357,8 +392,7 @@ rotate
 			<div class="chart-row-zone"
 				style="width: 100%; display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 25px;">
 				
-				<div class="print-chart-card"
-					style="background: #222733; padding: 20px; border-radius: 8px; border: 1px solid #2c313d; min-width: 0;">
+				<div class="print-chart-card">
 					<div
 						style="font-size: 14px; color: #ffffff; font-weight: 600; margin-bottom: 15px;">
 						<i class="fa-solid fa-dog"
@@ -370,8 +404,7 @@ rotate
 				</div>
 
 				
-				<div class="print-chart-card"
-					style="background: #222733; padding: 20px; border-radius: 8px; border: 1px solid #2c313d; min-width: 0;">
+				<div class="print-chart-card">
 					<div
 						style="font-size: 14px; color: #ffffff; font-weight: 600; margin-bottom: 15px;">
 						<i class="fa-solid fa-skull-crossbones"
@@ -395,6 +428,28 @@ rotate
 		fn_fetchAiBriefing();
 	});
 
+	function formatFlightDuration(seconds) {
+		var totalSeconds = Math.max(0, Math.round(Number(seconds) || 0));
+		var minutes = Math.floor(totalSeconds / 60);
+		var remainingSeconds = totalSeconds % 60;
+		return minutes + '분 ' + String(remainingSeconds).padStart(2, '0') + '초';
+	}
+
+	function createDashboardChartGradient(context, startColor, endColor, horizontal) {
+		var chart = context.chart;
+		var chartArea = chart.chartArea;
+		if (!chartArea) {
+			return startColor;
+		}
+
+		var gradient = horizontal ? chart.ctx.createLinearGradient(chartArea.left, chartArea.top,
+				chartArea.right, chartArea.top) : chart.ctx.createLinearGradient(chartArea.left,
+				chartArea.top, chartArea.left, chartArea.bottom);
+		gradient.addColorStop(0, startColor);
+		gradient.addColorStop(1, endColor);
+		return gradient;
+	}
+
 	function fn_fetchAiBriefing() {
 		var $contentBox = $("#aiBriefingContent");
 		$contentBox
@@ -413,8 +468,9 @@ rotate
 									: 0;
 							var detect = (res.detectionCount !== undefined && res.detectionCount !== null) ? res.detectionCount
 									: 0;
-							var hours = (res.flightHours !== undefined && res.flightHours !== null) ? res.flightHours
-									: 0.0;
+							var flightDurationSeconds = (res.flightDurationSeconds !== undefined
+									&& res.flightDurationSeconds !== null) ? res.flightDurationSeconds
+											: Number(res.flightHours || 0) * 3600;
 							var todayDetect = (res.todayDetectCount !== undefined && res.todayDetectCount !== null) ? res.todayDetectCount
 									: 0;
 							var completeRate = (res.actionCompleteRate !== undefined && res.actionCompleteRate !== null) ? res.actionCompleteRate
@@ -437,7 +493,7 @@ rotate
 							}
 							var cardHtml = '<div style="width:100%; display:grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap:15px; text-align:center; padding:10px 0;">'
 									+
-									'  <div style="background:#222733; padding:20px; border-radius:8px; border:1px solid #2c313d; border-top:4px solid ' + statusColor + ';">'
+									'  <div class="dashboard-stat-card" style="--stat-accent:' + statusColor + ';">'
 									+ '    <div style="font-size:12px; color:#aaa; margin-bottom:8px;">관제구역 종합 위험도</div>'
 									+ '    <div style="font-size:18px; font-weight:bold; color:' + statusColor + ';">'
 									+ score
@@ -446,35 +502,35 @@ rotate
 									+ ']</div>'
 									+ '  </div>'
 									+
-									'  <div style="background:#222733; padding:20px; border-radius:8px; border:1px solid #2c313d; border-top:4px solid #5ddcff;">'
+									'  <div class="dashboard-stat-card" style="--stat-accent:#5ddcff;">'
 									+ '    <div style="font-size:12px; color:#aaa; margin-bottom:8px;">당일 탐지 총 건수</div>'
 									+ '    <div style="font-size:24px; font-weight:bold; color:#5ddcff;">'
 									+ todayDetect
 									+ ' 건</div>'
 									+ '  </div>'
 									+
-									'  <div style="background:#222733; padding:20px; border-radius:8px; border:1px solid #2c313d; border-top:4px solid #2ecc71;">'
+									'  <div class="dashboard-stat-card" style="--stat-accent:#2ecc71;">'
 									+ '    <div style="font-size:12px; color:#aaa; margin-bottom:8px;">당일 현장조치 완료율</div>'
 									+ '    <div style="font-size:24px; font-weight:bold; color:#2ecc71;">'
 									+ completeRate
 									+ ' %</div>'
 									+ '  </div>'
 									+
-									'  <div style="background:#222733; padding:20px; border-radius:8px; border:1px solid #2c313d; border-top:4px solid #3498db;">'
+									'  <div class="dashboard-stat-card" style="--stat-accent:#3498db;">'
 									+ '    <div style="font-size:12px; color:#aaa; margin-bottom:8px;">당일 드론 총 비행시간</div>'
 									+ '    <div style="font-size:24px; font-weight:bold; color:#ffffff;">'
-									+ hours
-									+ ' 시간</div>'
+									+ formatFlightDuration(flightDurationSeconds)
+									+ '</div>'
 									+ '  </div>'
 									+
-									'  <div style="background:#222733; padding:20px; border-radius:8px; border:1px solid #2c313d; border-top:4px solid #e74c3c;">'
+									'  <div class="dashboard-stat-card" style="--stat-accent:#e74c3c;">'
 									+ '    <div style="font-size:12px; color:#aaa; margin-bottom:8px;">누적 위험객체 포착</div>'
 									+ '    <div style="font-size:24px; font-weight:bold; color:#ffffff;">'
 									+ danger
 									+ ' 회</div>'
 									+ '  </div>'
 									+
-									'  <div style="background:#222733; padding:20px; border-radius:8px; border:1px solid #2c313d; border-top:4px solid #f1c40f;">'
+									'  <div class="dashboard-stat-card" style="--stat-accent:#f1c40f;">'
 									+ '    <div style="font-size:12px; color:#aaa; margin-bottom:8px;">누적 미달경보 발생</div>'
 									+ '    <div style="font-size:24px; font-weight:bold; color:#ffffff;">'
 									+ detect + ' 건</div>' + '  </div>' +
@@ -497,8 +553,11 @@ rotate
 													{
 														label : '위험객체 (회)',
 														data : res.dangerWeeklyData,
-														borderColor : '#e74c3c',
-														backgroundColor : 'rgba(231, 76, 60, 0.05)',
+														borderColor : '#fb7185',
+														backgroundColor : function(context) {
+															return createDashboardChartGradient(context, 'rgba(251, 113, 133, 0.34)', 'rgba(251, 113, 133, 0.01)');
+														},
+														pointBackgroundColor : '#fb7185',
 														borderWidth : 2,
 														tension : 0.3,
 														fill : true
@@ -506,8 +565,11 @@ rotate
 													{
 														label : '미달경보 (건)',
 														data : res.detectWeeklyData,
-														borderColor : '#f1c40f',
-														backgroundColor : 'rgba(241, 196, 15, 0.05)',
+														borderColor : '#facc15',
+														backgroundColor : function(context) {
+															return createDashboardChartGradient(context, 'rgba(250, 204, 21, 0.30)', 'rgba(250, 204, 21, 0.01)');
+														},
+														pointBackgroundColor : '#facc15',
 														borderWidth : 2,
 														tension : 0.3,
 														fill : true
@@ -566,12 +628,16 @@ rotate
 									datasets : [ {
 										label : '위험객체 (회)',
 										data : res.dangerTimeData,
-										backgroundColor : '#e74c3c',
+										backgroundColor : function(context) {
+											return createDashboardChartGradient(context, '#fb7185', 'rgba(251, 113, 133, 0.38)');
+										},
 										borderRadius : 4
 									}, {
 										label : '미달경보 (건)',
 										data : res.detectTimeData,
-										backgroundColor : '#f1c40f',
+										backgroundColor : function(context) {
+											return createDashboardChartGradient(context, '#fde047', 'rgba(250, 204, 21, 0.36)');
+										},
 										borderRadius : 4
 									} ]
 								},
@@ -622,9 +688,13 @@ rotate
 									labels : res.animalLabels,
 									datasets : [ {
 										data : res.animalData,
-										backgroundColor : [ '#2980b9',
-												'#ecf0f1' ],
-										borderWidth : 0
+										backgroundColor : function(context) {
+											var colors = [ [ '#38bdf8', '#2563eb' ], [ '#e2e8f0', '#94a3b8' ], [ '#a78bfa', '#6366f1' ], [ '#34d399', '#0f766e' ] ];
+											var palette = colors[context.dataIndex % colors.length];
+											return createDashboardChartGradient(context, palette[0], palette[1], true);
+										},
+										borderColor : 'rgba(226, 232, 240, 0.16)',
+										borderWidth : 1
 									} ]
 								},
 								options : {
@@ -653,9 +723,11 @@ rotate
 											datasets : [ {
 												label : '포착 횟수',
 												data : res.dangerTypeData,
-												backgroundColor : [ '#3498db',
-														'#e67e22', '#9b59b6',
-														'#e74c3c' ],
+												backgroundColor : function(context) {
+													var colors = [ [ '#38bdf8', 'rgba(37, 99, 235, 0.34)' ], [ '#fb923c', 'rgba(249, 115, 22, 0.34)' ], [ '#c084fc', 'rgba(139, 92, 246, 0.34)' ], [ '#fb7185', 'rgba(244, 63, 94, 0.34)' ] ];
+													var palette = colors[context.dataIndex % colors.length];
+													return createDashboardChartGradient(context, palette[0], palette[1], true);
+												},
 												borderRadius : 4
 											} ]
 										},

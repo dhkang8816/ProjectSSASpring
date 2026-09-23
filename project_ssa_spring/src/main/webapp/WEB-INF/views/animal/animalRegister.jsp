@@ -5,6 +5,7 @@
 <!DOCTYPE html>
 <html>
 <head>
+<link rel="icon" type="image/png" href="${pageContext.request.contextPath}/resources/images/KakaoTalk_20260923_120441893.png?v=1">
 <link rel="stylesheet" href="${pageContext.request.contextPath}/resources/css/popup.css">
 <meta charset="UTF-8">
 <title>신규 동물 등록</title>
@@ -113,17 +114,64 @@ button.btn-cancel:hover {
     background-color: #334155 !important;
     color: #ffffff !important;
 }
+
+#animalRegisterPage .animal-photo-section {
+    align-items: center;
+}
+
+#animalRegisterPage .animal-photo-preview {
+    width: 132px;
+    height: 132px;
+    object-fit: cover;
+    border-radius: 12px;
+    border: 1px solid #334155;
+    background: #111827;
+}
+
+#animalRegisterPage .animal-photo-actions {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+#animalRegisterPage .animal-photo-upload-button {
+    padding: 8px 12px;
+    background: #1e293b;
+    color: #cbd5e1;
+    border: 1px solid #334155;
+}
+
+#animalRegisterPage .animal-photo-status {
+    color: #94a3b8;
+    font-size: 12px;
+}
 </style>
 
 <body class="popup-page">
-<div class="panel">
+<div id="animalRegisterPage" class="panel">
     <h2>신규 동물 등록</h2>
     
     
-    <form:form action="${pageContext.request.contextPath}/animal/register" method="post">
+    <form:form action="${pageContext.request.contextPath}/animal/register" method="post" enctype="multipart/form-data">
         <c:if test="${param.popup eq 'true'}">
             <input type="hidden" name="popup" value="true" />
         </c:if>
+        <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}" />
+        <input type="hidden" id="animalPicture" name="animalPicture" />
+
+        <div class="form-group animal-photo-section">
+            <label for="animalPictureFile">동물 사진</label>
+            <img id="animalPicturePreview"
+                 class="animal-photo-preview"
+                 src="${pageContext.request.contextPath}/resources/images/noImage.jpg"
+                 alt="동물 사진 미리보기" />
+            <div class="animal-photo-actions">
+                <input type="file" id="animalPictureFile" accept="image/jpeg,image/png,.jpg,.jpeg,.png" />
+                <button type="button" id="animalPictureUploadButton" class="animal-photo-upload-button">이미지 등록</button>
+            </div>
+            <span id="animalPictureStatus" class="animal-photo-status">사진은 선택 입력입니다.</span>
+        </div>
         
         
         <div class="form-group">
@@ -165,5 +213,67 @@ button.btn-cancel:hover {
     </form:form>
 </div>
 <script src="${pageContext.request.contextPath}/resources/js/popup-support.js"></script>
+<script>
+(function () {
+    const contextPath = '${pageContext.request.contextPath}';
+    const fileInput = document.getElementById('animalPictureFile');
+    const uploadButton = document.getElementById('animalPictureUploadButton');
+    const pictureInput = document.getElementById('animalPicture');
+    const preview = document.getElementById('animalPicturePreview');
+    const status = document.getElementById('animalPictureStatus');
+
+    fileInput.addEventListener('change', function () {
+        const file = this.files[0];
+        pictureInput.value = '';
+        if (!file) {
+            preview.src = contextPath + '/resources/images/noImage.jpg';
+            status.textContent = '사진은 선택 입력입니다.';
+            return;
+        }
+        preview.src = URL.createObjectURL(file);
+        status.textContent = '이미지 등록 버튼을 눌러 저장하세요.';
+    });
+
+    uploadButton.addEventListener('click', function () {
+        const file = fileInput.files[0];
+        if (!file) {
+            status.textContent = '등록할 JPG 또는 PNG 파일을 선택하세요.';
+            return;
+        }
+
+        const formData = new FormData();
+        formData.append('pictureFile', file);
+        formData.append('${_csrf.parameterName}', '${_csrf.token}');
+        uploadButton.disabled = true;
+        status.textContent = '이미지를 등록하고 있습니다...';
+
+        fetch(contextPath + '/animal/uploadPicture', {
+            method: 'POST',
+            headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
+            body: formData
+        })
+        .then(async function (response) {
+            const body = await response.json();
+            if (!response.ok || !body.success) {
+                throw new Error(body.message || '이미지 등록에 실패했습니다.');
+            }
+            return body;
+        })
+        .then(function (body) {
+            pictureInput.value = body.fileName;
+            preview.src = contextPath + '/animal/image/' + encodeURIComponent(body.fileName);
+            status.textContent = '이미지 등록이 완료되었습니다.';
+        })
+        .catch(function (error) {
+            pictureInput.value = '';
+            preview.src = contextPath + '/resources/images/noImage.jpg';
+            status.textContent = error.message;
+        })
+        .finally(function () {
+            uploadButton.disabled = false;
+        });
+    });
+})();
+</script>
 </body>
 </html>

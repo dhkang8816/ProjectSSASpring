@@ -1,5 +1,7 @@
 package com.spring.service;
 
+import java.util.Set;
+
 import java.util.List; // 💡 List 임포트 추가
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -107,5 +109,49 @@ public class MemberServiceImpl implements MemberService {
     @Override
     public int modifyMember(MemberVO memberVO) throws Exception{
         return memberDAO.updateMember(memberVO);
+    }
+
+    @Transactional
+    @Override
+    public int modifyMemberProfile(MemberVO memberVO) throws Exception {
+        return memberDAO.updateMemberProfile(memberVO);
+    }
+
+    @Transactional
+    @Override
+    public void updateMemberAccount(String memberId, String status, String roleCode,
+            String currentAdminId) throws Exception {
+        if (memberId == null || memberId.trim().isEmpty()
+                || status == null || roleCode == null) {
+            throw new InvalidRequestException("회원 계정 정보가 올바르지 않습니다.");
+        }
+        if (memberId.trim().equals(currentAdminId)) {
+            throw new InvalidRequestException("본인의 권한과 계정 상태는 목록에서 변경할 수 없습니다.");
+        }
+        if (!Set.of("0", "1", "2").contains(status)
+                || !Set.of("ROLE_ADMIN", "ROLE_USER", "ROLE_GUEST").contains(roleCode)) {
+            throw new InvalidRequestException("허용되지 않은 계정 상태 또는 권한입니다.");
+        }
+
+        MemberVO targetMember = getRequiredMemberById(memberId.trim());
+        List<MemberRoleVO> targetRoles = memberDAO.selectMemberRoles(targetMember.getMemberId());
+        boolean targetIsActiveAdmin = "0".equals(targetMember.getStatus())
+                && targetRoles != null && targetRoles.stream()
+                        .anyMatch(role -> "ROLE_ADMIN".equals(role.getRoleCode()));
+        boolean removesActiveAdmin = targetIsActiveAdmin
+                && (!"0".equals(status) || !"ROLE_ADMIN".equals(roleCode));
+        if (removesActiveAdmin && memberDAO.countActiveAdminMembers() <= 1) {
+            throw new InvalidRequestException("마지막 활성 관리자 계정은 변경할 수 없습니다.");
+        }
+
+        memberDAO.updateMemberStatus(MemberVO.builder()
+                .memberId(targetMember.getMemberId())
+                .status(status)
+                .build());
+        memberDAO.deleteMemberRoles(targetMember.getMemberId());
+        memberDAO.insertMemberRole(MemberRoleVO.builder()
+                .memberId(targetMember.getMemberId())
+                .roleCode(roleCode)
+                .build());
     }
 }

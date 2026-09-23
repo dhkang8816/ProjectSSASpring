@@ -6,6 +6,7 @@
 <!DOCTYPE html>
 <html>
 <head>
+<link rel="icon" type="image/png" href="${pageContext.request.contextPath}/resources/images/KakaoTalk_20260923_120441893.png?v=1">
 <link rel="stylesheet" href="${pageContext.request.contextPath}/resources/css/popup.css">
 <meta charset="UTF-8">
 <title>회원가입</title>
@@ -265,7 +266,7 @@ button:active { transform: translateY(0); }
         
         
         <div class="action-bar">
-            <button type="submit" class="btn-submit">🚀 가입 완료</button>
+            <button type="submit" class="btn-submit">가입 완료</button>
             <button type="button" class="btn-back" onclick="return closePopupAndRefreshParent('${pageContext.request.contextPath}/member/list');">취소</button>
         </div>
         
@@ -290,5 +291,19 @@ button:active { transform: translateY(0); }
 		fileInput.value = "";
 		preview.src = "${pageContext.request.contextPath}/resources/images/member/noImage.jpg";
 	}
+
+	(function resizeMemberRegisterPopup() {
+		if (!window.opener || window.opener.closed) {
+			return;
+		}
+
+		var popupWidth = Math.max(320, Math.min(680, screen.availWidth - 40));
+		var popupHeight = Math.max(420, Math.min(960, screen.availHeight - 36));
+		var left = Math.max(0, Math.round((screen.availWidth - popupWidth) / 2));
+		var top = Math.max(12, Math.min(24, screen.availHeight - popupHeight - 12));
+
+		window.resizeTo(popupWidth, popupHeight);
+		window.moveTo(left, top);
+	})();
 </script>
 </html>

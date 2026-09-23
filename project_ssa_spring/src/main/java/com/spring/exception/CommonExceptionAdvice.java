@@ -6,6 +6,7 @@ import org.mybatis.spring.MyBatisSystemException;
 import org.springframework.dao.DataAccessException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.servlet.ModelAndView;
@@ -20,6 +21,16 @@ import lombok.extern.log4j.Log4j2;
 @Log4j2
 @ControllerAdvice
 public class CommonExceptionAdvice {
+
+    /**
+     * Handles ownership checks performed inside MVC controllers. Security-filter
+     * authentication and authorization failures still use CustomDeniedHandler.
+     */
+    @ExceptionHandler(AccessDeniedException.class)
+    public Object handleAccessDenied(AccessDeniedException e, HttpServletRequest request) {
+        log.warn("Access denied by controller ownership check. requestUri={}", request.getRequestURI());
+        return errorResponse(request, HttpStatus.FORBIDDEN, "ACCESS_DENIED", "접근 권한이 없습니다.");
+    }
 
     @ExceptionHandler(MemberNotFoundException.class)
     public Object handleMemberNotFound(MemberNotFoundException e, HttpServletRequest request) {

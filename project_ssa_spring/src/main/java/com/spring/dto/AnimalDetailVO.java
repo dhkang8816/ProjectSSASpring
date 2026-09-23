@@ -22,4 +22,5 @@ public class AnimalDetailVO {
     private String animalName;      // 동물이름
     private Date entranceDate;      // 입소날자
     private String animalStatus;    // 보호상태
+    private String animalPicture;   // ANIMAL_PICTURE: server-generated image file name
 }
