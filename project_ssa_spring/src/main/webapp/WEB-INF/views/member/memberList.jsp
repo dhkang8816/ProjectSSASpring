@@ -300,7 +300,7 @@ body {
 		
 		<div class="staff-summary-bar" style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
 		    <div class="staff-count">
-		        총 직원수: <span class="count-num">${empty memberList ? 0 : memberList.size()}</span>명
+		        총 직원수: <span class="count-num">${pageMaker.totalCount}</span>명
 		    </div>
 		    
 		    <div class="summary-action-group" style="display: flex; gap: 8px; align-items: center;">

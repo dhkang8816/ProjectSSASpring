@@ -55,6 +55,13 @@ class BuzzerHelperTest(unittest.TestCase):
         self.assertTrue(queued)
         enqueue.assert_called_once_with("startup")
 
+    def test_startup_command_resynchronizes_the_board_before_resume_alerts(self):
+        command = buzzer_helper._COMMANDS["startup"]
+
+        self.assertNotIn("resume", command)
+        self.assertEqual("exec", command[0])
+        self.assertIn("main.play_startup_melody()", command[-1])
+
     def test_sensor_and_buzzer_mpremote_calls_are_serialized_by_one_lock(self):
         active_calls = 0
         maximum_parallel_calls = 0

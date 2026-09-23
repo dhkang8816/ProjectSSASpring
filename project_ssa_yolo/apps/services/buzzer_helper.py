@@ -27,7 +27,12 @@ _MPREMOTE_PREFIX = (sys.executable, "-m", "mpremote")
 _COMMANDS = {
     "animal": ("resume", "exec", "import main; main.play_animal_alert()"),
     "danger": ("resume", "exec", "import main; main.play_danger_alert()"),
-    "startup": ("resume", "exec", "import main; main.play_startup_melody()"),
+    # Do not use ``resume`` for the one-time startup command.  mpremote then
+    # performs its normal soft-reset/REPL synchronisation, which reloads
+    # ``main.py`` and creates a fresh PWM object before the long-lived
+    # ``resume`` commands are used for detection alerts.  This is the same
+    # recovery path as a manual ``mpremote connect COMx exec ...`` command.
+    "startup": ("exec", "import main; main.play_startup_melody()"),
 }
 _ERROR_MESSAGES = {
     "animal": "animal buzzer command failed",
