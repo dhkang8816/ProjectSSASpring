@@ -4,13 +4,22 @@
 <%@ taglib prefix="c" uri="jakarta.tags.core"%>
 
 <c:set var="isAdmin" value="false" scope="page" />
+<c:set var="hasUserRole" value="false" scope="page" />
+<c:set var="hasGuestRole" value="false" scope="page" />
 <c:if test="${not empty sessionScope.SPRING_SECURITY_CONTEXT}">
 	<c:forEach var="auth" items="${sessionScope.SPRING_SECURITY_CONTEXT.authentication.authorities}">
 		<c:if test="${auth.authority eq 'ROLE_ADMIN'}">
 			<c:set var="isAdmin" value="true" scope="page" />
 		</c:if>
+		<c:if test="${auth.authority eq 'ROLE_USER'}">
+			<c:set var="hasUserRole" value="true" scope="page" />
+		</c:if>
+		<c:if test="${auth.authority eq 'ROLE_GUEST'}">
+			<c:set var="hasGuestRole" value="true" scope="page" />
+		</c:if>
 	</c:forEach>
 </c:if>
+<c:set var="isGuestOnly" value="${hasGuestRole and not hasUserRole and not isAdmin}" scope="page" />
 
 
 <nav id="ssaSidebar" class="ssa-sidebar">
@@ -107,6 +116,7 @@
 		</c:if>
 
 
+		<c:if test="${not isGuestOnly}">
 		<!-- REPORT -->
 		<li><a href="javascript:void(0);"> 보고서 등록 </a>
 
@@ -133,6 +143,8 @@
 			</ul></li>
 
 
+		</c:if>
+
 		<!-- DANGER -->
 		<li><a href="javascript:void(0);"> 이상관리 </a>
 
@@ -151,6 +163,7 @@
 			</ul></li>
 
 
+		<c:if test="${not isGuestOnly}">
 		<!-- ANIMAL -->
 		<li><a href="javascript:void(0);"> 동물관리 </a>
 
@@ -162,6 +175,7 @@
 				<li><a href="<c:url value='/danger/list'/>"> 이상객체 관리 </a></li>
 
 			</ul></li>
+		</c:if>
 
 	</ul>
 

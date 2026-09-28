@@ -62,10 +62,11 @@
 	    <security:intercept-url pattern="/yolo/labels" method="GET" access="permitAll" />
 	    <security:intercept-url pattern="/yolo/environment/**" method="GET" access="permitAll" />
 	    <security:intercept-url pattern="/api/event/latest" method="GET" access="permitAll" />
+	    <security:intercept-url pattern="/dashboard/api/ai-briefing" method="GET" access="permitAll" />
 	    <security:intercept-url pattern="/workflow/**" access="hasAuthority('ROLE_ADMIN')" />
 	    <security:intercept-url pattern="/patrolreport/legacy/**" access="denyAll" />
-	    <security:intercept-url pattern="/patrolreport/register" access="isAuthenticated()" />
-	    <security:intercept-url pattern="/patrolreport/createInstantReport" access="isAuthenticated()" />
+	    <security:intercept-url pattern="/patrolreport/register" access="hasAnyAuthority('ROLE_ADMIN','ROLE_USER')" />
+	    <security:intercept-url pattern="/patrolreport/createInstantReport" access="hasAnyAuthority('ROLE_ADMIN','ROLE_USER')" />
 	    <security:intercept-url pattern="/guest/waiting" access="permitAll" />
 	    <!-- Flask worker coordination must remain server-to-server. It is not a UI page. -->
 	    <security:intercept-url pattern="/yolo/currentMappings" access="permitAll" />
@@ -73,6 +74,12 @@
 	    <security:intercept-url pattern="/api/v1/ai/targets" method="GET" access="permitAll" />
 	    <security:intercept-url pattern="/api/v1/ai/alert-policy" method="GET" access="permitAll" />
 	    <security:intercept-url pattern="/api/v1/ai/code-map" method="GET" access="permitAll" />
+
+	    <!-- ROLE_GUEST may use only the abnormal-event menu group. -->
+	    <security:intercept-url pattern="/alert/**" access="hasAnyAuthority('ROLE_ADMIN','ROLE_USER','ROLE_GUEST')" />
+	    <security:intercept-url pattern="/detection/**" access="hasAnyAuthority('ROLE_ADMIN','ROLE_USER','ROLE_GUEST')" />
+	    <security:intercept-url pattern="/dangerlog/**" access="hasAnyAuthority('ROLE_ADMIN','ROLE_USER','ROLE_GUEST')" />
+	    <security:intercept-url pattern="/dashboard/**" access="hasAnyAuthority('ROLE_ADMIN','ROLE_USER','ROLE_GUEST')" />
 	    
 	    <security:intercept-url pattern="/admin/**" access="hasAuthority('ROLE_ADMIN')" />
 	    <security:intercept-url pattern="/member/list" access="hasAuthority('ROLE_ADMIN')" />
@@ -81,25 +88,23 @@
 	    <security:intercept-url pattern="/member/regist" access="hasAuthority('ROLE_ADMIN')" />
 	    <!-- A signed-in member may open only their own profile. The controller
 	         enforces ownership; administrators retain access to every profile. -->
-	    <security:intercept-url pattern="/member/detail" access="isAuthenticated()" />
-	    <security:intercept-url pattern="/member/modifyForm" access="isAuthenticated()" />
-	    <security:intercept-url pattern="/member/modify" access="isAuthenticated()" />
+	    <security:intercept-url pattern="/member/detail" access="hasAnyAuthority('ROLE_ADMIN','ROLE_USER')" />
+	    <security:intercept-url pattern="/member/modifyForm" access="hasAnyAuthority('ROLE_ADMIN','ROLE_USER')" />
+	    <security:intercept-url pattern="/member/modify" access="hasAnyAuthority('ROLE_ADMIN','ROLE_USER')" />
 	    <security:intercept-url pattern="/loginlog/**" access="hasAuthority('ROLE_ADMIN')" />
 	    <security:intercept-url pattern="/commoncode/**" access="hasAuthority('ROLE_ADMIN')" />
-	    <security:intercept-url pattern="/member/**" access="isAuthenticated()" />
-	    <security:intercept-url pattern="/animal/**" access="isAuthenticated()" />
-	    <security:intercept-url pattern="/danger/**" access="isAuthenticated()" />
-	    <security:intercept-url pattern="/drone/**" access="isAuthenticated()" />
-	    <security:intercept-url pattern="/detection/**" access="isAuthenticated()" />
-	    <security:intercept-url pattern="/dangerlog/**" access="isAuthenticated()" />
-	    <security:intercept-url pattern="/api/event/**" access="isAuthenticated()" />
-        <security:intercept-url pattern="/dashboard/**" access="isAuthenticated()" />
-	    <security:intercept-url pattern="/flighthistory/**" access="isAuthenticated()" />
-	    <security:intercept-url pattern="/patrolreport/**" access="isAuthenticated()" />
-	    <security:intercept-url pattern="/api/**" access="isAuthenticated()" />
+	    <security:intercept-url pattern="/member/**" access="hasAnyAuthority('ROLE_ADMIN','ROLE_USER')" />
+	    <security:intercept-url pattern="/animal/**" access="hasAnyAuthority('ROLE_ADMIN','ROLE_USER')" />
+	    <security:intercept-url pattern="/danger/**" access="hasAnyAuthority('ROLE_ADMIN','ROLE_USER')" />
+	    <security:intercept-url pattern="/drone/**" access="hasAnyAuthority('ROLE_ADMIN','ROLE_USER')" />
+	    <security:intercept-url pattern="/yolo/**" access="hasAnyAuthority('ROLE_ADMIN','ROLE_USER')" />
+	    <security:intercept-url pattern="/api/event/**" access="hasAnyAuthority('ROLE_ADMIN','ROLE_USER')" />
+	    <security:intercept-url pattern="/flighthistory/**" access="hasAnyAuthority('ROLE_ADMIN','ROLE_USER')" />
+	    <security:intercept-url pattern="/patrolreport/**" access="hasAnyAuthority('ROLE_ADMIN','ROLE_USER')" />
+	    <security:intercept-url pattern="/api/**" access="hasAnyAuthority('ROLE_ADMIN','ROLE_USER')" />
 	    
-	    <!-- Every remaining MVC menu/page, including / and /yolo/**, needs login. -->
-	    <security:intercept-url pattern="/**" access="isAuthenticated()" />
+	    <!-- Every remaining non-public MVC route is for standard users or admins. -->
+	    <security:intercept-url pattern="/**" access="hasAnyAuthority('ROLE_ADMIN','ROLE_USER')" />
 	    
 	    
 	    <security:form-login
