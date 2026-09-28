@@ -14,9 +14,11 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.spring.cmd.PageMaker;
 import com.spring.dto.AnimalCounterVO;
+import com.spring.dto.AlertPolicyVO;
 import com.spring.dto.CommonCodeVO;
 import com.spring.dto.DetectionLogVO;
 import com.spring.service.AnimalCounterService;
+import com.spring.service.AlertPolicyService;
 import com.spring.service.CommonCodeService;
 import com.spring.service.DetectionLogService;
 
@@ -30,6 +32,8 @@ public class AiIntegrationController {
     private final AnimalCounterService animalCounterService;
     private final DetectionLogService detectionLogService;
     private final CommonCodeService commonCodeService; // 공통코드 서비스 주입
+
+    private final AlertPolicyService alertPolicyService;
 
     @GetMapping("/targets")
     public ResponseEntity<Map<String, Integer>> getAiTargetCounts() {
@@ -56,6 +60,22 @@ public class AiIntegrationController {
             targetMap.put("1", 0);
             return new ResponseEntity<>(targetMap, HttpStatus.INTERNAL_SERVER_ERROR);
         }
+    }
+
+    /**
+     * Read-only runtime configuration consumed by Flask. It follows the
+     * existing public AI metadata API contract and exposes no account or DB
+     * credentials.
+     */
+    @GetMapping("/alert-policy")
+    public ResponseEntity<Map<String, Object>> getAnimalShortageAlertPolicy() {
+        AlertPolicyVO policy = alertPolicyService.getAnimalShortagePolicy();
+        Map<String, Object> response = new HashMap<>();
+        response.put("underTargetSeconds", policy.getUnderTargetSeconds());
+        response.put("version", policy.getUpdatedAt() == null
+                ? "DEFAULT"
+                : String.valueOf(policy.getUpdatedAt().getTime()));
+        return new ResponseEntity<>(response, HttpStatus.OK);
     }
 
     @PostMapping("/report-log")

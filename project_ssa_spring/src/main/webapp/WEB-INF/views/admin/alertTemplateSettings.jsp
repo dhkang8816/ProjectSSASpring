@@ -93,6 +93,12 @@ body {
     gap: 12px;
 }
 
+#alertTemplateSettingsPage .policy-form {
+    display: grid;
+    gap: 12px;
+    margin-top: 12px;
+}
+
 #alertTemplateSettingsPage .template-card {
     padding: 15px;
     background: #0f172a;
@@ -125,6 +131,35 @@ body {
     color: #94a3b8;
     font-size: 12px;
     line-height: 1.5;
+}
+
+#alertTemplateSettingsPage .policy-input-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+#alertTemplateSettingsPage .policy-input-row input {
+    width: 130px;
+    height: 38px;
+    padding: 0 10px;
+    color: #e2e8f0;
+    background: #111827;
+    border: 1px solid #334155;
+    border-radius: 7px;
+    font: inherit;
+    font-weight: 700;
+}
+
+#alertTemplateSettingsPage .policy-input-row input:focus {
+    outline: none;
+    border-color: #38bdf8;
+}
+
+#alertTemplateSettingsPage .policy-input-unit {
+    color: #cbd5e1;
+    font-size: 14px;
+    font-weight: 700;
 }
 
 #alertTemplateSettingsPage textarea {
@@ -225,6 +260,12 @@ body {
             <c:if test="${not empty templateError}">
                 <div class="template-notice error"><c:out value="${templateError}" /></div>
             </c:if>
+            <c:if test="${not empty policySuccess}">
+                <div class="template-notice success"><c:out value="${policySuccess}" /></div>
+            </c:if>
+            <c:if test="${not empty policyError}">
+                <div class="template-notice error"><c:out value="${policyError}" /></div>
+            </c:if>
 
             <c:set var="animalTemplate" value="${templatesByKey['ANIMAL_SHORTAGE']}" />
             <c:set var="dangerTemplate" value="${templatesByKey['DANGER_OBJECT']}" />
@@ -246,6 +287,24 @@ body {
                 <div class="template-actions">
                     <button type="reset" class="cancel-button">입력 취소</button>
                     <button type="submit" class="save-button">문구 저장</button>
+                </div>
+            </form:form>
+
+            <form:form class="policy-form" method="post" action="${pageContext.request.contextPath}/admin/alert-policy?popup=true">
+                <article class="template-card">
+                    <h3 class="template-card-title">미달 경보 지속 시간</h3>
+                    <p class="template-card-help">동물 탐지 결과에서 보호중 개체수가 기준보다 적은 상태가 이 시간 이상 연속될 때 경보를 생성합니다. 설정 변경 후 진행 중이던 미달 시간은 새 기준으로 다시 계산됩니다.</p>
+                    <div class="policy-input-row">
+                        <input id="underTargetSeconds" name="underTargetSeconds" type="number"
+                               min="1" max="3600" step="1" required
+                               value="${animalShortagePolicy.underTargetSeconds}" />
+                        <span class="policy-input-unit">초</span>
+                    </div>
+                    <p class="template-meta">현재 설정: <c:out value="${animalShortagePolicy.underTargetSeconds}" />초<c:if test="${not empty animalShortagePolicy.updatedAt}"> · 마지막 저장: <fmt:formatDate value="${animalShortagePolicy.updatedAt}" pattern="yyyy-MM-dd HH:mm:ss" /> · <c:out value="${animalShortagePolicy.updatedBy}" /></c:if></p>
+                </article>
+
+                <div class="template-actions">
+                    <button type="submit" class="save-button">시간 저장</button>
                 </div>
             </form:form>
         </section>

@@ -38,6 +38,9 @@
 	<bean id="alertMessageTemplateDAO" class="com.spring.dao.AlertMessageTemplateDAOImpl">
 		<constructor-arg ref="sqlSession" />
 	</bean>
+	<bean id="alertPolicyDAO" class="com.spring.dao.AlertPolicyDAOImpl">
+		<constructor-arg ref="sqlSession" />
+	</bean>
 	<bean id="LoginLogDAO" class="com.spring.dao.LoginLogDAOImpl">
 		<constructor-arg ref="sqlSession" />
 	</bean>
@@ -51,6 +54,9 @@
 		<constructor-arg ref="sqlSession" />
 	</bean>
 	<bean id="EnvironmentDAO" class="com.spring.dao.EnvironmentDAOImpl">
+		<constructor-arg ref="sqlSession" />
+	</bean>
+	<bean id="AlertPolicyDAO" class="com.spring.dao.AlertPolicyDAOImpl">
 		<constructor-arg ref="sqlSession" />
 	</bean>
 
@@ -98,6 +104,9 @@
 		class="com.spring.service.AlertMessageTemplateServiceImpl" init-method="reloadFromDatabase">
 		<constructor-arg ref="alertMessageTemplateDAO" />
 	</bean>
+	<bean id="alertPolicyService" class="com.spring.service.AlertPolicyServiceImpl">
+		<constructor-arg ref="alertPolicyDAO" />
+	</bean>
 	<bean id="PatrolReportService"
 		class="com.spring.service.PatrolReportServiceImpl">
 		<constructor-arg ref="PatrolReportDAO" />
@@ -138,5 +147,8 @@
 	</bean>
 	<bean id="AlertMessageTemplateService"
 	      class="com.spring.service.AlertMessageTemplateServiceImpl">
+	</bean>
+	<bean id="AlertPolicyService"
+	      class="com.spring.service.AlertPolicyServiceImpl">
 	</bean>
 </beans>

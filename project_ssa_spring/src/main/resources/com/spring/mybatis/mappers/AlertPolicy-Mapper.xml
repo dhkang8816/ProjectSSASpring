@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="AlertPolicy-Mapper">
+
+    <resultMap id="alertPolicyMap" type="com.spring.dto.AlertPolicyVO">
+        <id property="policyKey" column="POLICY_KEY" />
+        <result property="underTargetSeconds" column="UNDER_TARGET_SECONDS" />
+        <result property="updatedBy" column="UPDATED_BY" />
+        <result property="updatedAt" column="UPDATED_AT" />
+    </resultMap>
+
+    <select id="selectAnimalShortagePolicy" resultMap="alertPolicyMap">
+        SELECT POLICY_KEY, UNDER_TARGET_SECONDS, UPDATED_BY, UPDATED_AT
+        FROM ALERT_POLICY
+        WHERE POLICY_KEY = 'ANIMAL_SHORTAGE'
+    </select>
+
+    <update id="mergeAnimalShortagePolicy" parameterType="com.spring.dto.AlertPolicyVO">
+        MERGE INTO ALERT_POLICY target
+        USING (
+            SELECT #{policyKey} AS POLICY_KEY FROM DUAL
+        ) source
+        ON (target.POLICY_KEY = source.POLICY_KEY)
+        WHEN MATCHED THEN
+            UPDATE SET
+                target.UNDER_TARGET_SECONDS = #{underTargetSeconds},
+                target.UPDATED_BY = #{updatedBy},
+                target.UPDATED_AT = SYSTIMESTAMP
+        WHEN NOT MATCHED THEN
+            INSERT (POLICY_KEY, UNDER_TARGET_SECONDS, UPDATED_BY, UPDATED_AT)
+            VALUES (#{policyKey}, #{underTargetSeconds}, #{updatedBy}, SYSTIMESTAMP)
+    </update>
+</mapper>

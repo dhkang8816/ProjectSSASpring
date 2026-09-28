@@ -23,16 +23,25 @@ class AnimalUnderTargetPolicyTest(unittest.TestCase):
         self.targets = patch.object(yolo_detector, "TARGET_ANIMALS", {"0": 2, "1": 1})
         self.names = patch.object(yolo_detector, "ANIMAL_NAME_MAP", {"dog": "개", "cat": "고양이"})
         self.cooldown = patch.object(yolo_detector, "ALARM_COOLDOWN", 10.0)
+        self.duration = patch.object(yolo_detector, "ANIMAL_UNDER_TARGET_SECONDS", 10.0)
+        self.policy_version = patch.object(yolo_detector, "_animal_policy_version", "test-v1")
+        self.refresh = patch.object(yolo_detector, "refresh_animal_targets_if_due")
         self.settings.start()
         self.targets.start()
         self.names.start()
         self.cooldown.start()
+        self.duration.start()
+        self.policy_version.start()
+        self.refresh.start()
 
     def tearDown(self):
         self.cooldown.stop()
         self.names.stop()
         self.targets.stop()
         self.settings.stop()
+        self.refresh.stop()
+        self.policy_version.stop()
+        self.duration.stop()
         with yolo_detector._event_state_lock:
             yolo_detector.under_target_start_time.clear()
             yolo_detector.recovery_start_time.clear()
@@ -82,6 +91,21 @@ class AnimalUnderTargetPolicyTest(unittest.TestCase):
 
         send_log.assert_called_once()
         trigger_sound.assert_called_once()
+
+    def test_policy_change_restarts_pending_shortage_duration(self):
+        with patch.object(yolo_detector.time, "time", side_effect=(0.0, 11.0)), \
+                patch.object(yolo_detector.oracle_service, "send_log_to_oracle") as send_log, \
+                patch.object(yolo_detector, "trigger_animal_sound") as trigger_sound:
+            yolo_detector.process_animal_detection_logic(["dog"], None, self.SOURCE_KEY)
+            changed = yolo_detector._apply_animal_shortage_policy({
+                "underTargetSeconds": 20.0,
+                "version": "test-v2",
+            })
+            yolo_detector.process_animal_detection_logic(["dog"], None, self.SOURCE_KEY)
+
+        self.assertTrue(changed)
+        send_log.assert_not_called()
+        trigger_sound.assert_not_called()
 
 
 if __name__ == "__main__":

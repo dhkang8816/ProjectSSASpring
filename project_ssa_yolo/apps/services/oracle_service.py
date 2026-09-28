@@ -19,6 +19,7 @@ API_DANGER_REPORT = f"{SPRING_HOST}/yolo/api/report"
 # 공통 코드 스캔 경로 동기화 완료
 API_TARGETS = f"{SPRING_HOST}/api/v1/ai/targets"
 API_CODE_MAP = f"{SPRING_HOST}/api/v1/ai/code-map"
+API_ALERT_POLICY = f"{SPRING_HOST}/api/v1/ai/alert-policy"
 METADATA_REQUEST_TIMEOUT = runtime_settings.METADATA_REQUEST_TIMEOUT_SECONDS
 FALLBACK_TARGET_COUNTS = {"0": 2, "1": 1}
 FALLBACK_CODE_MAP = {"0": "개", "1": "고양이"}
@@ -307,3 +308,31 @@ def fetch_code_map():
 
 def fetch_target_counts():
     return _fetch_metadata(API_TARGETS, FALLBACK_TARGET_COUNTS, _normalize_target_count)
+
+
+def fetch_alert_policy():
+    """Fetch the persisted shortage duration without replacing a live cache on failure."""
+    try:
+        response = requests.get(API_ALERT_POLICY, timeout=METADATA_REQUEST_TIMEOUT)
+        response.raise_for_status()
+        policy = response.json()
+        if not isinstance(policy, dict):
+            raise ValueError("alert policy response must be an object")
+
+        seconds = float(policy["underTargetSeconds"])
+        if not 1.0 <= seconds <= 3600.0:
+            raise ValueError("underTargetSeconds must be between 1 and 3600")
+
+        version = str(policy.get("version", "")).strip()
+        if not version:
+            raise ValueError("alert policy version is required")
+
+        return {
+            "underTargetSeconds": seconds,
+            "version": version,
+        }
+    except (KeyError, TypeError, ValueError, requests.RequestException) as error:
+        # Unlike target counts, policy must retain its last known value while
+        # Spring is temporarily unavailable.
+        print(f"[AI alert policy retained cache] {error}")
+        return None

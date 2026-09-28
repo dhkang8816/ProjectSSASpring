@@ -14,10 +14,13 @@
 		<typeAlias type="com.spring.dto.AlertLogVO" alias="alertLog" />
 		<typeAlias type="com.spring.dto.AnimalCounterVO" alias="animalCounter" />
 		<typeAlias type="com.spring.dto.AnimalDetailVO" alias="animalDetail" />
+		<typeAlias type="com.spring.dto.AlertMessageTemplateVO" alias="alertmessagetemplate" />
+		<typeAlias type="com.spring.dto.AlertPolicyVO" alias="alertpolicy" />
 		<typeAlias type="com.spring.dto.CommonCodeVO" alias="commonCode" />
 		<typeAlias type="com.spring.dto.DangerDetailVO" alias="dangerDetail" />
 		<typeAlias type="com.spring.dto.DangerLogVO" alias="dangerLog" />
 		<typeAlias type="com.spring.dto.DetectionLogVO" alias="detectionLog" />
+		<typeAlias type="com.spring.dto.DiagnosticResultVO" alias="diagnosticresult" />
 		<typeAlias type="com.spring.dto.DroneVO" alias="drone" />
 		<typeAlias type="com.spring.dto.FlightHistoryVO" alias="flightHistory" />
 		<typeAlias type="com.spring.dto.LoginLogVO" alias="loginLog" />
@@ -28,5 +31,7 @@
 		<typeAlias type="com.spring.dto.VideoDroneMapVO" alias="videoDroneMap" />
 		<typeAlias type="com.spring.dto.WorkFlowVO" alias="workFlow" />
 		<typeAlias type="com.spring.dto.EnvironmentVO" alias="environment" />
+		<typeAlias type="com.spring.dto.SpaceWeatherStatusVO" alias="spaceweatherstatus" />
+		<typeAlias type="com.spring.dto.WeatherStatusVO" alias="weatherstatus" />
 	</typeAliases>
 </configuration>

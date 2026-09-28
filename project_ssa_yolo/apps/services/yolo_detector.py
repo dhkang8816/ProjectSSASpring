@@ -40,6 +40,7 @@ DANGER_LABELS = ("blue_alien", "blue_shark", "pink_dragon", "tiger")
 
 ANIMAL_NAME_MAP = {}
 TARGET_ANIMALS = {"0": 2, "1": 1}
+ANIMAL_UNDER_TARGET_SECONDS = runtime_settings.ANIMAL_UNDER_TARGET_SECONDS
 ALARM_COOLDOWN = runtime_settings.ALARM_COOLDOWN_SECONDS
 program_start_time = None
 
@@ -55,10 +56,11 @@ source_changed = False
 
 _model = None
 _model_inference_lock = threading.RLock()
-_metadata_lock = threading.Lock()
+_metadata_lock = threading.RLock()
 _metadata_initialized = False
 _last_target_refresh_time = 0.0
 _target_refresh_in_progress = False
+_animal_policy_version = None
 _event_state_lock = threading.RLock()
 _manager_lock = threading.RLock()
 _legacy_state_lock = threading.Lock()
@@ -70,7 +72,7 @@ last_alarm_time = {}
 
 
 def init_ai_metadata_from_oracle():
-    """Load common-code labels and target counts once without blocking streams."""
+    """Load common-code labels, targets, and the runtime policy once."""
     global ANIMAL_NAME_MAP, TARGET_ANIMALS, program_start_time, _metadata_initialized
     global _last_target_refresh_time
 
@@ -87,6 +89,9 @@ def init_ai_metadata_from_oracle():
                 for label, code in YOLO_TO_CODE.items()
                 if code in db_code_map
             }
+            alert_policy = oracle_service.fetch_alert_policy()
+            if alert_policy is not None:
+                _apply_animal_shortage_policy(alert_policy)
             print(f"[YOLO metadata ready] targets={TARGET_ANIMALS}")
         except Exception as error:
             print(f"[YOLO metadata fallback] {error}")
@@ -96,7 +101,7 @@ def init_ai_metadata_from_oracle():
 
 
 def refresh_animal_targets_if_due():
-    """Schedule a shelter-count refresh without blocking SourceWorker inference."""
+    """Refresh target counts and alert policy without blocking inference."""
     global TARGET_ANIMALS, _last_target_refresh_time, _target_refresh_in_progress
 
     if not _metadata_initialized:
@@ -118,8 +123,11 @@ def refresh_animal_targets_if_due():
             refreshed_targets = {
                 str(key): int(value) for key, value in raw_targets.items()
             }
+            alert_policy = oracle_service.fetch_alert_policy()
             with _metadata_lock:
                 TARGET_ANIMALS = refreshed_targets
+            if alert_policy is not None:
+                _apply_animal_shortage_policy(alert_policy)
         except Exception as error:
             # Retain the last known protected-animal counts during a transient
             # Spring/Oracle outage rather than changing shortage behavior.
@@ -134,6 +142,43 @@ def refresh_animal_targets_if_due():
         name="yolo-animal-target-refresh",
         daemon=True,
     ).start()
+
+
+def _apply_animal_shortage_policy(policy):
+    """Install a fetched duration and restart only pending shortage timers."""
+    global ANIMAL_UNDER_TARGET_SECONDS, _animal_policy_version
+
+    seconds = float(policy["underTargetSeconds"])
+    version = str(policy["version"])
+    if not 1.0 <= seconds <= 3600.0 or not version:
+        raise ValueError("invalid animal shortage policy")
+
+    with _metadata_lock:
+        changed = (
+            seconds != ANIMAL_UNDER_TARGET_SECONDS
+            or version != _animal_policy_version
+        )
+        if not changed:
+            return False
+        ANIMAL_UNDER_TARGET_SECONDS = seconds
+        _animal_policy_version = version
+
+    # A timer that began under the old duration must not fire under the new
+    # rule. Cooldowns remain intact because only the pending shortage window
+    # changes.
+    with _event_state_lock:
+        for source_key, under_target in under_target_start_time.items():
+            for label in ANIMAL_LABELS:
+                under_target[YOLO_TO_CODE[label]] = None
+        for source_key, recovery in recovery_start_time.items():
+            for label in ANIMAL_LABELS:
+                recovery[YOLO_TO_CODE[label]] = None
+
+    print(
+        "[YOLO alert policy applied] "
+        f"under_target_seconds={ANIMAL_UNDER_TARGET_SECONDS}, version={version}"
+    )
+    return True
 
 
 def _event_state_for(source_key):
@@ -194,7 +239,7 @@ def process_animal_detection_logic(detected_names, frame, source_key=None, boxes
                     under_target[code_id] = current_time
                 elif (
                     current_time - under_target[code_id]
-                    >= runtime_settings.ANIMAL_UNDER_TARGET_SECONDS
+                    >= ANIMAL_UNDER_TARGET_SECONDS
                     and current_time - cooldown.get(code_id, 0.0) >= ALARM_COOLDOWN
                 ):
                     cooldown[code_id] = current_time
