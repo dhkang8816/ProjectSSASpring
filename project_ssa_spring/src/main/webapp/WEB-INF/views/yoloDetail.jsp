@@ -873,16 +873,16 @@ body {
 					<div class="env-section-title">Space Weather Risk</div>
 					<div class="env-card" style="gap: 6px;">
 						<div class="env-metric-item" style="flex-direction: row; justify-content: space-between; align-items: center;">
-							<span class="env-metric-label">지자기 (G Scale)</span>
+							<span class="env-metric-label">지자기 폭풍 (G Scale)</span>
 							<span id="spaceGScale" class="env-metric-value status-offline">UNKNOWN</span>
 						</div>
 						<div class="env-metric-item" style="flex-direction: row; justify-content: space-between; align-items: center;">
-							<span class="env-metric-label">복사 (R Scale)</span>
-							<span id="spaceRScale" class="env-metric-value status-offline">UNKNOWN</span>
+							<span class="env-metric-label">태양복사 폭풍 (S Scale)</span>
+							<span id="spaceSScale" class="env-metric-value status-offline">UNKNOWN</span>
 						</div>
 						<div class="env-metric-item" style="flex-direction: row; justify-content: space-between; align-items: center;">
-							<span class="env-metric-label">태양양성자 (S Scale)</span>
-							<span id="spaceSScale" class="env-metric-value status-offline">UNKNOWN</span>
+							<span class="env-metric-label">전파 장애 (R Scale)</span>
+							<span id="spaceRScale" class="env-metric-value status-offline">UNKNOWN</span>
 						</div>
 					</div>
 				</div>
