@@ -38,7 +38,6 @@
 	<!-- Flask/YOLO event callbacks target YoloApiReceiverController (/yolo/api/**). -->
 	<security:http pattern="/resources/**" security="none" />
 	<security:http pattern="/yolo/api/**" security="none" />
-	<security:http pattern="/api/event/**" security="none" />
 	<security:http pattern="/api/user/**" security="none" />
 	
 	
@@ -47,13 +46,33 @@
 	    <security:csrf disabled="true" />
 	    
 	    <security:intercept-url pattern="/login" access="permitAll" />
+	    <!-- Public monitoring views: read-only stream and status requests only. -->
+	    <security:intercept-url pattern="/" access="permitAll" />
+	    <security:intercept-url pattern="/main" access="permitAll" />
+	    <security:intercept-url pattern="/yolo/view" access="permitAll" />
+	    <security:intercept-url pattern="/yolo/detail" access="permitAll" />
+	    <security:intercept-url pattern="/yolo/videoFeed" method="GET" access="permitAll" />
+	    <security:intercept-url pattern="/yolo/videoFeed/**" method="GET" access="permitAll" />
+	    <security:intercept-url pattern="/yolo/detection/status" method="GET" access="permitAll" />
+	    <security:intercept-url pattern="/yolo/buzzer/enabled" method="GET" access="permitAll" />
+	    <security:intercept-url pattern="/yolo/envSensor/status" method="GET" access="permitAll" />
+	    <security:intercept-url pattern="/yolo/battery/status" method="GET" access="permitAll" />
+	    <security:intercept-url pattern="/yolo/battery/status/**" method="GET" access="permitAll" />
+	    <security:intercept-url pattern="/yolo/flight/status" method="GET" access="permitAll" />
+	    <security:intercept-url pattern="/yolo/labels" method="GET" access="permitAll" />
+	    <security:intercept-url pattern="/yolo/environment/**" method="GET" access="permitAll" />
+	    <security:intercept-url pattern="/api/event/latest" method="GET" access="permitAll" />
 	    <security:intercept-url pattern="/workflow/**" access="hasAuthority('ROLE_ADMIN')" />
 	    <security:intercept-url pattern="/patrolreport/legacy/**" access="denyAll" />
 	    <security:intercept-url pattern="/patrolreport/register" access="isAuthenticated()" />
 	    <security:intercept-url pattern="/patrolreport/createInstantReport" access="isAuthenticated()" />
-	    <security:intercept-url pattern="/" access="permitAll" />
-	    <security:intercept-url pattern="/main" access="permitAll" />
 	    <security:intercept-url pattern="/guest/waiting" access="permitAll" />
+	    <!-- Flask worker coordination must remain server-to-server. It is not a UI page. -->
+	    <security:intercept-url pattern="/yolo/currentMappings" access="permitAll" />
+	    <!-- Flask reads these non-secret detector metadata values without a browser session. -->
+	    <security:intercept-url pattern="/api/v1/ai/targets" method="GET" access="permitAll" />
+	    <security:intercept-url pattern="/api/v1/ai/alert-policy" method="GET" access="permitAll" />
+	    <security:intercept-url pattern="/api/v1/ai/code-map" method="GET" access="permitAll" />
 	    
 	    <security:intercept-url pattern="/admin/**" access="hasAuthority('ROLE_ADMIN')" />
 	    <security:intercept-url pattern="/member/list" access="hasAuthority('ROLE_ADMIN')" />
@@ -67,19 +86,20 @@
 	    <security:intercept-url pattern="/member/modify" access="isAuthenticated()" />
 	    <security:intercept-url pattern="/loginlog/**" access="hasAuthority('ROLE_ADMIN')" />
 	    <security:intercept-url pattern="/commoncode/**" access="hasAuthority('ROLE_ADMIN')" />
-	    <security:intercept-url pattern="/member/**" access="permitAll" />
-	    <security:intercept-url pattern="/animal/**" access="permitAll" />
-	    <security:intercept-url pattern="/danger/**" access="permitAll" />
-	    <security:intercept-url pattern="/drone/**" access="permitAll" />
-	    <security:intercept-url pattern="/detection/**" access="permitAll" />
-	    <security:intercept-url pattern="/dangerlog/**" access="permitAll" />
-	    <security:intercept-url pattern="/api/event/**" access="permitAll" />
-        <security:intercept-url pattern="/dashboard/**" access="permitAll" />
-	    <security:intercept-url pattern="/flighthistory/**" access="permitAll" />
+	    <security:intercept-url pattern="/member/**" access="isAuthenticated()" />
+	    <security:intercept-url pattern="/animal/**" access="isAuthenticated()" />
+	    <security:intercept-url pattern="/danger/**" access="isAuthenticated()" />
+	    <security:intercept-url pattern="/drone/**" access="isAuthenticated()" />
+	    <security:intercept-url pattern="/detection/**" access="isAuthenticated()" />
+	    <security:intercept-url pattern="/dangerlog/**" access="isAuthenticated()" />
+	    <security:intercept-url pattern="/api/event/**" access="isAuthenticated()" />
+        <security:intercept-url pattern="/dashboard/**" access="isAuthenticated()" />
+	    <security:intercept-url pattern="/flighthistory/**" access="isAuthenticated()" />
 	    <security:intercept-url pattern="/patrolreport/**" access="isAuthenticated()" />
-	    <security:intercept-url pattern="/api/**" access="permitAll" />
+	    <security:intercept-url pattern="/api/**" access="isAuthenticated()" />
 	    
-	    <security:intercept-url pattern="/**" access="permitAll" />
+	    <!-- Every remaining MVC menu/page, including / and /yolo/**, needs login. -->
+	    <security:intercept-url pattern="/**" access="isAuthenticated()" />
 	    
 	    
 	    <security:form-login

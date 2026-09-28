@@ -22,6 +22,7 @@ public class AlertPolicyServiceImpl implements AlertPolicyService {
      * what Flask uses before the migration has been applied.
      */
     private volatile AlertPolicyVO cachedPolicy = defaultPolicy();
+    private volatile boolean availabilityWarningLogged;
 
     @Override
     public AlertPolicyVO getAnimalShortagePolicy() {
@@ -30,8 +31,12 @@ public class AlertPolicyServiceImpl implements AlertPolicyService {
             if (policy != null && isValidDuration(policy.getUnderTargetSeconds())) {
                 cachedPolicy = copyOf(policy);
             }
+            availabilityWarningLogged = false;
         } catch (RuntimeException ex) {
-            log.warn("Alert policy table is unavailable; using the last known policy.");
+            if (!availabilityWarningLogged) {
+                availabilityWarningLogged = true;
+                log.warn("Alert policy table is unavailable; using the last known policy.");
+            }
         }
         return copyOf(cachedPolicy);
     }
