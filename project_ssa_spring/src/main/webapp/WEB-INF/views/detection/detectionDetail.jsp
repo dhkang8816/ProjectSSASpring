@@ -132,6 +132,44 @@ select:focus, textarea:focus {
     box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.25) !important;
 }
 
+.status-choice {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+button.status-choice-button {
+    min-width: 94px;
+    padding: 9px 14px;
+    color: #94a3b8;
+    background: #111827;
+    border: 1px solid #334155;
+    border-radius: 7px !important;
+}
+
+button.status-choice-button:hover {
+    color: #e2e8f0;
+    background: #1e293b;
+}
+
+button.status-choice-button.is-selected.status-unverified {
+    color: #fecaca;
+    background: #3b1d2a;
+    border-color: #ef4444;
+}
+
+button.status-choice-button.is-selected.status-progress {
+    color: #fde68a;
+    background: #3b2a16;
+    border-color: #f59e0b;
+}
+
+button.status-choice-button.is-selected.status-complete {
+    color: #bbf7d0;
+    background: #153526;
+    border-color: #22c55e;
+}
+
 .btn-group {
     margin-top: 28px;
     display: flex;
@@ -217,12 +255,13 @@ button.btn-list:hover {
                 <tr>
                     <th>관제원 현장 조치</th>
                     <td>
-                        
-        <select name="actionStatus">
-            <c:forEach var="actionStatus" items="${actionStatusList}">
-                <option value="${actionStatus.code}" ${detection.actionStatus == actionStatus.code ? 'selected' : ''}>${actionStatus.codeName}</option>
-            </c:forEach>
-        </select>
+                        <input type="hidden" id="actionStatus" name="actionStatus"
+                            value="${empty detection.actionStatus ? '0' : detection.actionStatus}" />
+                        <div class="status-choice" role="group" aria-label="현장 조치 상태">
+                            <button type="button" class="status-choice-button status-unverified ${empty detection.actionStatus or detection.actionStatus eq '0' ? 'is-selected' : ''}" data-status="0">미확인</button>
+                            <button type="button" class="status-choice-button status-progress ${detection.actionStatus eq '1' ? 'is-selected' : ''}" data-status="1">조치중</button>
+                            <button type="button" class="status-choice-button status-complete ${detection.actionStatus eq '2' ? 'is-selected' : ''}" data-status="2">조치완료</button>
+                        </div>
                     </td>
                 </tr>
                 <tr>
@@ -246,6 +285,20 @@ button.btn-list:hover {
 </body>
 
 <script>
+
+(function () {
+    const statusInput = document.getElementById('actionStatus');
+    const statusButtons = document.querySelectorAll('.status-choice-button');
+
+    statusButtons.forEach(function (button) {
+        button.addEventListener('click', function () {
+            statusInput.value = button.dataset.status;
+            statusButtons.forEach(function (candidate) {
+                candidate.classList.toggle('is-selected', candidate === button);
+            });
+        });
+    });
+}());
 
 function fn_goList() {
     return closePopupAndRefreshParent("${pageContext.request.contextPath}/detection/list"
