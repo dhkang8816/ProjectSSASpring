@@ -1,7 +1,10 @@
 package com.spring.controller;
 
 import java.text.SimpleDateFormat;
+import java.time.LocalDate;
 import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
@@ -16,13 +19,14 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 
 import com.spring.cmd.PageMaker;
 import com.spring.dto.CommonCodeVO;
 import com.spring.dto.DangerLogVO;
 import com.spring.dto.DetectionLogVO;
-import com.spring.dto.FlightHistoryVO;
+import com.spring.service.AnimalDetailService;
 import com.spring.service.CommonCodeService;
 import com.spring.service.DangerLogService;
 import com.spring.service.DetectionLogService;
@@ -43,6 +47,9 @@ public class DashboardController {
 	@Autowired
 	private CommonCodeService commonCodeService;
 
+	@Autowired
+	private AnimalDetailService animalDetailService;
+
 	@GetMapping("/dashboard/main")
 	public String showDashboardMain() {
 		return "dashboard/dashboardMain";
@@ -50,19 +57,36 @@ public class DashboardController {
 
 	@RequestMapping(value = "/dashboard/api/ai-briefing", produces = "application/json; charset=UTF-8")
 	@ResponseBody
-	public ResponseEntity<Map<String, Object>> getAiBriefingReport() {
+	public ResponseEntity<Map<String, Object>> getAiBriefingReport(
+			@RequestParam(value = "date", required = false) String date) {
 		Map<String, Object> resultMap = new HashMap<>();
+		LocalDate selectedDate;
+		try {
+			selectedDate = date == null || date.isBlank() ? LocalDate.now() : LocalDate.parse(date);
+		} catch (DateTimeParseException e) {
+			resultMap.put("message", "기준일 형식이 올바르지 않습니다.");
+			return ResponseEntity.badRequest().body(resultMap);
+		}
+		Date selectedDateValue = java.sql.Date.valueOf(selectedDate);
 
-		double todayTotalFlightHours = 0.0;
-	    int totalTodayDetectCount = 0;
+		double selectedFlightHours = 0.0;
+		double cumulativeFlightHours = 0.0;
+	    int selectedDetectCount = 0;
 	    double actionCompleteRate = 0.0;
+	    double cumulativeActionCompleteRate = 0.0;
 	    long dangerTotal = 0;
 	    long dangerComplete = 0;
 	    long detectTotal = 0;
 	    long detectComplete = 0;
+	    long cumulativeDangerTotal = 0;
+	    long cumulativeDangerComplete = 0;
+	    long cumulativeDetectTotal = 0;
+	    long cumulativeDetectComplete = 0;
+	    long animalTotal = 0;
+	    long adoptedAnimalCount = 0;
+	    double animalAdoptionRate = 0.0;
 		List<DangerLogVO> dangerList = null;
 		List<DetectionLogVO> detectList = null;
-		List<FlightHistoryVO> flightList = null;
 		List<CommonCodeVO> dangerCodes = null;
 		List<CommonCodeVO> animalCodes = null;
 
@@ -74,64 +98,75 @@ public class DashboardController {
 	        animalCodes = commonCodeService.getCodeListByGroup("ANIMAL_TYPE");
 	        dangerList = dangerLogService.getDangerLogList(dbPageMaker);
 	        detectList = detectionLogService.getDetectionLogList(dbPageMaker);
-	        flightList = flightHistoryService.getFlightHistoryList(dbPageMaker);
-	        if (flightList != null) {
-	            Calendar today = Calendar.getInstance();
-	            for (FlightHistoryVO fvo : flightList) {
-	                if (fvo.getFlightDate() == null) {
-	                    continue;
-	                }
-	                Calendar flightDate = Calendar.getInstance();
-	                flightDate.setTime(fvo.getFlightDate());
-	                if (today.get(Calendar.ERA) == flightDate.get(Calendar.ERA)
-	                        && today.get(Calendar.YEAR) == flightDate.get(Calendar.YEAR)
-	                        && today.get(Calendar.DAY_OF_YEAR) == flightDate.get(Calendar.DAY_OF_YEAR)) {
-	                    todayTotalFlightHours += fvo.getFlightDuration();
-	                }
-	            }
-	        }
-	        Map<String, Object> dangerStats = dangerLogService.getTodayDangerStats();
-	        Map<String, Object> detectStats = detectionLogService.getTodayDetectionStats();
+	        Map<String, Object> selectedDangerStats = dangerLogService.getDangerStats(selectedDateValue);
+	        Map<String, Object> selectedDetectStats = detectionLogService.getDetectionStats(selectedDateValue);
+	        Map<String, Object> cumulativeDangerStats = dangerLogService.getDangerStats(null);
+	        Map<String, Object> cumulativeDetectStats = detectionLogService.getDetectionStats(null);
+	        Map<String, Object> selectedFlightStats = flightHistoryService.getFlightDurationStats(selectedDateValue);
+	        Map<String, Object> cumulativeFlightStats = flightHistoryService.getFlightDurationStats(null);
+	        Map<String, Object> animalStats = animalDetailService.getAnimalStatusStats();
 
-	        if (dangerStats != null) {
-	            dangerTotal = dangerStats.get("TOTAL_COUNT") != null ? ((Number) dangerStats.get("TOTAL_COUNT")).longValue() : 0;
-	            dangerComplete = dangerStats.get("COMPLETE_COUNT") != null ? ((Number) dangerStats.get("COMPLETE_COUNT")).longValue() : 0;
-	        }
+	        dangerTotal = statValue(selectedDangerStats, "TOTAL_COUNT");
+	        dangerComplete = statValue(selectedDangerStats, "COMPLETE_COUNT");
+	        detectTotal = statValue(selectedDetectStats, "TOTAL_COUNT");
+	        detectComplete = statValue(selectedDetectStats, "COMPLETE_COUNT");
+	        cumulativeDangerTotal = statValue(cumulativeDangerStats, "TOTAL_COUNT");
+	        cumulativeDangerComplete = statValue(cumulativeDangerStats, "COMPLETE_COUNT");
+	        cumulativeDetectTotal = statValue(cumulativeDetectStats, "TOTAL_COUNT");
+	        cumulativeDetectComplete = statValue(cumulativeDetectStats, "COMPLETE_COUNT");
+	        selectedFlightHours = statDecimalValue(selectedFlightStats, "TOTAL_FLIGHT_HOURS");
+	        cumulativeFlightHours = statDecimalValue(cumulativeFlightStats, "TOTAL_FLIGHT_HOURS");
+	        animalTotal = statValue(animalStats, "TOTAL_COUNT");
+	        adoptedAnimalCount = statValue(animalStats, "ADOPTED_COUNT");
 
-	        if (detectStats != null) {
-	            detectTotal = detectStats.get("TOTAL_COUNT") != null ? ((Number) detectStats.get("TOTAL_COUNT")).longValue() : 0;
-	            detectComplete = detectStats.get("COMPLETE_COUNT") != null ? ((Number) detectStats.get("COMPLETE_COUNT")).longValue() : 0;
-	        }
-	        totalTodayDetectCount = (int) (dangerTotal + detectTotal); 
-	        long totalCompleteCount = dangerComplete + detectComplete;
+	        selectedDetectCount = (int) (dangerTotal + detectTotal);
+	        long selectedCompleteCount = dangerComplete + detectComplete;
+	        long cumulativeTotalCount = cumulativeDangerTotal + cumulativeDetectTotal;
+	        long cumulativeCompleteCount = cumulativeDangerComplete + cumulativeDetectComplete;
 
-	        if (totalTodayDetectCount > 0) {
-	            actionCompleteRate = ((double) totalCompleteCount / totalTodayDetectCount) * 100;
+	        if (selectedDetectCount > 0) {
+	            actionCompleteRate = ((double) selectedCompleteCount / selectedDetectCount) * 100;
+	        }
+	        if (cumulativeTotalCount > 0) {
+	            cumulativeActionCompleteRate = ((double) cumulativeCompleteCount / cumulativeTotalCount) * 100;
+	        }
+	        if (animalTotal > 0) {
+	            animalAdoptionRate = ((double) adoptedAnimalCount / animalTotal) * 100;
 	        }
 
 	    } catch (Exception e) {
-	        totalTodayDetectCount = 0;
+	        selectedDetectCount = 0;
 	        actionCompleteRate = 0.0;
-	        todayTotalFlightHours = 0.0;
+	        cumulativeActionCompleteRate = 0.0;
+	        selectedFlightHours = 0.0;
+	        cumulativeFlightHours = 0.0;
 	    }
 
-	    long todayTotalFlightSeconds = Math.max(0L, Math.round(todayTotalFlightHours * 3600));
-	    String formattedFlightHours = String.format("%.2f", todayTotalFlightHours);
+	    long selectedFlightSeconds = Math.max(0L, Math.round(selectedFlightHours * 3600));
+	    long cumulativeFlightSeconds = Math.max(0L, Math.round(cumulativeFlightHours * 3600));
+	    String formattedFlightHours = String.format("%.2f", selectedFlightHours);
 	    // 기존 클라이언트 호환용 시간 값은 유지하고, 화면 표시용 초 단위 값을 함께 제공한다.
 	    resultMap.put("flightHours", Double.parseDouble(formattedFlightHours));
-	    resultMap.put("flightDurationSeconds", todayTotalFlightSeconds);
-	    resultMap.put("todayDetectCount", totalTodayDetectCount);                // 당일 탐지 총 건수
-	    resultMap.put("actionCompleteRate", Math.round(actionCompleteRate * 100) / 100.0); // 당일 조치 완료율(소수점 둘째자리 반올림)
-	    int realTimeDangerCount = (int) dangerTotal;   // 오늘 발생한 위험객체 건수
-	    int realTimeDetectionCount = (int) detectTotal; // 오늘 발생한 미달경보 건수
+	    resultMap.put("flightDurationSeconds", selectedFlightSeconds);
+	    resultMap.put("cumulativeFlightDurationSeconds", cumulativeFlightSeconds);
+	    resultMap.put("todayDetectCount", selectedDetectCount);
+	    resultMap.put("actionCompleteRate", Math.round(actionCompleteRate * 100) / 100.0);
+	    resultMap.put("cumulativeActionCompleteRate", Math.round(cumulativeActionCompleteRate * 100) / 100.0);
+	    resultMap.put("animalAdoptionRate", Math.round(animalAdoptionRate * 100) / 100.0);
+	    resultMap.put("animalTotal", animalTotal);
+	    resultMap.put("adoptedAnimalCount", adoptedAnimalCount);
+	    resultMap.put("selectedDate", selectedDate.toString());
+	    resultMap.put("selectedDateLabel", selectedDate.format(DateTimeFormatter.ofPattern("yyyy-MM-dd")));
+	    int realTimeDangerCount = (int) dangerTotal;
+	    int realTimeDetectionCount = (int) detectTotal;
 	    int safetyScore = (realTimeDangerCount * 15) + (realTimeDetectionCount * 5);
 	    if (safetyScore > 100) {
 	        safetyScore = 100;
 	    }
 	    resultMap.put("safetyScore", safetyScore);
 	    resultMap.put("todayDangerCount", dangerTotal);
-	    resultMap.put("dangerCount", dangerList != null ? dangerList.size() : 0);
-	    resultMap.put("detectionCount", detectList != null ? detectList.size() : 0);
+	    resultMap.put("dangerCount", cumulativeDangerTotal);
+	    resultMap.put("detectionCount", cumulativeDetectTotal);
 		List<String> dateLabels = new ArrayList<>();
 		List<Integer> dangerWeeklyData = new ArrayList<>();
 		List<Integer> detectWeeklyData = new ArrayList<>();
@@ -141,8 +176,8 @@ public class DashboardController {
 		SimpleDateFormat hourFormat = new SimpleDateFormat("HH");
 
 		Calendar cal = Calendar.getInstance();
-		Date todayDate = cal.getTime();
-		String todayStr = dbFormat.format(todayDate);
+		cal.setTime(selectedDateValue);
+		String selectedDateStr = dbFormat.format(cal.getTime());
 
 		cal.add(Calendar.DATE, -6);
 		for (int i = 0; i < 7; i++) {
@@ -188,10 +223,11 @@ public class DashboardController {
 		Map<String, Integer> dangerHourMap = new TreeMap<>();
 		Map<String, Integer> detectHourMap = new TreeMap<>();
 
-		LocalTime currentTime = LocalTime.now();
-		int currentHour = currentTime.getHour();
+		boolean isSelectedToday = selectedDate.equals(LocalDate.now());
+		int lastHour = isSelectedToday ? LocalTime.now().getHour() : 23;
+		int firstHour = isSelectedToday ? Math.max(0, lastHour - 5) : 0;
 
-		for (int h = Math.max(0, currentHour - 5); h <= currentHour; h++) {
+		for (int h = firstHour; h <= lastHour; h++) {
 			String hourKey = String.format("%02d:00", h);
 			dangerHourMap.put(hourKey, 0);
 			detectHourMap.put(hourKey, 0);
@@ -199,7 +235,7 @@ public class DashboardController {
 
 		if (dangerList != null) {
 			for (DangerLogVO vo : dangerList) {
-				if (vo.getDangerTime() != null && todayStr.equals(dbFormat.format(vo.getDangerTime()))) {
+				if (vo.getDangerTime() != null && selectedDateStr.equals(dbFormat.format(vo.getDangerTime()))) {
 					int voHour = Integer.parseInt(hourFormat.format(vo.getDangerTime()));
 					String hourKey = String.format("%02d:00", voHour);
 					dangerHourMap.put(hourKey, dangerHourMap.getOrDefault(hourKey, 0) + 1);
@@ -211,7 +247,7 @@ public class DashboardController {
 
 		if (detectList != null) {
 			for (DetectionLogVO vo : detectList) {
-				if (vo.getDetectTime() != null && todayStr.equals(dbFormat.format(vo.getDetectTime()))) {
+				if (vo.getDetectTime() != null && selectedDateStr.equals(dbFormat.format(vo.getDetectTime()))) {
 					int voHour = Integer.parseInt(hourFormat.format(vo.getDetectTime()));
 					String hourKey = String.format("%02d:00", voHour);
 					detectHourMap.put(hourKey, detectHourMap.getOrDefault(hourKey, 0) + 1);
@@ -227,7 +263,7 @@ public class DashboardController {
 			detectTimeData.add(detectHourMap.getOrDefault(hourStr, 0));
 		}
 
-		if (!timeLabels.isEmpty()) {
+		if (isSelectedToday && !timeLabels.isEmpty()) {
 			String lastLabel = timeLabels.get(timeLabels.size() - 1);
 			timeLabels.set(timeLabels.size() - 1, lastLabel + "(현재)");
 		}
@@ -250,7 +286,7 @@ public class DashboardController {
 
 		if (detectList != null) {
 			for (DetectionLogVO vo : detectList) {
-				if (vo.getDetectTime() != null && todayStr.equals(dbFormat.format(vo.getDetectTime()))
+				if (vo.getDetectTime() != null && selectedDateStr.equals(dbFormat.format(vo.getDetectTime()))
 						&& vo.getAnimalType() != null && dynamicAnimalMap.containsKey(vo.getAnimalType())) {
 					dynamicAnimalMap.put(vo.getAnimalType(), dynamicAnimalMap.get(vo.getAnimalType()) + 1);
 				}
@@ -281,7 +317,7 @@ public class DashboardController {
 		if (dangerList != null) {
 			for (DangerLogVO vo : dangerList) {
 				int voType = vo.getDangerType();
-				if (vo.getDangerTime() != null && todayStr.equals(dbFormat.format(vo.getDangerTime()))
+				if (vo.getDangerTime() != null && selectedDateStr.equals(dbFormat.format(vo.getDangerTime()))
 						&& dynamicDangerMap.containsKey(voType)) {
 					dynamicDangerMap.put(voType, dynamicDangerMap.get(voType) + 1);
 				}
@@ -295,6 +331,22 @@ public class DashboardController {
 		resultMap.put("dangerTypeLabels", dangerTypeLabels);
 		resultMap.put("dangerTypeData", dangerTypeData);
 		return ResponseEntity.ok(resultMap);
+	}
+
+	private long statValue(Map<String, Object> stats, String key) {
+		if (stats == null || stats.get(key) == null) {
+			return 0L;
+		}
+		Object value = stats.get(key);
+		return value instanceof Number ? ((Number) value).longValue() : 0L;
+	}
+
+	private double statDecimalValue(Map<String, Object> stats, String key) {
+		if (stats == null || stats.get(key) == null) {
+			return 0.0d;
+		}
+		Object value = stats.get(key);
+		return value instanceof Number ? ((Number) value).doubleValue() : 0.0d;
 	}
 
 }

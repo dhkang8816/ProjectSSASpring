@@ -147,6 +147,41 @@ button.btn-list:hover {
     color: #ef4444 !important;
     border: 1px solid rgba(239, 68, 68, 0.3) !important;
 }
+
+.battery-status {
+    display: inline-block;
+    min-width: 62px;
+    padding: 5px 11px;
+    border: 1px solid transparent;
+    border-radius: 7px;
+    font-size: 12px;
+    font-weight: 700;
+    text-align: center;
+}
+
+.battery-status.good {
+    background-color: rgba(34, 197, 94, 0.12);
+    border-color: rgba(34, 197, 94, 0.35);
+    color: #4ade80;
+}
+
+.battery-status.warning {
+    background-color: rgba(245, 158, 11, 0.12);
+    border-color: rgba(245, 158, 11, 0.35);
+    color: #fbbf24;
+}
+
+.battery-status.danger {
+    background-color: rgba(239, 68, 68, 0.12);
+    border-color: rgba(239, 68, 68, 0.35);
+    color: #f87171;
+}
+
+.battery-status.unavailable {
+    background-color: rgba(100, 116, 139, 0.16);
+    border-color: rgba(148, 163, 184, 0.25);
+    color: #94a3b8;
+}
 </style>
 </head>
 <body class="popup-page">
@@ -188,8 +223,8 @@ button.btn-list:hover {
                     <th>시작 배터리</th>
                     <td>
                         <c:choose>
-                            <c:when test="${empty flightHistory.startBatteryPercent}"><span class="badge-status rejected">측정 없음</span></c:when>
-                            <c:otherwise>${flightHistory.startBatteryPercent} %</c:otherwise>
+                            <c:when test="${empty flightHistory.startBatteryPercent}"><span class="battery-status unavailable">측정 없음</span></c:when>
+                            <c:otherwise><span class="battery-status ${flightHistory.startBatteryStatusClass}">${flightHistory.startBatteryPercent} %</span></c:otherwise>
                         </c:choose>
                     </td>
                 </tr>
@@ -197,8 +232,8 @@ button.btn-list:hover {
                     <th>종료 배터리</th>
                     <td>
                         <c:choose>
-                            <c:when test="${empty flightHistory.endBatteryPercent}"><span class="badge-status rejected">측정 없음</span></c:when>
-                            <c:otherwise>${flightHistory.endBatteryPercent} %</c:otherwise>
+                            <c:when test="${empty flightHistory.endBatteryPercent}"><span class="battery-status unavailable">측정 없음</span></c:when>
+                            <c:otherwise><span class="battery-status ${flightHistory.endBatteryStatusClass}">${flightHistory.endBatteryPercent} %</span></c:otherwise>
                         </c:choose>
                     </td>
                 </tr>
@@ -206,8 +241,8 @@ button.btn-list:hover {
                     <th>배터리 소모량</th>
                     <td>
                         <c:choose>
-                            <c:when test="${empty flightHistory.batteryConsumption}"><span class="badge-status rejected">측정 없음</span></c:when>
-                            <c:otherwise>${flightHistory.batteryConsumption} %</c:otherwise>
+                            <c:when test="${empty flightHistory.batteryConsumption}"><span class="battery-status unavailable">측정 없음</span></c:when>
+                            <c:otherwise><span class="battery-status ${flightHistory.batteryConsumptionStatusClass}">${flightHistory.batteryConsumption} %</span></c:otherwise>
                         </c:choose>
                     </td>
                 </tr>

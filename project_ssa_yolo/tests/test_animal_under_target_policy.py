@@ -52,7 +52,7 @@ class AnimalUnderTargetPolicyTest(unittest.TestCase):
             yolo_detector.under_target_start_time[self.SOURCE_KEY],
         )
 
-    def test_detected_animal_below_its_target_triggers_only_that_animal(self):
+    def test_detected_animal_starts_timer_for_its_missing_protected_peer(self):
         frame = object()
         with patch.object(yolo_detector.time, "time", side_effect=(0.0, 10.1)), \
                 patch.object(yolo_detector.oracle_service, "send_log_to_oracle") as send_log, \
@@ -60,11 +60,16 @@ class AnimalUnderTargetPolicyTest(unittest.TestCase):
             yolo_detector.process_animal_detection_logic(["dog"], frame, self.SOURCE_KEY)
             yolo_detector.process_animal_detection_logic(["dog"], frame, self.SOURCE_KEY)
 
-        send_log.assert_called_once()
-        self.assertEqual("0", send_log.call_args.kwargs["animal_type"])
-        self.assertEqual(1, send_log.call_args.kwargs["detect_count"])
-        trigger_sound.assert_called_once()
-        self.assertIsNone(yolo_detector.under_target_start_time[self.SOURCE_KEY]["1"])
+        self.assertEqual(2, send_log.call_count)
+        self.assertCountEqual(
+            ["0", "1"],
+            [call.kwargs["animal_type"] for call in send_log.call_args_list],
+        )
+        self.assertCountEqual(
+            [1, 0],
+            [call.kwargs["detect_count"] for call in send_log.call_args_list],
+        )
+        self.assertEqual(2, trigger_sound.call_count)
 
     def test_lost_detection_clears_pending_timer_instead_of_firing_later(self):
         with patch.object(yolo_detector.time, "time", side_effect=(0.0, 5.0, 11.0, 21.1)), \

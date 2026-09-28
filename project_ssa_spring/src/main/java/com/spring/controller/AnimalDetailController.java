@@ -83,8 +83,9 @@ public class AnimalDetailController {
     public String register(AnimalDetailVO vo, RedirectAttributes rttr,
             @RequestParam(value = "popup", defaultValue = "false") boolean popup,
             HttpServletRequest request) {
+        getAnimalUploadPath(request);
         String uploadedPicture = normalizeUploadedPicture(vo.getAnimalPicture(), request);
-        vo.setAnimalPicture(uploadedPicture);
+        vo.setAnimalPicture(uploadedPicture == null ? DEFAULT_IMAGE_NAME : uploadedPicture);
         try {
             animalDetailService.registerAnimal(vo);
         } catch (RuntimeException e) {
@@ -111,12 +112,15 @@ public class AnimalDetailController {
     public String modify(AnimalDetailVO vo, PageMaker pageMaker, RedirectAttributes rttr,
             @RequestParam(value = "popup", defaultValue = "false") boolean popup,
             HttpServletRequest request) {
+        getAnimalUploadPath(request);
         AnimalDetailVO oldAnimal = animalDetailService.getAnimalById(vo.getAnimalId());
         String oldPicture = oldAnimal == null ? null : oldAnimal.getAnimalPicture();
         String uploadedPicture = normalizeUploadedPicture(vo.getAnimalPicture(), request);
 
         // A modify form without a new upload must never clear ANIMAL_PICTURE.
-        vo.setAnimalPicture(uploadedPicture == null ? oldPicture : uploadedPicture);
+        vo.setAnimalPicture(uploadedPicture == null
+                ? (oldPicture == null || oldPicture.trim().isEmpty() ? DEFAULT_IMAGE_NAME : oldPicture)
+                : uploadedPicture);
         try {
             animalDetailService.modifyAnimal(vo);
         } catch (RuntimeException e) {

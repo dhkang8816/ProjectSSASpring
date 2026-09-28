@@ -13,4 +13,5 @@ public interface DangerLogDAO {
     public DangerLogVO selectDangerLogById(int danlogId);
     public int updateDactionStatus(DangerLogVO dlv);
     public Map<String, Object> selectTodayDangerStats() throws Exception;
+    public Map<String, Object> selectDangerStats(Map<String, Object> parameters);
 }

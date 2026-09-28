@@ -64,7 +64,7 @@
         INSERT INTO ANIMAL_COUNTER (
             COUNTER_ID, CURRENT_COUNT, LAST_UPDATE
         ) VALUES (
-            #{counterId}, 0, SYSDATE
+            #{counterId}, #{currentCount, jdbcType=INTEGER}, SYSDATE
         )
     </insert>
 </mapper>

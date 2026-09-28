@@ -2,6 +2,8 @@ package com.spring.service;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Date;
+import java.util.HashMap;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -47,5 +49,12 @@ public class DangerLogServiceImpl implements DangerLogService {
     @Override
     public Map<String, Object> getTodayDangerStats() throws Exception {
         return dangerLogDAO.selectTodayDangerStats();
+    }
+
+    @Override
+    public Map<String, Object> getDangerStats(Date targetDate) {
+        Map<String, Object> parameters = new HashMap<>();
+        parameters.put("targetDate", targetDate);
+        return dangerLogDAO.selectDangerStats(parameters);
     }
 }

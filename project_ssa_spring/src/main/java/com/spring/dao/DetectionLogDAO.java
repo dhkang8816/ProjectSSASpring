@@ -13,4 +13,5 @@ public interface DetectionLogDAO {
     public DetectionLogVO selectDetectionLogById(int dlogId);
     public int updateActionStatus(DetectionLogVO dlv);
     public Map<String, Object> selectTodayDetectionStats() throws Exception;
+    public Map<String, Object> selectDetectionStats(Map<String, Object> parameters);
 }

@@ -47,4 +47,9 @@ public class DangerLogDAOImpl implements DangerLogDAO {
     public Map<String, Object> selectTodayDangerStats() throws Exception {
         return sqlSession.selectOne(NAMESPACE + ".selectTodayDangerStats");
     }
+
+    @Override
+    public Map<String, Object> selectDangerStats(Map<String, Object> parameters) {
+        return sqlSession.selectOne(NAMESPACE + ".selectDangerStats", parameters);
+    }
 }

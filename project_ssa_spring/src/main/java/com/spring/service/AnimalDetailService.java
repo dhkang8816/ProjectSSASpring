@@ -1,6 +1,7 @@
 package com.spring.service;
 
 import java.util.List;
+import java.util.Map;
 import com.spring.cmd.PageMaker;
 import com.spring.dto.AnimalDetailVO;
 
@@ -10,4 +11,5 @@ public interface AnimalDetailService {
     public AnimalDetailVO getAnimalById(int animalId);
     public void modifyAnimal(AnimalDetailVO adv);
     public void removeAnimal(int animalId);
+    public Map<String, Object> getAnimalStatusStats();
 }

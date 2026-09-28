@@ -1,6 +1,9 @@
 package com.spring.service;
 
 import java.util.List;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -39,5 +42,12 @@ public class FlightHistoryServiceImpl implements FlightHistoryService {
     @Transactional
     public void removeFlightHistory(int flightId) {
         flightHistoryDAO.deleteFlightHistory(flightId);
+    }
+
+    @Override
+    public Map<String, Object> getFlightDurationStats(Date targetDate) {
+        Map<String, Object> parameters = new HashMap<>();
+        parameters.put("targetDate", targetDate);
+        return flightHistoryDAO.selectFlightDurationStats(parameters);
     }
 }

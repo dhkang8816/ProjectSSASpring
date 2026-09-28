@@ -37,10 +37,12 @@ public class AIStreamBridgeService {
 	private int cachedDogCount = -1;
 	private int cachedCatCount = -1;
 	private boolean isMetadataLoaded = false;
+	private long lastAnimalCounterLoadTime = 0L;
 
 	private final Map<Integer, Long> lastNormalInsertTimeMap = new ConcurrentHashMap<>();
 	private final Map<Integer, Long> lastInsertTimeMap = new ConcurrentHashMap<>();
 	private final long ALARM_COOLDOWN_MS = 10000;
+	private static final long ANIMAL_COUNTER_REFRESH_MS = 5000;
 
     public AIStreamBridgeService(VideoDroneMapDAO videoDroneMapDAO,
             AlertMessageTemplateService alertMessageTemplateService) {
@@ -82,6 +84,7 @@ public class AIStreamBridgeService {
 		this.cachedDogCount = dogCount;
 		this.cachedCatCount = catCount;
 		this.isMetadataLoaded = true;
+		this.lastAnimalCounterLoadTime = System.currentTimeMillis();
 	}
 
 	public Map<String, String> getRawDroneCache() {
@@ -91,9 +94,10 @@ public class AIStreamBridgeService {
 	}
 	public void processYoloLabels(JsonNode root, String currentMode, String lastActiveSourceKey) throws Exception {
 		long currentTime = System.currentTimeMillis();
-		if (!isMetadataLoaded) {
+		if (!isMetadataLoaded || (currentTime - lastAnimalCounterLoadTime) >= ANIMAL_COUNTER_REFRESH_MS) {
 			PageMaker dummyPageMaker = new PageMaker();
 			dummyPageMaker.setPage(1);
+			dummyPageMaker.setPerPageNum(100);
 			List<AnimalCounterVO> dbCounterList = animalCounterService.getAnimalCounterList(dummyPageMaker);
 			if (dbCounterList != null) {
 				for (AnimalCounterVO cvo : dbCounterList) {
@@ -108,6 +112,7 @@ public class AIStreamBridgeService {
 			if (cachedCatCount == -1)
 				cachedCatCount = 1;
 			isMetadataLoaded = true;
+			lastAnimalCounterLoadTime = currentTime;
 		}
 		JsonNode boxesNode = root.get("boxes");
 		List<String> detectedLabels = new ArrayList<>();
@@ -121,9 +126,10 @@ public class AIStreamBridgeService {
 		String currentActiveDroneId = resolveActiveDroneId(currentMode, lastActiveSourceKey);
 		int dogTargetLimit = 2;
 		int catTargetLimit = 1;
+		boolean hasAnimalDetection = detectedLabels.contains("dog") || detectedLabels.contains("cat");
 
 		synchronized (lastNormalInsertTimeMap) {
-			if (cachedDogCount < dogTargetLimit) {
+			if (hasAnimalDetection && cachedDogCount < dogTargetLimit) {
 				long lastDogTime = lastNormalInsertTimeMap.getOrDefault(0, 0L);
 				if ((currentTime - lastDogTime) >= ALARM_COOLDOWN_MS) {
 					lastNormalInsertTimeMap.put(0, currentTime);
@@ -148,7 +154,7 @@ public class AIStreamBridgeService {
 				}
 			}
 
-			if (cachedCatCount < catTargetLimit) {
+			if (hasAnimalDetection && cachedCatCount < catTargetLimit) {
 				long lastCatTime = lastNormalInsertTimeMap.getOrDefault(1, 0L);
 				if ((currentTime - lastCatTime) >= ALARM_COOLDOWN_MS) {
 					lastNormalInsertTimeMap.put(1, currentTime);

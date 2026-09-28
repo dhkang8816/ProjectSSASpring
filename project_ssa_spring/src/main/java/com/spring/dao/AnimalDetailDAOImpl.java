@@ -1,6 +1,7 @@
 package com.spring.dao;
 
 import java.util.List;
+import java.util.Map;
 
 import org.apache.ibatis.session.SqlSession;
 import org.springframework.stereotype.Repository;
@@ -45,5 +46,10 @@ public class AnimalDetailDAOImpl implements AnimalDetailDAO {
     @Override
     public int deleteAnimal(int animalId) {
         return sqlSession.delete(NAMESPACE + ".deleteAnimal", animalId);
+    }
+
+    @Override
+    public Map<String, Object> selectAnimalStatusStats() {
+        return sqlSession.selectOne(NAMESPACE + ".selectAnimalStatusStats");
     }
 }

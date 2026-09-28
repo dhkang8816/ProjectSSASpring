@@ -206,6 +206,24 @@
     border: 1px solid rgba(16, 185, 129, 0.3) !important;
 }
 
+#animalListPage .badge-status.status-protected {
+    background-color: rgba(16, 185, 129, 0.15) !important;
+    color: #34d399 !important;
+    border: 1px solid rgba(16, 185, 129, 0.35) !important;
+}
+
+#animalListPage .badge-status.status-adopted {
+    background-color: rgba(245, 158, 11, 0.15) !important;
+    color: #fbbf24 !important;
+    border: 1px solid rgba(245, 158, 11, 0.35) !important;
+}
+
+#animalListPage .badge-status.status-discharged {
+    background-color: rgba(239, 68, 68, 0.15) !important;
+    color: #f87171 !important;
+    border: 1px solid rgba(239, 68, 68, 0.35) !important;
+}
+
 
 #animalListPage .badge-status.status-none {
     background-color: rgba(148, 163, 184, 0.15) !important;
@@ -358,12 +376,24 @@
                                 <td>
                                     
                                     <c:set var="animalStatusName" value="${animal.animalStatus}" />
+                                    <c:set var="animalStatusClass" value="status-none" />
+                                    <c:choose>
+                                        <c:when test="${animal.animalStatus eq '0'}">
+                                            <c:set var="animalStatusClass" value="status-protected" />
+                                        </c:when>
+                                        <c:when test="${animal.animalStatus eq '1'}">
+                                            <c:set var="animalStatusClass" value="status-adopted" />
+                                        </c:when>
+                                        <c:when test="${animal.animalStatus eq '2'}">
+                                            <c:set var="animalStatusClass" value="status-discharged" />
+                                        </c:when>
+                                    </c:choose>
                                     <c:forEach var="animalStatus" items="${animalStatusList}">
                                         <c:if test="${animalStatus.code == animal.animalStatus}">
                                             <c:set var="animalStatusName" value="${animalStatus.codeName}" />
                                         </c:if>
                                     </c:forEach>
-                                    <span class="badge-status status-none"><c:out value="${animalStatusName}" /></span>
+                                    <span class="badge-status ${animalStatusClass}"><c:out value="${animalStatusName}" /></span>
                                 </td>
                             </tr>
                         </c:forEach>

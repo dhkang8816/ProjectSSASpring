@@ -57,6 +57,8 @@ _model = None
 _model_inference_lock = threading.RLock()
 _metadata_lock = threading.Lock()
 _metadata_initialized = False
+_last_target_refresh_time = 0.0
+_target_refresh_in_progress = False
 _event_state_lock = threading.RLock()
 _manager_lock = threading.RLock()
 _legacy_state_lock = threading.Lock()
@@ -70,6 +72,7 @@ last_alarm_time = {}
 def init_ai_metadata_from_oracle():
     """Load common-code labels and target counts once without blocking streams."""
     global ANIMAL_NAME_MAP, TARGET_ANIMALS, program_start_time, _metadata_initialized
+    global _last_target_refresh_time
 
     with _metadata_lock:
         if _metadata_initialized:
@@ -88,7 +91,49 @@ def init_ai_metadata_from_oracle():
         except Exception as error:
             print(f"[YOLO metadata fallback] {error}")
         finally:
+            _last_target_refresh_time = time.monotonic()
             _metadata_initialized = True
+
+
+def refresh_animal_targets_if_due():
+    """Schedule a shelter-count refresh without blocking SourceWorker inference."""
+    global TARGET_ANIMALS, _last_target_refresh_time, _target_refresh_in_progress
+
+    if not _metadata_initialized:
+        return
+
+    now = time.monotonic()
+    with _metadata_lock:
+        if (
+            _target_refresh_in_progress
+            or now - _last_target_refresh_time < runtime_settings.ANIMAL_TARGET_REFRESH_SECONDS
+        ):
+            return
+        _target_refresh_in_progress = True
+
+    def refresh():
+        global TARGET_ANIMALS, _last_target_refresh_time, _target_refresh_in_progress
+        try:
+            raw_targets = oracle_service.fetch_target_counts()
+            refreshed_targets = {
+                str(key): int(value) for key, value in raw_targets.items()
+            }
+            with _metadata_lock:
+                TARGET_ANIMALS = refreshed_targets
+        except Exception as error:
+            # Retain the last known protected-animal counts during a transient
+            # Spring/Oracle outage rather than changing shortage behavior.
+            print(f"[YOLO target refresh retained cache] {error}")
+        finally:
+            with _metadata_lock:
+                _last_target_refresh_time = time.monotonic()
+                _target_refresh_in_progress = False
+
+    threading.Thread(
+        target=refresh,
+        name="yolo-animal-target-refresh",
+        daemon=True,
+    ).start()
 
 
 def _event_state_for(source_key):
@@ -119,26 +164,29 @@ def _notification_metadata(event_type, label, boxes):
 
 def process_animal_detection_logic(detected_names, frame, source_key=None, boxes=None):
     """Apply animal-count policy with timers isolated by source key."""
+    refresh_animal_targets_if_due()
     source_key = source_key or get_default_source_key()
     current_time = time.time()
     pending_reports = []
 
     with _event_state_lock:
         under_target, recovery, cooldown = _event_state_for(source_key)
+
+        # No recognised shelter animal in a frame means the camera/YOLO result
+        # cannot prove a shortage.  Once at least one dog or cat is recognised,
+        # compare every protected animal type: a detected dog with no detected
+        # cat is a valid cat-shortage condition.
+        if not any(label in ANIMAL_LABELS for label in detected_names):
+            for label in ANIMAL_LABELS:
+                code_id = YOLO_TO_CODE[label]
+                under_target[code_id] = None
+                recovery[code_id] = None
+            return
+
         for label in ANIMAL_LABELS:
             code_id = YOLO_TO_CODE[label]
             target_count = int(TARGET_ANIMALS.get(code_id, 0))
             current_count = detected_names.count(label)
-
-            # A frame with no instance of this animal is an unknown/non-detect
-            # condition, not proof that the shelter has zero animals.  Start
-            # or continue a shortage timer only after YOLO has actually found
-            # this same animal label in the current frame.  Clearing here also
-            # prevents a stale timer from firing after detection is lost.
-            if current_count == 0:
-                under_target[code_id] = None
-                recovery[code_id] = None
-                continue
 
             if current_count < target_count:
                 recovery[code_id] = None

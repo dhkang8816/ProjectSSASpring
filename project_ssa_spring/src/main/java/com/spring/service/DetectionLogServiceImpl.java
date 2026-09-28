@@ -2,6 +2,8 @@ package com.spring.service;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Date;
+import java.util.HashMap;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -65,6 +67,13 @@ public class DetectionLogServiceImpl implements DetectionLogService {
     @Override
     public Map<String, Object> getTodayDetectionStats() throws Exception {
         return detectionLogDAO.selectTodayDetectionStats();
+    }
+
+    @Override
+    public Map<String, Object> getDetectionStats(Date targetDate) {
+        Map<String, Object> parameters = new HashMap<>();
+        parameters.put("targetDate", targetDate);
+        return detectionLogDAO.selectDetectionStats(parameters);
     }
 
     private void validateDetectionLogId(int dlogId) {

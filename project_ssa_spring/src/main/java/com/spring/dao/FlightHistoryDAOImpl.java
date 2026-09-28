@@ -1,6 +1,7 @@
 package com.spring.dao;
 
 import java.util.List;
+import java.util.Map;
 
 import org.apache.ibatis.session.SqlSession;
 import org.springframework.stereotype.Repository;
@@ -40,5 +41,10 @@ public class FlightHistoryDAOImpl implements FlightHistoryDAO {
     @Override
     public int deleteFlightHistory(int flightId) {
         return sqlSession.delete(NAMESPACE + ".deleteFlightHistory", flightId);
+    }
+
+    @Override
+    public Map<String, Object> selectFlightDurationStats(Map<String, Object> parameters) {
+        return sqlSession.selectOne(NAMESPACE + ".selectFlightDurationStats", parameters);
     }
 }

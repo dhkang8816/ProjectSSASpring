@@ -47,4 +47,9 @@ public class DetectionLogDAOImpl implements DetectionLogDAO {
     public Map<String, Object> selectTodayDetectionStats() throws Exception {
         return sqlSession.selectOne(NAMESPACE + ".selectTodayDetectionStats");
     }
+
+    @Override
+    public Map<String, Object> selectDetectionStats(Map<String, Object> parameters) {
+        return sqlSession.selectOne(NAMESPACE + ".selectDetectionStats", parameters);
+    }
 }

@@ -43,7 +43,7 @@
             #{animalName},
             SYSDATE,
             #{animalStatus},
-            #{animalPicture}
+            NVL(#{animalPicture, jdbcType=VARCHAR}, 'noImage.jpg')
         )
     </insert>
 
@@ -75,6 +75,13 @@
         WHERE ANIMAL_ID = #{animalId}
     </select>
 
+    <select id="selectAnimalStatusStats" resultType="java.util.HashMap">
+        SELECT
+            COUNT(*) AS "TOTAL_COUNT",
+            COUNT(CASE WHEN ANIMAL_STATUS = '1' THEN 1 END) AS "ADOPTED_COUNT"
+        FROM ANIMAL_DETAIL
+    </select>
+
     
     <update id="updateAnimal" parameterType="com.spring.dto.AnimalDetailVO">
         UPDATE ANIMAL_DETAIL
@@ -83,7 +90,7 @@
             ANIMAL_BREED = #{animalBreed},
             ANIMAL_NAME = #{animalName},
             ANIMAL_STATUS = #{animalStatus},
-            ANIMAL_PICTURE = #{animalPicture}
+            ANIMAL_PICTURE = NVL(#{animalPicture, jdbcType=VARCHAR}, 'noImage.jpg')
         WHERE ANIMAL_ID = #{animalId}
     </update>
 

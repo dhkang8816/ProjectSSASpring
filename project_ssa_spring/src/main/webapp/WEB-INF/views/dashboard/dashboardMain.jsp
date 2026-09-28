@@ -78,6 +78,7 @@ body {
 	margin-bottom: 20px;
 	border-bottom: 1px solid #1e293b;
 	padding-bottom: 14px;
+	position: relative;
 }
 
 .panel-title {
@@ -165,6 +166,81 @@ body {
 	border-radius: 10px;
 	background: #111827;
 	box-shadow: none;
+}
+
+.dashboard-date-region {
+	position: absolute;
+	left: 50%;
+	transform: translateX(-50%);
+	display: inline-flex;
+	align-items: center;
+	gap: 10px;
+	white-space: nowrap;
+}
+
+.dashboard-date-control {
+	display: inline-flex;
+	align-items: center;
+	gap: 7px;
+	color: #94a3b8;
+	font-size: 12px;
+	font-weight: 700;
+}
+
+.dashboard-date-control input[type="date"] {
+	min-height: 32px;
+	padding: 5px 8px;
+	border: 1px solid #334155;
+	border-radius: 7px;
+	background: #0f172a;
+	color: #e2e8f0;
+	font: inherit;
+	color-scheme: dark;
+}
+
+.dashboard-date-control input[type="date"]:focus {
+	outline: none;
+	border-color: #38bdf8;
+}
+
+.dashboard-date-control .btn-today {
+	min-height: 32px;
+	padding: 5px 9px;
+	border: 1px solid #334155;
+	border-radius: 7px;
+	background: #172033;
+	color: #cbd5e1;
+	font: inherit;
+	font-size: 12px;
+	font-weight: 700;
+	cursor: pointer;
+}
+
+.dashboard-date-control .btn-today:hover {
+	border-color: #38bdf8;
+	color: #ffffff;
+}
+
+.dashboard-report-date {
+	margin: 0;
+	color: #94a3b8;
+	font-size: 12px;
+	font-variant-numeric: tabular-nums;
+	white-space: nowrap;
+}
+
+@media (max-width: 1100px) {
+	.panel-header {
+		flex-wrap: wrap !important;
+	}
+	.dashboard-date-region {
+		position: static;
+		order: 3;
+		width: 100%;
+		justify-content: center;
+		transform: none;
+		margin-top: 10px;
+	}
 }
 
 #dashboardPage .dashboard-stat-card::before {
@@ -265,6 +341,11 @@ rotate
 		margin-bottom: 8px !important;
 		padding-bottom: 6px !important;
 	}
+	.dashboard-report-date {
+		margin-left: auto !important;
+		font-size: 10px !important;
+		color: #64748b !important;
+	}
 
 	
 	#aiBriefingContent>div {
@@ -337,6 +418,13 @@ rotate
 					style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
 					관제 통계 수치 지표
 				</div>
+				<div class="dashboard-date-region">
+					<div id="dashboardReportDate" class="dashboard-report-date">기준일: 집계 중</div>
+					<div class="dashboard-date-control no-print">
+						<input type="date" id="dashboardDate" aria-label="대시보드 기준일">
+						<button type="button" class="btn-today" onclick="fn_selectTodayDashboardDate()">오늘</button>
+					</div>
+				</div>
 				<div class="d-flex gap-2 no-print"
 					style="display: flex; gap: 6px; flex-shrink: 0;">
 					<button type="button" class="btn-refresh-ai"
@@ -368,7 +456,7 @@ rotate
 						<div
 							style="font-size: 14px; color: #ffffff; font-weight: 600; margin-bottom: 15px;">
 							<i class="fa-solid fa-calendar-days"
-								style="color: #5ddcff; margin-right: 6px;"></i> 최근 7일간 일별 트렌드
+								style="color: #5ddcff; margin-right: 6px;"></i><span id="trendChartTitle">최근 7일간 일별 트렌드</span>
 						</div>
 						<div style="position: relative; width: 100%; height: 250px;">
 							<canvas id="trendChart"></canvas>
@@ -379,7 +467,7 @@ rotate
 						<div
 							style="font-size: 14px; color: #ffffff; font-weight: 600; margin-bottom: 15px;">
 							<i class="fa-solid fa-clock"
-								style="color: #ffae19; margin-right: 6px;"></i> 실시간 당일 시간대별 통계
+								style="color: #ffae19; margin-right: 6px;"></i><span id="timeChartTitle">당일 시간대별 통계</span>
 						</div>
 						<div style="position: relative; width: 100%; height: 250px;">
 							<canvas id="timeChart"></canvas>
@@ -396,7 +484,7 @@ rotate
 					<div
 						style="font-size: 14px; color: #ffffff; font-weight: 600; margin-bottom: 15px;">
 						<i class="fa-solid fa-dog"
-							style="color: #2ecc71; margin-right: 6px;"></i> 축종별 경보 발생 분포
+							style="color: #2ecc71; margin-right: 6px;"></i><span id="animalChartTitle">축종별 경보 발생 분포</span>
 					</div>
 					<div style="position: relative; width: 100%; height: 250px;">
 						<canvas id="animalChart"></canvas>
@@ -408,7 +496,7 @@ rotate
 					<div
 						style="font-size: 14px; color: #ffffff; font-weight: 600; margin-bottom: 15px;">
 						<i class="fa-solid fa-skull-crossbones"
-							style="color: #e74c3c; margin-right: 6px;"></i> 이상객체 유형별 포착 통계
+							style="color: #e74c3c; margin-right: 6px;"></i><span id="dangerTypeChartTitle">이상객체 유형별 포착 통계</span>
 					</div>
 					<div style="position: relative; width: 100%; height: 250px;">
 						<canvas id="dangerTypeChart"></canvas>
@@ -425,14 +513,35 @@ rotate
 
 <script>
 	$(document).ready(function() {
+		var today = getLocalIsoDate();
+		$("#dashboardDate").attr("max", today).val(today).on("change", fn_fetchAiBriefing);
 		fn_fetchAiBriefing();
 	});
+
+	function getLocalIsoDate() {
+		var now = new Date();
+		var offsetDate = new Date(now.getTime() - now.getTimezoneOffset() * 60000);
+		return offsetDate.toISOString().slice(0, 10);
+	}
+
+	function fn_selectTodayDashboardDate() {
+		$("#dashboardDate").val(getLocalIsoDate());
+		fn_fetchAiBriefing();
+	}
 
 	function formatFlightDuration(seconds) {
 		var totalSeconds = Math.max(0, Math.round(Number(seconds) || 0));
 		var minutes = Math.floor(totalSeconds / 60);
 		var remainingSeconds = totalSeconds % 60;
 		return minutes + '분 ' + String(remainingSeconds).padStart(2, '0') + '초';
+	}
+
+	function dashboardCardHtml(title, value, accentColor, valueFontSize) {
+		return '  <div class="dashboard-stat-card" style="--stat-accent:' + accentColor + ';">'
+				+ '    <div style="font-size:12px; color:#aaa; margin-bottom:8px;">' + title + '</div>'
+				+ '    <div style="font-size:' + (valueFontSize || '24px')
+				+ '; font-weight:bold; color:' + accentColor + ';">' + value + '</div>'
+				+ '  </div>';
 	}
 
 	function createDashboardChartGradient(context, startColor, endColor, horizontal) {
@@ -452,14 +561,16 @@ rotate
 
 	function fn_fetchAiBriefing() {
 		var $contentBox = $("#aiBriefingContent");
+		var selectedDate = $("#dashboardDate").val() || getLocalIsoDate();
 		$contentBox
 				.html('<div class="ai-loading">'
-						+ '    <i class="fa-solid fa-gear"></i> 오라클 통합 수치 집계 및 Gemini AI 상황 분석 분석 중...'
+						+ '    <i class="fa-solid fa-gear"></i> 오라클 통합 수치 집계 및 상황 분석 분석 중...'
 						+ '</div>');
 		$
 				.ajax({
 					url : "${pageContext.request.contextPath}/dashboard/api/ai-briefing",
 					type : "GET",
+					data : { date : selectedDate },
 					dataType : "json",
 					success : function(res) {
 						console.log("✈ [오라클 관제 데이터 수신 완료]:", res);
@@ -477,6 +588,19 @@ rotate
 									: 0.0;
 							var score = (res.safetyScore !== undefined && res.safetyScore !== null) ? res.safetyScore
 									: 0;
+							var cumulativeCompleteRate = (res.cumulativeActionCompleteRate !== undefined
+									&& res.cumulativeActionCompleteRate !== null) ? res.cumulativeActionCompleteRate : 0.0;
+							var cumulativeFlightDurationSeconds = (res.cumulativeFlightDurationSeconds !== undefined
+									&& res.cumulativeFlightDurationSeconds !== null) ? res.cumulativeFlightDurationSeconds : 0;
+							var animalAdoptionRate = (res.animalAdoptionRate !== undefined && res.animalAdoptionRate !== null)
+									? res.animalAdoptionRate : 0.0;
+							var selectedDateLabel = res.selectedDateLabel || selectedDate;
+
+							$("#dashboardReportDate").text("기준일: " + selectedDateLabel);
+							$("#trendChartTitle").text(selectedDateLabel + " 기준 최근 7일간 일별 트렌드");
+							$("#timeChartTitle").text(selectedDateLabel + " 시간대별 통계");
+							$("#animalChartTitle").text(selectedDateLabel + " 축종별 경보 발생 분포");
+							$("#dangerTypeChartTitle").text(selectedDateLabel + " 이상객체 유형별 포착 통계");
 
 							var statusText = "안전";
 							var statusColor = "#2ecc71";
@@ -492,50 +616,16 @@ rotate
 								statusColor = "#2ecc71";
 							}
 							var cardHtml = '<div style="width:100%; display:grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap:15px; text-align:center; padding:10px 0;">'
-									+
-									'  <div class="dashboard-stat-card" style="--stat-accent:' + statusColor + ';">'
-									+ '    <div style="font-size:12px; color:#aaa; margin-bottom:8px;">관제구역 종합 위험도</div>'
-									+ '    <div style="font-size:18px; font-weight:bold; color:' + statusColor + ';">'
-									+ score
-									+ '점 ['
-									+ statusText
-									+ ']</div>'
-									+ '  </div>'
-									+
-									'  <div class="dashboard-stat-card" style="--stat-accent:#5ddcff;">'
-									+ '    <div style="font-size:12px; color:#aaa; margin-bottom:8px;">당일 탐지 총 건수</div>'
-									+ '    <div style="font-size:24px; font-weight:bold; color:#5ddcff;">'
-									+ todayDetect
-									+ ' 건</div>'
-									+ '  </div>'
-									+
-									'  <div class="dashboard-stat-card" style="--stat-accent:#2ecc71;">'
-									+ '    <div style="font-size:12px; color:#aaa; margin-bottom:8px;">당일 현장조치 완료율</div>'
-									+ '    <div style="font-size:24px; font-weight:bold; color:#2ecc71;">'
-									+ completeRate
-									+ ' %</div>'
-									+ '  </div>'
-									+
-									'  <div class="dashboard-stat-card" style="--stat-accent:#3498db;">'
-									+ '    <div style="font-size:12px; color:#aaa; margin-bottom:8px;">당일 드론 총 비행시간</div>'
-									+ '    <div style="font-size:24px; font-weight:bold; color:#ffffff;">'
-									+ formatFlightDuration(flightDurationSeconds)
-									+ '</div>'
-									+ '  </div>'
-									+
-									'  <div class="dashboard-stat-card" style="--stat-accent:#e74c3c;">'
-									+ '    <div style="font-size:12px; color:#aaa; margin-bottom:8px;">누적 위험객체 포착</div>'
-									+ '    <div style="font-size:24px; font-weight:bold; color:#ffffff;">'
-									+ danger
-									+ ' 회</div>'
-									+ '  </div>'
-									+
-									'  <div class="dashboard-stat-card" style="--stat-accent:#f1c40f;">'
-									+ '    <div style="font-size:12px; color:#aaa; margin-bottom:8px;">누적 미달경보 발생</div>'
-									+ '    <div style="font-size:24px; font-weight:bold; color:#ffffff;">'
-									+ detect + ' 건</div>' + '  </div>' +
-
-									'</div>';
+									+ dashboardCardHtml('관제구역 종합 위험도', score + '점 [' + statusText + ']', statusColor, '18px')
+									+ dashboardCardHtml('탐지 총 건수', todayDetect + ' 건', '#5ddcff')
+									+ dashboardCardHtml('현장조치 완료율', completeRate + ' %', '#2ecc71')
+									+ dashboardCardHtml('드론 총 비행시간', formatFlightDuration(flightDurationSeconds), '#3498db', '20px')
+									+ dashboardCardHtml('누적 위험객체 포착', danger + ' 회', '#e74c3c')
+									+ dashboardCardHtml('누적 미달경보 발생', detect + ' 건', '#f1c40f')
+									+ dashboardCardHtml('누적 조치 완료율', cumulativeCompleteRate + ' %', '#a78bfa')
+									+ dashboardCardHtml('누적 드론 총 비행시간', formatFlightDuration(cumulativeFlightDurationSeconds), '#60a5fa', '20px')
+									+ dashboardCardHtml('현재 보호동물 입양율', animalAdoptionRate + ' %', '#fbbf24')
+									+ '</div>';
 							$("#aiBriefingContent").html(cardHtml);
 							$("#dashboardGraphZone").show();
 							var ctxTrend = document
@@ -769,6 +859,11 @@ rotate
 									.html(
 											'<div style="color:#ff6b6b;">❌ 데이터 멀티 시각화 블록 분리 연동 중 오류가 발생했습니다.</div>');
 						}
+					},
+					error : function(xhr) {
+						var message = xhr.responseJSON && xhr.responseJSON.message
+								? xhr.responseJSON.message : '선택한 날짜의 대시보드 데이터를 불러오지 못했습니다.';
+						$("#aiBriefingContent").html('<div style="color:#ff6b6b;">❌ ' + message + '</div>');
 					}
 
 				});

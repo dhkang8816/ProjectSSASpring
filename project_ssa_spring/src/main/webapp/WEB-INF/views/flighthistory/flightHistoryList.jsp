@@ -192,6 +192,41 @@ body {
 	border: 1px solid rgba(245, 158, 11, 0.3) !important;
 }
 
+#flightHistoryListPage .battery-status {
+	display: inline-block;
+	min-width: 58px;
+	padding: 4px 10px;
+	border: 1px solid transparent;
+	border-radius: 7px;
+	font-size: 12px;
+	font-weight: 700;
+	text-align: center;
+}
+
+#flightHistoryListPage .battery-status.good {
+	background-color: rgba(34, 197, 94, 0.12);
+	border-color: rgba(34, 197, 94, 0.35);
+	color: #4ade80;
+}
+
+#flightHistoryListPage .battery-status.warning {
+	background-color: rgba(245, 158, 11, 0.12);
+	border-color: rgba(245, 158, 11, 0.35);
+	color: #fbbf24;
+}
+
+#flightHistoryListPage .battery-status.danger {
+	background-color: rgba(239, 68, 68, 0.12);
+	border-color: rgba(239, 68, 68, 0.35);
+	color: #f87171;
+}
+
+#flightHistoryListPage .battery-status.unavailable {
+	background-color: rgba(100, 116, 139, 0.16);
+	border-color: rgba(148, 163, 184, 0.25);
+	color: #94a3b8;
+}
+
 
 #flightHistoryListPage .pagination {
 	display: flex;
@@ -324,8 +359,8 @@ body {
 									
 									<td style="text-align: right; padding-right: 20px !important;">${history.flightDurationText}</td>
 									<td><c:choose>
-											<c:when test="${empty history.batteryConsumption}">측정 없음</c:when>
-											<c:otherwise>${history.batteryConsumption} %</c:otherwise>
+											<c:when test="${empty history.batteryConsumption}"><span class="battery-status unavailable">측정 없음</span></c:when>
+											<c:otherwise><span class="battery-status ${history.batteryConsumptionStatusClass}">${history.batteryConsumption} %</span></c:otherwise>
 										</c:choose></td>
 									<td><fmt:formatDate value="${history.flightDate}"
 											pattern="yyyy-MM-dd" /></td>

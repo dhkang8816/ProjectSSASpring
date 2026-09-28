@@ -18,8 +18,8 @@ class AnimalDetailMapperXmlTest {
             String mapperXml = new String(stream.readAllBytes(), StandardCharsets.UTF_8);
             assertTrue(mapperXml.contains("property=\"animalPicture\" column=\"ANIMAL_PICTURE\""));
             assertTrue(mapperXml.contains("ANIMAL_STATUS, ANIMAL_PICTURE"));
-            assertTrue(mapperXml.contains("#{animalPicture}"));
-            assertTrue(mapperXml.contains("ANIMAL_PICTURE = #{animalPicture}"));
+            assertTrue(mapperXml.contains("NVL(#{animalPicture, jdbcType=VARCHAR}, 'noImage.jpg')"));
+            assertTrue(mapperXml.contains("ANIMAL_PICTURE = NVL(#{animalPicture, jdbcType=VARCHAR}, 'noImage.jpg')"));
         }
     }
 }

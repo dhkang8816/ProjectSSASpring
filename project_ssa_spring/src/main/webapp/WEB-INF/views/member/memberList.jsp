@@ -116,6 +116,22 @@ body {
     box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.25);
 }
 
+#memberListPage .search-group .btn-search {
+    padding: 9px 16px;
+    border: 0;
+    border-radius: 8px;
+    background: #0ea5e9;
+    color: #ffffff;
+    font-size: 13.5px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background-color 0.15s ease;
+}
+
+#memberListPage .search-group .btn-search:hover {
+    background: #0284c7;
+}
+
 
 .staff-count {
     color: #94a3b8 !important;
@@ -345,7 +361,8 @@ body {
                         <option value="t" ${pageMaker.searchType == 't' ? 'selected' : ''}>이름</option>
                         <option value="c" ${pageMaker.searchType == 'c' ? 'selected' : ''}>사번</option>
                     </select> 
-                    <input type="text" name="keyword" class="search-input" value="${pageMaker.keyword}" placeholder="검색어 입력 후 엔터">
+					<input type="text" name="keyword" class="search-input" value="${pageMaker.keyword}" placeholder="검색어 입력">
+					<button type="submit" class="btn-search">검색</button>
                 </form>
             </div>
         </div>

@@ -455,7 +455,7 @@
 				</select>
 				<input type="text" name="keyword" value="${pageMaker.keyword}"
 					placeholder="검색어 입력">
-				<button type="submit">검색</button>
+				<button type="submit" class="btn-search">검색</button>
 			</form:form>
 
 			<div style="margin-top: 25px;">

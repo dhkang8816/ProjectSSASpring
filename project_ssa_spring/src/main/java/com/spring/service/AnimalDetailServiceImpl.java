@@ -1,6 +1,8 @@
 package com.spring.service;
 
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import com.spring.cmd.PageMaker;
@@ -14,6 +16,8 @@ import lombok.AllArgsConstructor;
 @AllArgsConstructor
 public class AnimalDetailServiceImpl implements AnimalDetailService {
 
+    private static final String PROTECTED_STATUS = "0";
+
     private final AnimalDetailDAO animalDetailDAO;
     private final AnimalCounterDAO animalCounterDAO; 
 
@@ -21,6 +25,9 @@ public class AnimalDetailServiceImpl implements AnimalDetailService {
     @Transactional
     public void registerAnimal(AnimalDetailVO adv) {
         animalDetailDAO.insertAnimal(adv);
+        if (!isProtected(adv)) {
+            return;
+        }
         int counterId = Integer.parseInt(adv.getAnimalType());
         PageMaker pm = new PageMaker();
         pm.setSearchType("c");
@@ -53,7 +60,22 @@ public class AnimalDetailServiceImpl implements AnimalDetailService {
     @Override
     @Transactional
     public void modifyAnimal(AnimalDetailVO adv) {
-        animalDetailDAO.updateAnimal(adv);
+        AnimalDetailVO previousAnimal = animalDetailDAO.selectAnimalById(adv.getAnimalId());
+        if (previousAnimal == null || animalDetailDAO.updateAnimal(adv) == 0) {
+            return;
+        }
+
+        boolean wasProtected = isProtected(previousAnimal);
+        boolean isNowProtected = isProtected(adv);
+        if (wasProtected && isNowProtected
+                && !Objects.equals(previousAnimal.getAnimalType(), adv.getAnimalType())) {
+            animalCounterDAO.updateAnimalCount(Integer.parseInt(previousAnimal.getAnimalType()), -1);
+            increaseProtectedAnimalCounter(adv.getAnimalType());
+        } else if (wasProtected && !isNowProtected) {
+            animalCounterDAO.updateAnimalCount(Integer.parseInt(previousAnimal.getAnimalType()), -1);
+        } else if (!wasProtected && isNowProtected) {
+            increaseProtectedAnimalCounter(adv.getAnimalType());
+        }
     }
 
     @Override
@@ -61,9 +83,36 @@ public class AnimalDetailServiceImpl implements AnimalDetailService {
     public void removeAnimal(int animalId) {
         AnimalDetailVO adv = animalDetailDAO.selectAnimalById(animalId);
         if (adv != null) {
-            animalDetailDAO.deleteAnimal(animalId);
-            int counterId = Integer.parseInt(adv.getAnimalType());
-            animalCounterDAO.updateAnimalCount(counterId, -1);
+            if (animalDetailDAO.deleteAnimal(animalId) > 0 && isProtected(adv)) {
+                int counterId = Integer.parseInt(adv.getAnimalType());
+                animalCounterDAO.updateAnimalCount(counterId, -1);
+            }
+        }
+    }
+
+    @Override
+    public Map<String, Object> getAnimalStatusStats() {
+        return animalDetailDAO.selectAnimalStatusStats();
+    }
+
+    private boolean isProtected(AnimalDetailVO animal) {
+        return animal != null && PROTECTED_STATUS.equals(animal.getAnimalStatus());
+    }
+
+    private void increaseProtectedAnimalCounter(String animalType) {
+        int counterId = Integer.parseInt(animalType);
+        PageMaker pm = new PageMaker();
+        pm.setSearchType("c");
+        pm.setKeyword(String.valueOf(counterId));
+
+        if (animalCounterDAO.selectAnimalCounterCount(pm) > 0) {
+            animalCounterDAO.updateAnimalCount(counterId, 1);
+        } else {
+            AnimalCounterVO counter = AnimalCounterVO.builder()
+                    .counterId(counterId)
+                    .currentCount(1)
+                    .build();
+            animalCounterDAO.insertNewCounter(counter);
         }
     }
 }

@@ -14,9 +14,7 @@
 		<h2 style="color: red;">⚠️ 서비스 이용에 불편을 드려 죄송합니다.</h2>
 		<p style="font-size: 16px; font-weight: bold;">${errorMsg}</p>
 
-		<button type="button" onclick="history.back();">이전 페이지로</button>
-		<button type="button"
-			onclick="location.href='${pageContext.request.contextPath}/'">메인으로</button>
+		<button type="button" onclick="window.close();">닫기</button>
 	</div>
 </body>
 </html>

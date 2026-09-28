@@ -178,6 +178,41 @@ a.main-link:hover {
     color: #94a3b8;
     font-size: 12px;
 }
+
+/* Keep this popup aligned with the member detail popup without affecting other views. */
+body.popup-page {
+    padding: 24px !important;
+    box-sizing: border-box;
+}
+
+#animalDetailPage.panel {
+    width: 100%;
+    max-width: 520px;
+    padding: 32px !important;
+    border-radius: 14px;
+    box-sizing: border-box;
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.5);
+}
+
+#animalDetailPage h2 {
+    text-align: center;
+    padding-bottom: 16px;
+}
+
+#animalDetailPage .btn-group {
+    justify-content: center;
+    gap: 12px;
+}
+
+#animalDetailPage .animal-photo-preview {
+    width: 150px;
+    height: 185px;
+    padding: 6px;
+    box-sizing: content-box;
+    border: 2px solid #0ea5e9;
+    border-radius: 6px;
+    box-shadow: 0 0 20px rgba(14, 165, 233, 0.2);
+}
 </style>
 
 </head>
@@ -359,6 +394,21 @@ function fn_goList() {
             uploadButton.disabled = false;
         });
     });
+})();
+</script>
+<script>
+(function resizeAnimalDetailPopup() {
+    if (!window.opener || window.opener.closed) {
+        return;
+    }
+
+    var popupWidth = Math.max(320, Math.min(680, screen.availWidth - 40));
+    var popupHeight = Math.max(420, Math.min(960, screen.availHeight - 36));
+    var left = Math.max(0, Math.round((screen.availWidth - popupWidth) / 2));
+    var top = Math.max(12, Math.min(24, screen.availHeight - popupHeight - 12));
+
+    window.resizeTo(popupWidth, popupHeight);
+    window.moveTo(left, top);
 })();
 </script>
 </html>
