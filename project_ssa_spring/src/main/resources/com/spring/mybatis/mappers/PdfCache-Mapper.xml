@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="PdfCache-Mapper">
+
+    <resultMap id="pdfCacheResultMap" type="com.spring.dto.PdfCacheVO">
+        <id property="pdfCacheId" column="PDF_CACHE_ID" />
+        <result property="pdfFilePath" column="PDF_FILE_PATH" />
+        <result property="generationStatus" column="GENERATION_STATUS" />
+        <result property="pdfDate" column="PDF_DATE" />
+        <result property="reportId" column="REPORT_ID" />
+    </resultMap>
+
+    <insert id="insertPdfCacheRequest" parameterType="com.spring.dto.PdfCacheVO">
+        <selectKey keyProperty="pdfCacheId" resultType="long" order="BEFORE">
+            SELECT SEQ_PDF_CACHE.NEXTVAL FROM DUAL
+        </selectKey>
+        INSERT INTO PDF_CACHE (
+            PDF_CACHE_ID,
+            PDF_FILE_PATH,
+            GENERATION_STATUS,
+            PDF_DATE,
+            REPORT_ID
+        ) VALUES (
+            #{pdfCacheId},
+            NULL,
+            'REQUEST',
+            SYSDATE,
+            #{reportId}
+        )
+    </insert>
+
+    <select id="selectLatestSuccessPdfCache" parameterType="long" resultMap="pdfCacheResultMap">
+        SELECT *
+        FROM (
+            SELECT C.PDF_CACHE_ID, C.PDF_FILE_PATH, C.GENERATION_STATUS, C.PDF_DATE, C.REPORT_ID
+            FROM PDF_CACHE C
+            INNER JOIN PATROL_REPORT P ON P.REPORT_ID = C.REPORT_ID
+            WHERE C.REPORT_ID = #{reportId}
+              AND C.GENERATION_STATUS = 'SUCCESS'
+              AND C.PDF_FILE_PATH IS NOT NULL
+              AND (P.MOD_DATE IS NULL OR C.PDF_DATE &gt;= P.MOD_DATE)
+            ORDER BY C.PDF_DATE DESC, C.PDF_CACHE_ID DESC
+        )
+        WHERE ROWNUM = 1
+    </select>
+
+    <update id="updatePdfCacheSuccess" parameterType="com.spring.dto.PdfCacheVO">
+        UPDATE PDF_CACHE
+        SET PDF_FILE_PATH = #{pdfFilePath},
+            GENERATION_STATUS = 'SUCCESS'
+        WHERE PDF_CACHE_ID = #{pdfCacheId}
+    </update>
+
+    <update id="updatePdfCacheFail" parameterType="long">
+        UPDATE PDF_CACHE
+        SET GENERATION_STATUS = 'FAIL'
+        WHERE PDF_CACHE_ID = #{pdfCacheId}
+    </update>
+</mapper>

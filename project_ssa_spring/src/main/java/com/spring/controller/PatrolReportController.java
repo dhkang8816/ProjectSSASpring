@@ -1,5 +1,7 @@
 package com.spring.controller;
 
+import java.nio.file.Path;
+import java.net.InetAddress;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
@@ -8,6 +10,11 @@ import java.util.Map;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.core.io.Resource;
+import org.springframework.core.io.UrlResource;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -19,6 +26,8 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
+import jakarta.servlet.http.HttpServletRequest;
+
 import com.spring.cmd.PageMaker;
 import com.spring.dto.FlightHistoryVO;
 import com.spring.dto.MemberVO;
@@ -29,6 +38,7 @@ import com.spring.service.DangerLogService;
 import com.spring.service.DetectionLogService;
 import com.spring.service.FlightHistoryService;
 import com.spring.service.MemberService;
+import com.spring.service.PdfCacheService;
 import com.spring.service.PatrolReportService;
 import com.spring.service.WorkFlowService;
 
@@ -42,6 +52,7 @@ import lombok.extern.log4j.Log4j2;
 public class PatrolReportController {
 
 	private final PatrolReportService reportService;
+	private final PdfCacheService pdfCacheService;
 	private final DangerLogService dangerLogService;
 	private final DetectionLogService detectionLogService;
 	private final FlightHistoryService flightHistoryService;
@@ -340,6 +351,36 @@ public class PatrolReportController {
 			log.error("💥 업무 보고서 상세 조회 프로세스 중 치명적 서버 오류 발생: ", e);
 			model.addAttribute("msg", "상세 조회 중 시스템 에러가 발생했습니다.");
 			return "patrolreport/patrolReportList";
+		}
+	}
+
+	@GetMapping(value = "/pdf/{reportId}", produces = MediaType.APPLICATION_PDF_VALUE)
+	public ResponseEntity<Resource> downloadPdf(@PathVariable("reportId") Long reportId, HttpServletRequest request) throws Exception {
+		String localOrigin = "http://127.0.0.1:" + request.getServerPort() + request.getContextPath();
+		Path pdfPath = pdfCacheService.getOrCreatePatrolReportPdf(reportId, localOrigin);
+		Resource resource = new UrlResource(pdfPath.toUri());
+		String filename = "patrol_report_" + reportId + ".pdf";
+		return ResponseEntity.ok()
+				.header(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=\"" + filename + "\"")
+				.header(HttpHeaders.CACHE_CONTROL, "no-store")
+				.contentType(MediaType.APPLICATION_PDF)
+				.body(resource);
+	}
+
+	@GetMapping("/internal/pdf/{reportId}")
+	public String internalPdfView(@PathVariable("reportId") Long reportId, @RequestParam("token") String token,
+			Model model, HttpServletRequest request) {
+		if (!isLoopbackRequest(request) || !pdfCacheService.isValidInternalRenderToken(reportId, token)) {
+			throw new AccessDeniedException("PDF rendering endpoint is internal only.");
+		}
+		return detail(reportId, model);
+	}
+
+	private boolean isLoopbackRequest(HttpServletRequest request) {
+		try {
+			return InetAddress.getByName(request.getRemoteAddr()).isLoopbackAddress();
+		} catch (Exception ex) {
+			return false;
 		}
 	}
 

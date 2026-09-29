@@ -51,6 +51,12 @@ public class CommonExceptionAdvice {
         return errorResponse(request, HttpStatus.NOT_FOUND, "DETECTION_NOT_FOUND", e.getMessage());
     }
 
+    @ExceptionHandler(PatrolReportNotFoundException.class)
+    public Object handlePatrolReportNotFound(PatrolReportNotFoundException e, HttpServletRequest request) {
+        log.warn("Patrol report not found. requestUri={}, reportId={}", request.getRequestURI(), e.getReportId());
+        return errorResponse(request, HttpStatus.NOT_FOUND, "PATROL_REPORT_NOT_FOUND", e.getMessage());
+    }
+
     @ExceptionHandler(InvalidRequestException.class)
     public Object handleInvalidRequest(InvalidRequestException e, HttpServletRequest request) {
         log.warn("Invalid request. requestUri={}", request.getRequestURI());

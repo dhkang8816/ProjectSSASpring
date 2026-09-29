@@ -175,6 +175,11 @@ body {
 	.report-frame * {
 		color: #000000 !important;
 	}
+	.report-note-content {
+		background: #ffffff !important;
+		color: #000000 !important;
+		border: 1px solid #d1d5db;
+	}
 	.layout-segment {
 		break-inside: avoid;
 	}
@@ -194,6 +199,8 @@ body {
 
 			
 			<div class="d-flex gap-2 align-items-center no-print">
+				<button type="button" class="btn btn-primary"
+					onclick="location.href='${pageContext.request.contextPath}/patrolreport/pdf/${report.reportId}';">PDF 다운로드</button>
 				<button type="button" class="btn btn-outline-light"
 					onclick="window.print();">인쇄</button>
 				<c:choose>
@@ -248,7 +255,7 @@ body {
 				<span
 					style="font-size: 12px; color: #888; display: block; margin-bottom: 4px;">■
 					당일 현장 조치내용 (ACTION_TAKEN)</span>
-				<p
+				<p class="report-note-content"
 					style="background: #161920; padding: 12px; border-radius: 6px; margin-bottom: 15px; line-height: 1.6;">
 					<c:out value="${report.actionTaken}" />
 				</p>
@@ -256,7 +263,7 @@ body {
 				<span
 					style="font-size: 12px; color: #888; display: block; margin-bottom: 4px;">■
 					특이사항 및 비고 (REMARK)</span>
-				<p
+				<p class="report-note-content"
 					style="background: #161920; padding: 12px; border-radius: 6px; margin: 0; line-height: 1.6; color: #ffae19;">
 					<c:out value="${report.remark}" />
 				</p>
@@ -361,9 +368,19 @@ body {
 		</div>
 	</div>
 
-	<script>
+<script>
 
-$(document).ready(function() {
+window.__REPORT_RENDER_READY__ = false;
+window.__REPORT_RENDER_ERROR__ = '';
+
+function renderPatrolReportCharts() {
+    try {
+        if (typeof Chart !== 'function') {
+            throw new Error('Chart.js is unavailable.');
+        }
+
+        // The internal PDF route must finish its chart draw before Chromium prints it.
+        var isPdfRender = window.location.pathname.indexOf('/patrolreport/internal/pdf/') !== -1;
     new Chart(document.getElementById('miniTrendChart'), {
         type: 'line',
         data: {
@@ -381,6 +398,7 @@ $(document).ready(function() {
         options: { 
             responsive: true, 
             maintainAspectRatio: false, 
+            animation: isPdfRender ? false : undefined,
             plugins: { legend: { display: false } } 
         }
     });
@@ -401,10 +419,21 @@ $(document).ready(function() {
         options: { 
             responsive: true, 
             maintainAspectRatio: false, 
+            animation: isPdfRender ? false : undefined,
             plugins: { legend: { display: false } } 
         }
     });
-}); // 💡 유실되었던 도큐먼트 레디 닫는 괄호선 완벽 수리 완료!
+        window.__REPORT_RENDER_READY__ = true;
+    } catch (error) {
+        window.__REPORT_RENDER_ERROR__ = error && error.message ? error.message : String(error);
+    }
+}
+
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', renderPatrolReportCharts);
+} else {
+    renderPatrolReportCharts();
+}
 
 
 function fn_triggerForceUpdate() {

@@ -47,6 +47,9 @@
 	<bean id="PatrolReportDAO" class="com.spring.dao.PatrolReportDAOImpl">
 		<constructor-arg ref="sqlSession" />
 	</bean>
+	<bean id="pdfCacheDAO" class="com.spring.dao.PdfCacheDAOImpl">
+		<constructor-arg ref="sqlSession" />
+	</bean>
 	<bean id="VideoDroneMapDAO" class="com.spring.dao.VideoDroneMapDAOImpl">
 		<constructor-arg ref="sqlSession" />
 	</bean>
@@ -112,6 +115,10 @@
 		<constructor-arg ref="PatrolReportDAO" />
 		<constructor-arg ref="WorkFlowDAO" />
 		<constructor-arg ref="memberDAO" />
+	</bean>
+	<bean id="pdfCacheService" class="com.spring.service.PdfCacheServiceImpl">
+		<constructor-arg ref="pdfCacheDAO" />
+		<constructor-arg ref="PatrolReportDAO" />
 	</bean>
 	<bean id="AIStreamBridgeService" class="com.spring.yolo.AIStreamBridgeService">
 	    <constructor-arg ref="VideoDroneMapDAO" />
