@@ -196,12 +196,55 @@
 	const contextPath =
 		"${pageContext.request.contextPath}";
 
+	const miniChannelStorageKey =
+		"ssa.miniSidebar.channel";
+
+	const miniChannelKeys = [
+		"video_1",
+		"video_2",
+		"video_3",
+		"esp32"
+	];
+
 	let miniChannelKey =
 		"video_1";
 
 	let miniStatusTimer = null;
 
 	let sidebarClockTimer = null;
+
+
+	function getSavedMiniChannel() {
+
+		try {
+			const savedChannel = sessionStorage.getItem(
+				miniChannelStorageKey
+			);
+
+			return miniChannelKeys.includes(
+				savedChannel
+			) ? savedChannel : null;
+		} catch (error) {
+			return null;
+		}
+
+	}
+
+
+	function saveMiniChannel(
+		channelKey
+	) {
+
+		try {
+			sessionStorage.setItem(
+				miniChannelStorageKey,
+				channelKey
+			);
+		} catch (error) {
+			// The sidebar remains usable when browser storage is unavailable.
+		}
+
+	}
 
 
 	/* =====================================================
@@ -300,16 +343,28 @@
 			channelKey
 		) {
 
+			if (!miniChannelKeys.includes(channelKey)) {
+				return;
+			}
+
 			if (
 				miniChannelKey
 				=== channelKey
 			) {
+				saveMiniChannel(
+					channelKey
+				);
 				return;
 			}
 
 
 			miniChannelKey =
 				channelKey;
+
+
+			saveMiniChannel(
+				channelKey
+			);
 
 
 			document
@@ -622,6 +677,16 @@
 	   ===================================================== */
 
 	function initMiniSidebar() {
+
+		const savedChannel =
+			getSavedMiniChannel();
+
+
+		if (savedChannel) {
+			window.switchMiniChannel(
+				savedChannel
+			);
+		}
 
 		updateSidebarClock();
 
