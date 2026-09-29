@@ -47,6 +47,16 @@ body {
     text-align: center;
 }
 
+.password-error {
+    margin: -10px 0 16px;
+    padding: 10px 12px;
+    border: 1px solid #ef4444;
+    border-radius: 8px;
+    background: rgba(127, 29, 29, 0.28);
+    color: #fecaca !important;
+    font-size: 13px;
+}
+
 
 .profile-upload-wrapper {
     display: flex;
@@ -125,6 +135,7 @@ body {
 
 
 .form-grid-card input[type="text"], 
+.form-grid-card input[type="password"],
 .form-grid-card input[type="email"], 
 .form-grid-card select {
     width: 220px !important; 
@@ -195,6 +206,10 @@ button:active { transform: translateY(0); }
 
 <div class="form-panel">
     <h2>⚙ 직원 정보 수정 설정</h2>
+
+    <c:if test="${param.passwordError eq 'true'}">
+        <p class="password-error">새 비밀번호와 비밀번호 확인이 일치하지 않습니다.</p>
+    </c:if>
     
     
     <form:form modelAttribute="member" action="${pageContext.request.contextPath}/member/modify" method="post" enctype="multipart/form-data">
@@ -258,6 +273,22 @@ button:active { transform: translateY(0); }
                     <form:input path="email" type="email" placeholder="example@domain.com" />
                 </div>
             </div>
+
+            <div class="form-row">
+                <span class="form-label">새 비밀번호</span>
+                <div class="form-value-slot">
+                    <input type="password" id="newPassword" name="newPassword"
+                        autocomplete="new-password" placeholder="변경할 때만 입력" />
+                </div>
+            </div>
+
+            <div class="form-row">
+                <span class="form-label">비밀번호 확인</span>
+                <div class="form-value-slot">
+                    <input type="password" id="newPasswordConfirm" name="newPasswordConfirm"
+                        autocomplete="new-password" placeholder="새 비밀번호 재입력" />
+                </div>
+            </div>
             
             
             <c:if test="${canManageAccount}">
@@ -310,6 +341,15 @@ button:active { transform: translateY(0); }
 		preview.src = "${pageContext.request.contextPath}/resources/images/member/noImage.jpg";
 		document.getElementById('deleteFlag').value = "true";
 	}
+
+    document.querySelector('form').addEventListener('submit', function(event) {
+        var newPassword = document.getElementById('newPassword').value;
+        var newPasswordConfirm = document.getElementById('newPasswordConfirm').value;
+        if ((newPassword || newPasswordConfirm) && newPassword !== newPasswordConfirm) {
+            event.preventDefault();
+            alert('새 비밀번호와 비밀번호 확인이 일치하지 않습니다.');
+        }
+    });
 
 	(function resizeMemberModifyPopup() {
 		if (!window.opener || window.opener.closed) {

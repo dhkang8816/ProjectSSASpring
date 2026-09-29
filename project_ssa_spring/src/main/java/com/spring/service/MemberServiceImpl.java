@@ -108,13 +108,24 @@ public class MemberServiceImpl implements MemberService {
     @Transactional
     @Override
     public int modifyMember(MemberVO memberVO) throws Exception{
+        encodeChangedPassword(memberVO);
         return memberDAO.updateMember(memberVO);
     }
 
     @Transactional
     @Override
     public int modifyMemberProfile(MemberVO memberVO) throws Exception {
+        encodeChangedPassword(memberVO);
         return memberDAO.updateMemberProfile(memberVO);
+    }
+
+    private void encodeChangedPassword(MemberVO memberVO) {
+        String newPassword = memberVO.getPassword();
+        if (newPassword == null || newPassword.isEmpty()) {
+            memberVO.setPassword(null);
+            return;
+        }
+        memberVO.setPassword(passwordEncoder.encode(newPassword));
     }
 
     @Transactional

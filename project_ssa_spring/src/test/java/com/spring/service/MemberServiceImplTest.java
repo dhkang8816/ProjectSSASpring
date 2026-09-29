@@ -82,6 +82,22 @@ class MemberServiceImplTest {
     }
 
     @Test
+    void profilePasswordChangeIsEncodedBeforeTheProfileMapperIsCalled() throws Exception {
+        MemberDAO dao = mock(MemberDAO.class);
+        PasswordEncoder encoder = mock(PasswordEncoder.class);
+        MemberVO member = MemberVO.builder().memberId("member01").password("new-password").build();
+        when(encoder.encode("new-password")).thenReturn("encoded-password");
+        when(dao.updateMemberProfile(member)).thenReturn(1);
+
+        int result = new MemberServiceImpl(dao, encoder).modifyMemberProfile(member);
+
+        assertEquals(1, result);
+        assertEquals("encoded-password", member.getPassword());
+        verify(encoder).encode("new-password");
+        verify(dao).updateMemberProfile(member);
+    }
+
+    @Test
     void loginFailureDoesNothingWhenMemberDoesNotExist() throws Exception {
         MemberDAO dao = mock(MemberDAO.class);
         PasswordEncoder encoder = mock(PasswordEncoder.class);

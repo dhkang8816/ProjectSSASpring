@@ -237,6 +237,10 @@
 			DEPARTMENT = #{department},
 			PHONE = #{phone, jdbcType=VARCHAR},
 			EMAIL = #{email},
+			<if test="password != null and password != ''">
+				PASSWORD = #{password},
+				PWD_CHG_DATE = SYSDATE,
+			</if>
 			STATUS = #{status},
 			PICTURE = #{picture}   
 		WHERE MEMBER_ID = #{memberId}
@@ -251,6 +255,10 @@
 			DEPARTMENT = #{department},
 			PHONE = #{phone, jdbcType=VARCHAR},
 			EMAIL = #{email},
+			<if test="password != null and password != ''">
+				PASSWORD = #{password},
+				PWD_CHG_DATE = SYSDATE,
+			</if>
 			PICTURE = #{picture}
 		WHERE MEMBER_ID = #{memberId}
 	</update>

@@ -204,6 +204,8 @@ public class MemberController {
     public String modify(MemberVO member,
                          @RequestParam(value = "pictureFile", required = false) MultipartFile pictureFile,
                          @RequestParam(value = "deleteOldPicture", defaultValue = "false") String deleteOldPicture,
+                         @RequestParam(value = "newPassword", defaultValue = "") String newPassword,
+                         @RequestParam(value = "newPasswordConfirm", defaultValue = "") String newPasswordConfirm,
                          @RequestParam(value = "popup", defaultValue = "false") boolean popup,
                          HttpServletRequest request) throws Exception {
         
@@ -212,6 +214,16 @@ public class MemberController {
         validateMemberAccess(member.getMemberId());
         boolean canManageAccount = isCurrentAdmin();
         MemberVO oldMember = memberService.getRequiredMemberById(member.getMemberId());
+
+        boolean passwordChangeRequested = !newPassword.isEmpty() || !newPasswordConfirm.isEmpty();
+        if (passwordChangeRequested && (newPassword.isEmpty() || !newPassword.equals(newPasswordConfirm))) {
+            return "redirect:/member/modifyForm?memberId=" + member.getMemberId()
+                    + "&passwordError=true" + (popup ? "&popup=true" : "");
+        }
+        // Do not accept a forged password field from the general member binding.
+        // The service encrypts this explicit new-password value only when it is present.
+        member.setPassword(passwordChangeRequested ? newPassword : null);
+
         String oldPictureName = oldMember.getPicture();
         String uploadPath = getUploadPath(request);
         if ("true".equals(deleteOldPicture)) {
