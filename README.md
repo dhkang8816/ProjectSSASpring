@@ -205,10 +205,12 @@ SEQ_PDF_CACHE
 | `SSA_FLASK_LABEL_TIMEOUT_MS`, `SSA_FLASK_CONTROL_TIMEOUT_MS` | Flask 상태/제어 요청 timeout |
 | `SSA_UPLOAD_ROOT` | snapshot 및 PDF cache 저장 루트 |
 | `SSA_PDF_BROWSER_PATH`, `SSA_PDF_RENDER_TIMEOUT_SECONDS` | Headless Chrome PDF 렌더링 설정 |
-| `SSA_DISCORD_INVITE_URL` | 사이드바 Discord 초대 링크 override |
+| `SSA_DISCORD_INVITE_URL` | 공통 사이드바의 Discord 초대 링크. `RuntimeSettings`를 거쳐 모든 `menu.jsp`에 주입됩니다. |
 | `SSA_ENABLE_LEGACY_LABEL_EVENT_SIDE_EFFECTS` | legacy label event 부수효과 사용 여부 |
 
-Spring의 `RuntimeSettings`는 JVM system property를 먼저 확인하고, 없으면 Tomcat 환경변수를 확인합니다. 설정용 Tomcat 화면 스크린샷은 현재 저장소에 포함되어 있지 않습니다.
+Spring의 `RuntimeSettings`는 JVM system property를 먼저 확인하고, 없으면 Tomcat 환경변수를 확인합니다. 따라서 Discord 초대 링크는 Eclipse의 **Servers → Tomcat → Open Launch Configuration → Environment**에 `SSA_DISCORD_INVITE_URL`로 설정합니다. URL은 `https` 기반의 Discord 초대 링크를 사용하며, 값 변경 후에는 Tomcat을 재시작합니다.
+
+`SSA_DISCORD_INVITE_URL`은 Spring 화면의 **사이드바 링크** 설정이고, Flask `.env`의 `DISCORD_WEBHOOK_URL`은 탐지 경보를 전송하는 **Webhook** 설정입니다. 두 값은 목적과 설정 위치가 다르므로 서로 대체하지 않습니다.
 
 ### Flask / YOLO
 
@@ -373,6 +375,5 @@ ProjectSSASpring/
 - `project_ssa_spring/src/main/resources/com/spring/properties/jdbc.properties.example`과 `project_ssa_yolo/.env.example`만 템플릿으로 사용합니다.
 - 현재 Flask 설정 코드에 고정된 Flask session/CSRF secret 값이 있는지 GitHub 공개 전에 별도로 확인하고 환경변수화해야 합니다. 이 값은 본 README에 노출하지 않습니다.
 - 초기 `admin` 계정은 개발용이므로 공개/운영 환경에서는 교체해야 합니다.
-
 
 

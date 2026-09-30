@@ -5,8 +5,6 @@ import java.net.URI;
 
 public final class RuntimeSettings {
 
-    private static final String DEFAULT_DISCORD_INVITE_URL = "https://discord.gg/BGNDuq5Pm8";
-
     private RuntimeSettings() {
     }
 
@@ -43,7 +41,7 @@ public final class RuntimeSettings {
     }
 
     public static String discordInviteUrl() {
-        String configuredUrl = text("SSA_DISCORD_INVITE_URL", DEFAULT_DISCORD_INVITE_URL);
+        String configuredUrl = text("SSA_DISCORD_INVITE_URL", "");
         try {
             URI uri = URI.create(configuredUrl);
             String host = uri.getHost();
@@ -57,6 +55,6 @@ public final class RuntimeSettings {
         } catch (IllegalArgumentException ignored) {
             // A malformed deployment setting must not render an unsafe sidebar link.
         }
-        return DEFAULT_DISCORD_INVITE_URL;
+        return configuredUrl;
     }
 }
