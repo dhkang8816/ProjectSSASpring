@@ -22,7 +22,7 @@ SSA는 영상·센서·동물 정보·드론 정보·탐지 이력·직원 업�
 ### 1. YOLO 기반 다중 영상 객체 탐지
 
 - `video_1`, `video_2`, `video_3`, `esp32`의 네 영상 소스를 관리합니다.
-- 각 소스는 독립적인 `SourceWorker`가 `OpenCV VideoCapture`를 소유하고 처리합니다.
+- 각 소스는 독립적인 `SourceWorker`가 입력 capture를 소유하고 처리합니다. 로컬 영상은 OpenCV를, ESP32-CAM은 전용 HTTP MJPEG reader를 사용합니다.
 - Ultralytics YOLO 모델은 한 번만 로드하며 `_model_inference_lock`으로 추론 동시 접근을 보호합니다.
 - Worker는 프레임 큐를 무한히 쌓지 않고 `latest_frame`, 최신 bounding box, 상태, 오류를 보관합니다. 따라서 오래된 프레임보다 최신 프레임을 우선해 관제 지연을 줄입니다.
 - 탐지 결과는 동물 개체수 부족 정책과 위험 객체 정책으로 분기되고, Spring API와 Discord 알림 작업으로 전달됩니다.
@@ -113,7 +113,7 @@ flowchart TB
     Result --> Events[animal shortage / danger event]
 ```
 
-`SourceWorker`만 자신의 `VideoCapture`를 열고 해제합니다. HTTP MJPEG generator와 Discord worker는 capture를 직접 소유하지 않고, 최신 결과만 읽습니다. 영상 조회 또는 채널 전환은 비행 이력 lifecycle을 시작·종료하지 않으며, 탐지 시작/중지가 그 책임을 가집니다.
+`SourceWorker`만 자신의 입력 capture를 열고 해제합니다. HTTP MJPEG generator와 Discord worker는 capture를 직접 소유하지 않고, 최신 결과만 읽습니다. 영상 조회 또는 채널 전환은 비행 이력 lifecycle을 시작·종료하지 않으며, 탐지 시작/중지가 그 책임을 가집니다.
 
 ## 기술 스택
 
@@ -223,7 +223,7 @@ Copy-Item .env.example .env
 | Flask | `FLASK_APP`, `FLASK_RUN_HOST`, `FLASK_RUN_PORT`, `FLASK_RUN_EXTRA_ARGS` |
 | Spring callback | `SSA_SPRING_HOST` |
 | 영상/모델 | `SSA_YOLO_MODEL_PATH`, `SSA_VIDEO_1_PATH`, `SSA_VIDEO_2_PATH`, `SSA_VIDEO_3_PATH`, `SSA_ESP32_STREAM_URL`, `SSA_DEFAULT_VIDEO_SOURCE`, `SSA_YOLO_CONFIDENCE` |
-| ESP32 | `SSA_ESP32_COM_PORT`, `SSA_ESP32_CAPTURE_TIMEOUT_MS`, `SSA_ESP32_RECEIVER_JOIN_TIMEOUT_SECONDS` |
+| ESP32 | `SSA_ESP32_COM_PORT`, `SSA_ESP32_STREAM_URL`, `SSA_ESP32_HTTP_CONNECT_TIMEOUT_SECONDS`, `SSA_ESP32_HTTP_READ_TIMEOUT_SECONDS`, `SSA_ESP32_MJPEG_BUFFER_MAX_BYTES`, `SSA_ESP32_RECONNECT_INITIAL_SECONDS`, `SSA_ESP32_RECONNECT_MAX_SECONDS` |
 | 배터리 보정 | `SSA_BATTERY_ENABLED`, `SSA_BATTERY_SOURCE_KEY`, `SSA_BATTERY_ADC_PIN`, `SSA_BATTERY_ADC_REFERENCE_VOLTAGE`, `SSA_BATTERY_MIN_VOLTAGE`, `SSA_BATTERY_MAX_VOLTAGE`, `SSA_BATTERY_DIVIDER_RATIO`, `SSA_BATTERY_CALIBRATION`, `SSA_BATTERY_SAMPLE_COUNT` |
 | 배터리 상태/테스트 | `SSA_BATTERY_LOW_PERCENT`, `SSA_BATTERY_CRITICAL_PERCENT`, `SSA_BATTERY_MOCK_ENABLED`, `SSA_BATTERY_MOCK_PERCENT`, `SSA_BATTERY_DEBUG`, `SSA_BATTERY_DEBUG_INTERVAL_SECONDS` |
 | 경보 정책 | `SSA_ANIMAL_UNDER_TARGET_SECONDS`, `SSA_ANIMAL_RECOVERY_SECONDS`, `SSA_ALARM_COOLDOWN_SECONDS`, `SSA_ANIMAL_TARGET_REFRESH_SECONDS` |
@@ -268,6 +268,7 @@ mvn test
 
 - COM 포트는 장비마다 다르므로 `SSA_ESP32_COM_PORT`로 지정합니다. `COM6`은 기본값일 뿐 필수값이 아닙니다.
 - Thonny 등 다른 도구가 동일한 serial port를 점유하면 `mpremote`와 충돌할 수 있습니다.
+- ESP32-CAM IP가 바뀌면 로컬 `.env`의 `SSA_ESP32_STREAM_URL`만 변경하고 Flask를 재시작합니다. `runtime_settings.py`는 `.env` 값이 없을 때만 쓰는 기본값이므로 장비 IP 변경마다 수정하지 않습니다.
 - 실제 ESP32 stream URL, 영상 경로, 모델 경로는 공개 저장소의 기본값에 의존하지 말고 로컬 `.env`에서 설정하세요.
 
 ## 외부 연동
@@ -333,6 +334,8 @@ README 작성 시점의 로컬 실행 결과는 **27 passed, 1 failed**였습니
 | ESP32 배터리 잔량 | GPIO2 ADC의 raw 값에 40.2kΩ / 10kΩ 분배비(약 `5.02`)와 calibration을 적용하고, 3.0V~4.25V 범위를 0~100%로 환산 |
 | ESP32 부저 초기 동작 | 전용 부저 worker가 `mpremote` 호출을 직렬화하고, 시작 초기화 명령을 통해 수동 최초 실행 의존을 줄임 |
 | VideoCapture lifecycle | `SourceWorker`만 capture를 소유/해제하도록 해 HTTP generator·Discord worker와의 경쟁을 방지 |
+| ESP32-CAM MJPEG 연결 timeout | 브라우저에서는 정상이나 OpenCV/FFmpeg에서 약 1초 후 끊기던 문제를 ESP32 전용 HTTP MJPEG reader로 분리했다. `requests(stream=True)` 연결 하나에서 JPEG SOI/EOI를 찾아 `cv2.imdecode()`하며, 연결 5초·read 2초·`1→2→4→5초` 재연결 backoff와 제한된 버퍼를 적용한다. HTTP generator는 worker를 시작하지 않고 latest frame만 읽는다. |
+| ESP32-CAM IP 변경 | 실행 값은 `run_server.py`가 시작 시 읽는 로컬 `.env`의 `SSA_ESP32_STREAM_URL`이 우선한다. IP 변경 시 `.env`만 수정하고 Flask를 재시작한다. 연결 문제는 `python scripts/diagnostics/esp32_stream_check.py`로 YOLO·COM 포트 없이 첫 프레임 수신 여부를 확인한다. |
 | Flask reloader | `run_server.py`에서 reloader를 끄고 단일 process로 실행해 native resource와 serial port 중복 점유를 방지 |
 | 외부 API 실패 전파 | Service 계층에서 외부 연동 예외를 분리하고 `CommonExceptionAdvice`가 JSP 또는 JSON의 안전한 오류 응답으로 변환 |
 | Git 민감정보 | `jdbc.properties`, `.env`, pycache, pyc, logs, 모델·영상 산출물을 ignore하고 example 파일만 공유 |
@@ -369,7 +372,6 @@ ProjectSSASpring/
 - `project_ssa_spring/src/main/resources/com/spring/properties/jdbc.properties.example`과 `project_ssa_yolo/.env.example`만 템플릿으로 사용합니다.
 - 현재 Flask 설정 코드에 고정된 Flask session/CSRF secret 값이 있는지 GitHub 공개 전에 별도로 확인하고 환경변수화해야 합니다. 이 값은 본 README에 노출하지 않습니다.
 - 초기 `admin` 계정은 개발용이므로 공개/운영 환경에서는 교체해야 합니다.
-
 
 
 
