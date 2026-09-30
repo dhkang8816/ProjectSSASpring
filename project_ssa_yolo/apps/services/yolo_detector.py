@@ -7,7 +7,6 @@ and loading the same weights once per source would multiply CPU/GPU memory.
 """
 
 import atexit
-import os
 import threading
 import time
 from datetime import datetime
@@ -16,15 +15,9 @@ import cv2
 from ultralytics import YOLO
 
 from apps import runtime_settings
+from apps.services.esp32_mjpeg import Esp32MjpegCapture
 from apps.services import oracle_service
 from apps.services.buzzer_helper import trigger_animal_sound, trigger_danger_sound
-
-
-# Bound stalled ESP32 FFMPEG reads. The OpenCV property fallback is also used.
-os.environ.setdefault(
-    "OPENCV_FFMPEG_CAPTURE_OPTIONS",
-    f"timeout;{runtime_settings.ESP32_CAPTURE_TIMEOUT_MS * 1000}",
-)
 
 
 YOLO_TO_CODE = {
@@ -356,6 +349,7 @@ class SourceWorker:
         self.last_error = None
         self.last_frame_at = None
         self.frame_sequence = 0
+        self._esp32_retry_delay = runtime_settings.ESP32_RECONNECT_INITIAL_SECONDS
 
     def start(self):
         with self.capture_lock:
@@ -377,8 +371,17 @@ class SourceWorker:
         print(f"[SourceWorker {self.source_key}] stop requested")
         thread = self.thread
         if thread is not None and thread is not threading.current_thread():
+            timeout = join_timeout or runtime_settings.SOURCE_WORKER_STOP_TIMEOUT_SECONDS
+            if self.mode == "esp32":
+                # An HTTP connect can still be in progress when OFF is
+                # pressed.  Give that one bounded request enough time to
+                # return, rather than incorrectly reporting a failed stop.
+                timeout = max(
+                    timeout,
+                    runtime_settings.ESP32_HTTP_CONNECT_TIMEOUT_SECONDS + 0.5,
+                )
             thread.join(
-                join_timeout or runtime_settings.SOURCE_WORKER_STOP_TIMEOUT_SECONDS
+                timeout
             )
         with self.frame_lock:
             self.latest_frame = None
@@ -422,23 +425,31 @@ class SourceWorker:
             capture.set(cv2.CAP_PROP_BUFFERSIZE, 1)
             return capture
 
-        open_timeout = getattr(cv2, "CAP_PROP_OPEN_TIMEOUT_MSEC", None)
-        read_timeout = getattr(cv2, "CAP_PROP_READ_TIMEOUT_MSEC", None)
-        if open_timeout is not None and read_timeout is not None:
-            properties = (
-                open_timeout,
-                runtime_settings.ESP32_CAPTURE_TIMEOUT_MS,
-                read_timeout,
-                runtime_settings.ESP32_CAPTURE_TIMEOUT_MS,
-            )
-            try:
-                capture = cv2.VideoCapture(self.uri, cv2.CAP_FFMPEG, properties)
-            except (TypeError, cv2.error):
-                capture = cv2.VideoCapture(self.uri, cv2.CAP_FFMPEG)
-        else:
-            capture = cv2.VideoCapture(self.uri, cv2.CAP_FFMPEG)
-        capture.set(cv2.CAP_PROP_BUFFERSIZE, 1)
+        capture = Esp32MjpegCapture(
+            self.uri,
+            connect_timeout_seconds=runtime_settings.ESP32_HTTP_CONNECT_TIMEOUT_SECONDS,
+            read_timeout_seconds=runtime_settings.ESP32_HTTP_READ_TIMEOUT_SECONDS,
+            max_buffer_bytes=runtime_settings.ESP32_MJPEG_BUFFER_MAX_BYTES,
+        )
+        capture.open()
         return capture
+
+    def _next_retry_delay(self):
+        if self.mode != "esp32":
+            return runtime_settings.SOURCE_WORKER_RETRY_SECONDS
+        delay = self._esp32_retry_delay
+        self._esp32_retry_delay = min(
+            runtime_settings.ESP32_RECONNECT_MAX_SECONDS,
+            max(
+                runtime_settings.ESP32_RECONNECT_INITIAL_SECONDS,
+                self._esp32_retry_delay * 2,
+            ),
+        )
+        return delay
+
+    def _reset_retry_delay(self):
+        if self.mode == "esp32":
+            self._esp32_retry_delay = runtime_settings.ESP32_RECONNECT_INITIAL_SECONDS
 
     def _publish(self, frame, boxes):
         global current_frame, current_boxes
@@ -466,13 +477,20 @@ class SourceWorker:
                     self.capture = capture
 
                 if not capture.isOpened():
-                    self._set_error("VideoCapture could not be opened")
-                    self.stop_event.wait(runtime_settings.SOURCE_WORKER_RETRY_SECONDS)
+                    self._set_error(
+                        getattr(capture, "last_error", None)
+                        or "VideoCapture could not be opened"
+                    )
+                    retry_after_release = True
                     continue
 
                 while not self.stop_event.is_set():
                     success, frame = capture.read()
                     if not success:
+                        self._set_error(
+                            getattr(capture, "last_error", None)
+                            or "VideoCapture frame read failed"
+                        )
                         if self.mode == "video":
                             # Loop valid files, but do not spin on a capture that
                             # opened successfully yet cannot decode any frame.
@@ -482,6 +500,7 @@ class SourceWorker:
                                 continue
                         retry_after_release = True
                         break
+                    self._reset_retry_delay()
                     try:
                         annotated_frame, detected_names, boxes = _run_inference(frame)
                         if self.stop_event.is_set():
@@ -506,7 +525,7 @@ class SourceWorker:
             except Exception as error:
                 self._set_error(error)
                 print(f"[YOLO:{self.source_key}] worker error: {error}")
-                self.stop_event.wait(runtime_settings.SOURCE_WORKER_RETRY_SECONDS)
+                retry_after_release = True
             finally:
                 if capture is not None:
                     # This worker is the sole owner of its decoder. Never call
@@ -517,7 +536,7 @@ class SourceWorker:
                     if self.capture is capture:
                         self.capture = None
             if retry_after_release:
-                self.stop_event.wait(runtime_settings.SOURCE_WORKER_RETRY_SECONDS)
+                self.stop_event.wait(self._next_retry_delay())
 
 
 _workers = {

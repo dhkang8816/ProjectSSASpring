@@ -78,7 +78,8 @@ def change_mode_signal(mode_name):
 def generate_esp32_frames_bridge():
     """Serve the ESP32 worker's annotated latest frame to legacy consumers."""
     global esp32_current_frame, esp32_boxes
-    start_esp32_receiver()
+    # Streaming is a read-only consumer.  The /stream/detection lifecycle API
+    # is the sole authority that starts or stops the ESP32 source worker.
     print("[Stream esp32] legacy client connected")
     try:
         while True:
