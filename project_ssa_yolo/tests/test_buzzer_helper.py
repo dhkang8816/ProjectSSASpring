@@ -62,6 +62,21 @@ class BuzzerHelperTest(unittest.TestCase):
         self.assertEqual("exec", command[0])
         self.assertIn("main.play_startup_melody()", command[-1])
 
+    def test_shutdown_melody_waits_for_its_queued_command(self):
+        def enqueue(alert_type, completed):
+            self.assertEqual("shutdown", alert_type)
+            completed.set()
+            return True
+
+        with patch.object(buzzer_helper, "_enqueue", side_effect=enqueue):
+            self.assertTrue(buzzer_helper.play_shutdown_melody(0.01))
+
+    def test_shutdown_command_uses_the_existing_resumed_board_session(self):
+        command = buzzer_helper._COMMANDS["shutdown"]
+
+        self.assertEqual("resume", command[0])
+        self.assertIn("main.play_shutdown_melody()", command[-1])
+
     def test_sensor_and_buzzer_mpremote_calls_are_serialized_by_one_lock(self):
         active_calls = 0
         maximum_parallel_calls = 0

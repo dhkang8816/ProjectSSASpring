@@ -33,11 +33,13 @@ _COMMANDS = {
     # ``resume`` commands are used for detection alerts.  This is the same
     # recovery path as a manual ``mpremote connect COMx exec ...`` command.
     "startup": ("exec", "import main; main.play_startup_melody()"),
+    "shutdown": ("resume", "exec", "import main; main.play_shutdown_melody()"),
 }
 _ERROR_MESSAGES = {
     "animal": "animal buzzer command failed",
     "danger": "danger buzzer command failed",
     "startup": "startup buzzer command failed",
+    "shutdown": "shutdown buzzer command failed",
 }
 
 
@@ -79,7 +81,7 @@ def _buzzer_worker():
     """Consume commands one at a time to protect the shared USB COM port."""
     while not _shutdown_event.is_set():
         try:
-            alert_type = _buzzer_queue.get(timeout=0.5)
+            alert_type, completed = _buzzer_queue.get(timeout=0.5)
         except queue.Empty:
             continue
         try:
@@ -88,6 +90,8 @@ def _buzzer_worker():
             if is_buzzer_enabled():
                 _run_mpremote_command(alert_type)
         finally:
+            if completed is not None:
+                completed.set()
             _buzzer_queue.task_done()
 
 
@@ -123,11 +127,17 @@ def stop_buzzer_service(join_timeout=2.0):
     return False
 
 
-def _enqueue(alert_type):
+def is_buzzer_service_running():
+    """Return whether this process already owns an active buzzer worker."""
+    worker = _worker_thread
+    return worker is not None and worker.is_alive()
+
+
+def _enqueue(alert_type, completed=None):
     if not is_buzzer_enabled():
         return False
     start_buzzer_service()
-    _buzzer_queue.put(alert_type)
+    _buzzer_queue.put((alert_type, completed))
     return True
 
 
@@ -204,3 +214,15 @@ def trigger_danger_sound():
 def play_startup_melody():
     """Queue one short startup sound through the existing COM owner."""
     return _enqueue("startup")
+
+
+def play_shutdown_melody(wait_timeout):
+    """Queue the one-time shutdown tone and wait only for that command.
+
+    The completion event is set after the serial attempt, including a bounded
+    mpremote failure.  Flask shutdown therefore never waits indefinitely.
+    """
+    completed = threading.Event()
+    if not _enqueue("shutdown", completed):
+        return False
+    return completed.wait(wait_timeout)

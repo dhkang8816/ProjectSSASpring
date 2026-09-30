@@ -21,6 +21,19 @@ class StarterTest(unittest.TestCase):
         finally:
             starter._startup_sound_played = original_played
 
+    def test_shutdown_tone_runs_after_sensor_stop_and_before_buzzer_stop(self):
+        calls = []
+        with patch.object(starter, "stop_notification_service", side_effect=lambda: calls.append("notification")), \
+                patch.object(starter, "stop_sensor_service", side_effect=lambda: calls.append("sensor")), \
+                patch.object(starter, "play_shutdown_melody", side_effect=lambda timeout: calls.append(("shutdown", timeout))), \
+                patch.object(starter, "is_buzzer_service_running", return_value=True), \
+                patch.object(starter, "stop_buzzer_service", side_effect=lambda: calls.append("buzzer")), \
+                patch.object(starter.runtime_settings, "BUZZER_SHUTDOWN_SOUND_ENABLED", True), \
+                patch.object(starter.runtime_settings, "BUZZER_SHUTDOWN_SOUND_WAIT_SECONDS", 3.0):
+            starter.stop_services()
+
+        self.assertEqual(["notification", "sensor", ("shutdown", 3.0), "buzzer"], calls)
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -5,6 +5,8 @@ import threading
 from apps import runtime_settings
 from apps.services.buzzer_helper import (
     play_startup_melody,
+    play_shutdown_melody,
+    is_buzzer_service_running,
     start_buzzer_service,
     stop_buzzer_service,
 )
@@ -39,4 +41,12 @@ def stop_services():
     """Stop optional background services during Flask process shutdown."""
     stop_notification_service()
     stop_sensor_service()
+    # The sensor poller and buzzer share one mpremote lock.  Stop polling
+    # first, then give the queued shutdown tone a bounded chance to own COM6.
+    # A muted console intentionally stays silent during shutdown as well.
+    if (
+        runtime_settings.BUZZER_SHUTDOWN_SOUND_ENABLED
+        and is_buzzer_service_running()
+    ):
+        play_shutdown_melody(runtime_settings.BUZZER_SHUTDOWN_SOUND_WAIT_SECONDS)
     stop_buzzer_service()

@@ -229,6 +229,14 @@ def play_startup_melody():
     stop_buzzer()
 
 
+def play_shutdown_melody():
+    """Short sol-mi-do confirmation before the Flask service exits."""
+    for frequency in (392, 330, 262):
+        _beep(frequency, 90)
+        time.sleep_ms(55)
+    stop_buzzer()
+
+
 # =========================================================
 # 충돌 경고 알람
 # =========================================================
