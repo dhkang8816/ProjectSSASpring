@@ -194,6 +194,7 @@ a.main-link:hover {
     
     <form:form id="droneForm" method="post">
         <input type="hidden" name="popup" value="true" />
+        <input type="hidden" name="droneId" value="${drone.droneId}" />
         
         <input type="hidden" name="page" value="${pageMaker.page}" />
         <input type="hidden" name="searchType" value="${pageMaker.searchType}" />
