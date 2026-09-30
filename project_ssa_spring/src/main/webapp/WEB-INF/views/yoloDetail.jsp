@@ -596,6 +596,11 @@ body {
 	background-color: #000000;
 }
 
+/* Only the ESP32-CAM source preserves its full, often 4:3, frame. */
+.streaming-frame-large.is-esp32-source {
+	object-fit: contain;
+}
+
 .single-video-display-box.stream-off .streaming-frame-large,
 .single-video-display-box.stream-error .streaming-frame-large {
 	visibility: hidden;
@@ -1410,6 +1415,8 @@ body {
 			const els = getElements();
 			if (!els.image)
 				return;
+			els.image.classList.toggle('is-esp32-source',
+					currentChannelKey === 'esp32');
 			els.box.classList.remove('stream-error');
 			if (enabled) {
 				if (els.image.dataset.channel === currentChannelKey

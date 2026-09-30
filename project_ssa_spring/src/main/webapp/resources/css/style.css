@@ -240,6 +240,10 @@ body {
 	object-fit: cover;
 }
 
+#ssaSidebar .mini-streaming-frame.is-esp32-source {
+	object-fit: contain;
+}
+
 
 #ssaSidebar .mini-video-display.stream-off .mini-streaming-frame,
 #ssaSidebar .mini-video-display.stream-error .mini-streaming-frame {

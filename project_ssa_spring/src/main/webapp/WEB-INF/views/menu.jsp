@@ -468,6 +468,12 @@
 		}
 
 
+		img.classList.toggle(
+			"is-esp32-source",
+			miniChannelKey === "esp32"
+		);
+
+
 		box.classList.remove(
 			"stream-error"
 		);

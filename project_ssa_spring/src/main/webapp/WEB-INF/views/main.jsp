@@ -433,6 +433,12 @@ body {
 	background-color: #000000;
 }
 
+/* ESP32-CAM commonly emits a 4:3 frame. Preserve the full sensor image
+   inside the landscape monitoring card instead of cropping it with cover. */
+#droneVideo_esp32 {
+	object-fit: contain;
+}
+
 .video-display-box.stream-off .streaming-frame, .video-display-box.stream-error .streaming-frame
 	{
 	visibility: hidden;
