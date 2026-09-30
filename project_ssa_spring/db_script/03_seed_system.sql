@@ -39,7 +39,8 @@ INSERT INTO COMMON_CODE (GRP_CODE, CODE, CODE_NAME, SORT_SEQ, USE_YN, CODE_DATE)
 
 -- ---------------------------------------------------------------------------
 -- 2. Default development administrator
---    Login: admin / ssa1234!  (replace before any shared deployment)
+--    Development-only local bootstrap account. Replace or remove this account
+--    before a shared deployment; do not publish its credential separately.
 -- ---------------------------------------------------------------------------
 INSERT INTO MEMBER (
     MEMBER_ID, NAME, DEPARTMENT, PASSWORD, STATUS, FAIL_COUNT,

@@ -89,8 +89,15 @@ class AnimalUnderTargetPolicyTest(unittest.TestCase):
             yolo_detector.process_animal_detection_logic(["dog"], None, self.SOURCE_KEY)
             yolo_detector.process_animal_detection_logic(["dog"], None, self.SOURCE_KEY)
 
-        send_log.assert_called_once()
-        trigger_sound.assert_called_once()
+        # A recognised dog makes the policy evaluate both protected animal
+        # types. The empty frame reset both pending timers, so these are the
+        # two new reports from the restarted timer only.
+        self.assertEqual(2, send_log.call_count)
+        self.assertCountEqual(
+            ["0", "1"],
+            [call.kwargs["animal_type"] for call in send_log.call_args_list],
+        )
+        self.assertEqual(2, trigger_sound.call_count)
 
     def test_policy_change_restarts_pending_shortage_duration(self):
         with patch.object(yolo_detector.time, "time", side_effect=(0.0, 11.0)), \

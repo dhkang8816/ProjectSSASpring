@@ -9,4 +9,4 @@ Run the tests with the project virtual environment:
 The test suite mocks subprocess, HTTP and Flask state. It does not open COM6,
 run YOLO inference, send Discord notifications or require an ESP32 board.
 
-`requirements-test.txt` contains test-only dependencies.
+`requirements-test.txt` installs `requirements.txt` first and then adds pytest.

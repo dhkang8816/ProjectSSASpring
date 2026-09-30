@@ -11,6 +11,57 @@ Spring MVC, Flask, YOLO, Oracle, ESP32를 연동해 실시간 영상 관제, AI 
 
 > 이 문서는 현재 저장소의 Spring Mapper, JSP, Python 서비스, SQL 초기화 스크립트 및 설정 파일을 기준으로 작성되었습니다. 실제 키, DB 비밀번호, Webhook URL, 로컬 경로는 문서에 포함하지 않습니다.
 
+## Portfolio Snapshot
+
+> **AI 객체 감지와 IoT 센서를 활용해 유기동물 보호소의 상태를 실시간으로 모니터링하는 통합 관제 시스템**
+
+### 프로젝트 목적
+
+제한된 인력으로 여러 보호 구역을 동시에 살피기 어려운 문제를 해결하기 위해, 영상 탐지·센서·운영 데이터를 한 화면에 연결했습니다. 동물 개체수 미달과 위험 객체를 감지하고, 관제 이력·조치·보고서까지 이어지는 운영 흐름을 제공합니다.
+
+### 핵심 구현
+
+- 2×2 화면에서 `video_1~3`과 ESP32-CAM을 독립적으로 처리하는 4채널 관제
+- 공유 YOLO 모델과 소스별 `SourceWorker`를 통한 최신 프레임 중심의 저지연 추론
+- 동물 미달·위험 객체 이벤트, 스냅샷, Discord 알림 queue, Oracle 이력 연동
+- ESP32 환경 센서·배터리·부저 상태를 비동기 worker로 분리한 IoT 연동
+- Spring Security 권한 제어, 업무 CRUD, Dashboard, PDF 일일 관제 보고서 및 Workflow
+
+### 주요 기술
+
+| 영역 | 기술 |
+| --- | --- |
+| Backend | Java 17, Spring MVC, Spring Security, MyBatis, Oracle XE |
+| AI / Vision | Python, Flask, Ultralytics YOLO, OpenCV, NumPy |
+| IoT | ESP32-S3, ESP32-CAM, MicroPython, `mpremote` |
+| Frontend | JSP, JSTL, JavaScript, Chart.js |
+| Test | JUnit 5, Mockito, pytest |
+
+### System Architecture
+
+```mermaid
+flowchart LR
+    Browser[Browser / JSP] --> Spring[Spring MVC]
+    Spring --> Security[Spring Security]
+    Spring --> MyBatis[MyBatis]
+    MyBatis --> Oracle[(Oracle XE)]
+    Spring <--> Flask[Flask AI Server]
+    Flask --> YOLO[YOLO / OpenCV]
+    Flask <--> ESP32[ESP32-S3 / ESP32-CAM]
+    Flask --> Spring
+```
+
+### 구현 범위 (저장소 기준)
+
+- Spring MVC 기반 운영 화면, 권한별 메뉴·URL 접근 제어, MyBatis/Oracle CRUD
+- Flask 다중 소스 영상 처리, 탐지 정책, Spring callback 및 notification queue
+- ESP32 센서/배터리/부저 연동과 ESP32-CAM MJPEG 입력 안정화
+- Dashboard, 탐지·경보 이력, FlightHistory, PDF Cache, PatrolReport 및 Workflow
+
+### Demo
+
+현재 저장소에는 GitHub README에서 재사용할 수 있는 실제 관제 화면 스크린샷·GIF·데모 영상이 포함되어 있지 않습니다. 아이콘, 기본 이미지 및 외부 라이브러리 샘플은 데모 자산으로 사용하지 않았습니다.
+
 ## 프로젝트 소개
 
 유기동물 보호소는 여러 구역의 상태를 지속해서 확인해야 하지만, 제한된 인력으로 모든 구역을 동시에 관찰하기 어렵습니다. 이 과정에서 동물 개체수 부족, 위험 객체 출현, 장비 상태 이상에 대한 대응이 늦어질 수 있습니다.
@@ -182,11 +233,10 @@ SEQ_PDF_CACHE
 
 | Item | Value |
 | --- | --- |
-| ID | `admin` |
-| Password | `ssa1234!` |
+| ID | `admin` (개발 seed 전용) |
 | Role | `ROLE_ADMIN` |
 
-> 개발 및 시연 전용 계정입니다. 공유·운영 환경에서는 반드시 비밀번호와 계정 정보를 변경하거나 seed 계정을 제거하세요.
+> 개발 및 시연 환경의 초기 로그인 검증을 위한 seed 계정입니다. 실제 비밀번호는 README에 기록하지 않습니다. 공유·운영 환경에서는 반드시 별도 관리자 계정을 생성하고 seed 계정을 제거하거나 자격 증명을 변경하세요.
 
 ## 환경 설정
 
@@ -223,7 +273,7 @@ Copy-Item .env.example .env
 
 | 변수 그룹 | 주요 변수 |
 | --- | --- |
-| Flask | `FLASK_APP`, `FLASK_RUN_HOST`, `FLASK_RUN_PORT`, `FLASK_RUN_EXTRA_ARGS` |
+| Flask | `FLASK_APP`, `FLASK_RUN_HOST`, `FLASK_RUN_PORT`, `FLASK_RUN_EXTRA_ARGS`, `SSA_FLASK_SECRET_KEY`, `SSA_FLASK_CSRF_SECRET_KEY` |
 | Spring callback | `SSA_SPRING_HOST` |
 | 영상/모델 | `SSA_YOLO_MODEL_PATH`, `SSA_VIDEO_1_PATH`, `SSA_VIDEO_2_PATH`, `SSA_VIDEO_3_PATH`, `SSA_ESP32_STREAM_URL`, `SSA_DEFAULT_VIDEO_SOURCE`, `SSA_YOLO_CONFIDENCE` |
 | ESP32 | `SSA_ESP32_COM_PORT`, `SSA_ESP32_STREAM_URL`, `SSA_ESP32_HTTP_CONNECT_TIMEOUT_SECONDS`, `SSA_ESP32_HTTP_READ_TIMEOUT_SECONDS`, `SSA_ESP32_MJPEG_BUFFER_MAX_BYTES`, `SSA_ESP32_RECONNECT_INITIAL_SECONDS`, `SSA_ESP32_RECONNECT_MAX_SECONDS` |
@@ -243,11 +293,14 @@ Copy-Item .env.example .env
 
 ### 2. Flask / YOLO 서버
 
-Python runtime 의존성은 루트 `requirements.txt`로 아직 통합되어 있지 않습니다. 현재 코드의 import 기준으로 Flask, Flask-Migrate, Flask-Login, Flask-WTF, Flask-SQLAlchemy, python-dotenv, requests, pyserial, OpenCV, NumPy, pandas, Ultralytics, mpremote가 필요합니다.
+`requirements.txt`는 Flask, YOLO/OpenCV, ESP32 제어에 필요한 실행 의존성을 관리합니다. `requirements-test.txt`는 실행 의존성에 pytest를 추가합니다.
 
 ```powershell
 Set-Location project_ssa_yolo
-python -m pip install flask flask-migrate flask-login flask-wtf flask-sqlalchemy python-dotenv requests pyserial opencv-python numpy pandas ultralytics mpremote
+python -m venv .venv
+.\.venv\Scripts\Activate.ps1
+python -m pip install --upgrade pip
+python -m pip install -r requirements.txt
 python run_server.py
 ```
 
@@ -315,7 +368,7 @@ Set-Location project_ssa_spring
 mvn test
 ```
 
-이번 README 작성 환경에는 `mvn` 명령이 없어 Spring 테스트는 실행하지 못했습니다.
+사용자 제공 Maven 실행 로그 기준으로 `mvn test`는 **Tests run: 55, Failures: 0, Errors: 0, Skipped: 0, BUILD SUCCESS**를 기록했습니다.
 
 ### Python
 
@@ -323,11 +376,12 @@ Flask/YOLO 회귀 테스트는 `project_ssa_yolo/tests`에 있으며 실제 COM 
 
 ```powershell
 Set-Location project_ssa_yolo
+.\.venv\Scripts\Activate.ps1
 python -m pip install -r requirements-test.txt
 python -m pytest tests -q -p no:cacheprovider
 ```
 
-README 작성 시점의 로컬 실행 결과는 **27 passed, 1 failed**였습니다. 실패한 `test_lost_detection_clears_pending_timer_instead_of_firing_later`는 현재 정책이 인식된 동물 프레임에서 개와 고양이 부족 여부를 함께 평가하는 동작과 기존 테스트의 단일 호출 기대가 달라 발생했습니다. 이는 별도 회귀 테스트 정리가 필요한 항목입니다.
+현재 코드 기준 로컬 실행 결과는 **30 passed**입니다. `test_lost_detection_clears_pending_timer_instead_of_firing_later`는 현재 정책(인식된 개 또는 고양이 프레임에서 두 보호종의 미달 여부를 함께 평가)과 일치하도록 기대값을 정리했습니다.
 
 ## 주요 Trouble Shooting
 
@@ -362,6 +416,7 @@ ProjectSSASpring/
 │  ├─ apps/
 │  ├─ tests/
 │  ├─ .env.example
+│  ├─ requirements.txt
 │  ├─ requirements-test.txt
 │  └─ run_server.py
 ├─ .gitignore
@@ -373,7 +428,5 @@ ProjectSSASpring/
 - `.env`, `jdbc.properties`, API Key, DB 비밀번호, 실제 Discord Webhook, 개인 경로, 장비 IP는 커밋하지 않습니다.
 - `.gitignore`는 Eclipse/Tomcat 산출물, Python cache, 모델 파일, 영상 파일, 로그를 제외하도록 구성되어 있습니다.
 - `project_ssa_spring/src/main/resources/com/spring/properties/jdbc.properties.example`과 `project_ssa_yolo/.env.example`만 템플릿으로 사용합니다.
-- 현재 Flask 설정 코드에 고정된 Flask session/CSRF secret 값이 있는지 GitHub 공개 전에 별도로 확인하고 환경변수화해야 합니다. 이 값은 본 README에 노출하지 않습니다.
+- Flask session/CSRF secret은 `SSA_FLASK_SECRET_KEY`, `SSA_FLASK_CSRF_SECRET_KEY` 환경변수로 관리합니다. 로컬 미설정 시에는 프로세스마다 임시 난수가 생성되므로, 재시작 후에도 세션을 유지해야 하는 배포 환경에서는 반드시 `.env` 또는 배포 환경변수에 고정된 난수를 설정해야 합니다.
 - 초기 `admin` 계정은 개발용이므로 공개/운영 환경에서는 교체해야 합니다.
-
-

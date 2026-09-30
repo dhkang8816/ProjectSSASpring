@@ -1,2 +1,5 @@
-# Test-only dependencies. Runtime services do not import pytest.
+# Install the runtime service first, then add the test runner.
+-r requirements.txt
+
+# Test-only dependency. Runtime services do not import pytest.
 pytest>=8,<9

@@ -16,8 +16,12 @@ Servers/
 # Python
 **/__pycache__/
 **/*.pyc
+**/.pytest_cache/
 **/.venv/
 **/venv/
+**/.idea/
+**/*.sqlite
+**/*.db
 
 # Secrets
 **/.env

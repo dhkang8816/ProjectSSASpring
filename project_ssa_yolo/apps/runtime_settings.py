@@ -34,7 +34,7 @@ def _bool(name, default=False):
 
 
 SPRING_HOST = _text("SSA_SPRING_HOST", "http://localhost:80/project_ssa_spring")
-ESP32_STREAM_URL = _text("SSA_ESP32_STREAM_URL", "http://192.168.137.79:80/stream")
+ESP32_STREAM_URL = _text("SSA_ESP32_STREAM_URL", "http://192.168.0.100:80/stream")
 ESP32_COM_PORT = _text("SSA_ESP32_COM_PORT", "COM6")
 
 # Battery telemetry is produced by the existing ESP32 sensor polling command;

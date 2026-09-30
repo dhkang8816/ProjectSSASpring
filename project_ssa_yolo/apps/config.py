@@ -1,11 +1,19 @@
+import os
+import secrets
 from pathlib import Path
 
 basedir = Path(__file__).parent.parent
 
+
+def _secret(name, fallback=None):
+    """Read deployment secrets without committing a reusable fallback value."""
+    value = os.getenv(name, "").strip()
+    return value or fallback or secrets.token_urlsafe(32)
+
 # BaseConfig 클래스를 작성한다
 class BaseConfig:
-    SECRET_KEY = "dkajlfdsj3dkslhl"
-    WTF_CSRF_SECRET_KEY = "3hksfjlvjjwueh83"
+    SECRET_KEY = _secret("SSA_FLASK_SECRET_KEY")
+    WTF_CSRF_SECRET_KEY = _secret("SSA_FLASK_CSRF_SECRET_KEY", SECRET_KEY)
 
 
 # BaseConfig 클래스를 상속하여 LocalConfig 클래스를 작성한다
