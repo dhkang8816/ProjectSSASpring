@@ -1,0 +1,39 @@
+-- SSA Oracle XE sequences for MyBatis Mapper NEXTVAL statements.
+-- Run after 01_schema.sql and before 03_seed_system.sql.
+-- Do not add sequences for Mapper statements that intentionally use MAX(...)+1.
+
+CREATE SEQUENCE ALERT_LOG_SEQ
+    START WITH 1
+    INCREMENT BY 1
+    NOCACHE
+    NOCYCLE;
+
+CREATE SEQUENCE DETECTION_LOG_SEQ
+    START WITH 1
+    INCREMENT BY 1
+    NOCACHE
+    NOCYCLE;
+
+CREATE SEQUENCE DANGER_LOG_SEQ
+    START WITH 1
+    INCREMENT BY 1
+    NOCACHE
+    NOCYCLE;
+
+CREATE SEQUENCE SEQ_ENVIRONMENT
+    START WITH 1
+    INCREMENT BY 1
+    NOCACHE
+    NOCYCLE;
+
+CREATE SEQUENCE SEQ_FLIGHT_HISTORY
+    START WITH 1
+    INCREMENT BY 1
+    NOCACHE
+    NOCYCLE;
+
+CREATE SEQUENCE SEQ_PDF_CACHE
+    START WITH 1
+    INCREMENT BY 1
+    NOCACHE
+    NOCYCLE;
