@@ -11,10 +11,6 @@ Spring MVC, Flask, YOLO, Oracle, ESP32를 연동해 실시간 영상 관제, AI 
 
 > 이 문서는 현재 저장소의 Spring Mapper, JSP, Python 서비스, SQL 초기화 스크립트 및 설정 파일을 기준으로 작성되었습니다. 실제 키, DB 비밀번호, Webhook URL, 로컬 경로는 문서에 포함하지 않습니다.
 
-## Portfolio Snapshot
-
-> **AI 객체 감지와 IoT 센서를 활용해 유기동물 보호소의 상태를 실시간으로 모니터링하는 통합 관제 시스템**
-
 ### 프로젝트 목적
 
 제한된 인력으로 여러 보호 구역을 동시에 살피기 어려운 문제를 해결하기 위해, 영상 탐지·센서·운영 데이터를 한 화면에 연결했습니다. 동물 개체수 미달과 위험 객체를 감지하고, 관제 이력·조치·보고서까지 이어지는 운영 흐름을 제공합니다.
@@ -57,10 +53,6 @@ flowchart LR
 - Flask 다중 소스 영상 처리, 탐지 정책, Spring callback 및 notification queue
 - ESP32 센서/배터리/부저 연동과 ESP32-CAM MJPEG 입력 안정화
 - Dashboard, 탐지·경보 이력, FlightHistory, PDF Cache, PatrolReport 및 Workflow
-
-### Demo
-
-현재 저장소에는 GitHub README에서 재사용할 수 있는 실제 관제 화면 스크린샷·GIF·데모 영상이 포함되어 있지 않습니다. 아이콘, 기본 이미지 및 외부 라이브러리 샘플은 데모 자산으로 사용하지 않았습니다.
 
 ## 프로젝트 소개
 
