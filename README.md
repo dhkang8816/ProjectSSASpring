@@ -133,7 +133,8 @@ flowchart TB
 
 Oracle XE를 사용합니다. 신규 개발 DB는 아래 초기화 스크립트 순서로 구성합니다.
 
-
+| 대상 | 내용 |
+| --- | --- |
 | `project_ssa_spring/db_script/01_schema.sql` | 현재 Mapper가 사용하는 19개 테이블, PK/FK, CHECK 제약, 기본값, 테이블 설명 및 인덱스 |
 | `project_ssa_spring/db_script/02_sequences.sql` | Mapper의 `NEXTVAL` 사용처와 일치하는 시퀀스 생성 |
 | `project_ssa_spring/db_script/03_seed_system.sql` | 애플리케이션 구동에 필요한 도메인 코드와 안전한 개발용 기준 데이터 |
