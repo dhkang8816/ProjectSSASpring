@@ -147,6 +147,10 @@ body {
 	gap: 5px;
 }
 
+.pdf-watermark {
+	display: none;
+}
+
 @page {
 	size: A4;
 	margin: 12mm;
@@ -186,10 +190,29 @@ body {
 	canvas {
 		max-width: 100% !important;
 	}
+	.pdf-watermark {
+		display: flex !important;
+		position: fixed;
+		inset: 0;
+		z-index: 100;
+		align-items: center;
+		justify-content: center;
+		pointer-events: none;
+	}
+	.pdf-watermark img {
+		width: 93%;
+		height: auto;
+		opacity: 0.13;
+	}
 }
 </style>
 </head>
 <body class="popup-page">
+	<c:if test="${pdfRender}">
+		<div class="pdf-watermark" aria-hidden="true">
+			<img src="<c:url value='/resources/images/privateMark.png'/>" alt="">
+		</div>
+	</c:if>
 	<div class="report-frame">
 		<div
 			class="d-flex justify-content-between align-items-center mb-3 pb-2"

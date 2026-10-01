@@ -373,6 +373,7 @@ public class PatrolReportController {
 		if (!isLoopbackRequest(request) || !pdfCacheService.isValidInternalRenderToken(reportId, token)) {
 			throw new AccessDeniedException("PDF rendering endpoint is internal only.");
 		}
+		model.addAttribute("pdfRender", true);
 		return detail(reportId, model);
 	}
 

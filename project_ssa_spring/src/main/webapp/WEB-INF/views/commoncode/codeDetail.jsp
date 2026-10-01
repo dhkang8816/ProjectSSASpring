@@ -179,7 +179,7 @@ button.btn-list:hover {
             
             
             <button type="button" class="btn-list"
-                    onclick="location.href='${pageContext.request.contextPath}/commoncode/list'">목록으로</button>
+                    onclick="return closePopupAndRefreshParent('${pageContext.request.contextPath}/commoncode/list');">목록으로</button>
         </div>
         
     </form:form>

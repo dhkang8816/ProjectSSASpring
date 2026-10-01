@@ -31,7 +31,7 @@ public class PdfCacheServiceImpl implements PdfCacheService {
 
     public PdfCacheServiceImpl(PdfCacheDAO pdfCacheDAO, PatrolReportDAO patrolReportDAO) {
         this(pdfCacheDAO, patrolReportDAO, new HeadlessChromePdfRenderer(),
-                Paths.get(RuntimeSettings.text("SSA_UPLOAD_ROOT", "C:\\upload"), "pdf-cache", "v3"));
+                Paths.get(RuntimeSettings.text("SSA_UPLOAD_ROOT", "C:\\upload"), "pdf-cache", "v4"));
     }
 
     PdfCacheServiceImpl(PdfCacheDAO pdfCacheDAO, PatrolReportDAO patrolReportDAO,
