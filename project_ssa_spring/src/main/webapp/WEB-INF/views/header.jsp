@@ -25,7 +25,7 @@
 	href="${pageContext.request.contextPath}/resources/css/style.css?v=20260921">
 <style>
 
-header, .top-header {
+#ssaHeader {
     background-color: #111827 !important; 
     border-bottom: 1px solid #1e293b;
     padding: 0 30px;
@@ -34,6 +34,7 @@ header, .top-header {
     align-items: center;
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
     box-sizing: border-box;
+    font-family: 'Segoe UI', Roboto, 'Malgun Gothic', sans-serif;
 }
 
 
@@ -296,6 +297,10 @@ header, .top-header {
 
 <script>
 $(document).ready(function() {
+    if (!document.getElementById('alarmBellIcon')) {
+        return;
+    }
+
     $('#alarmBellIcon').on('click', function(e) {
         e.stopPropagation();
         $('.alarm-dropdown').fadeToggle(150);
@@ -314,7 +319,99 @@ $(document).ready(function() {
     $(document).on('click', function() {
         $('.alarm-dropdown').fadeOut(100);
     });
-    let lastProcessedAlertId = null; 
+    let lastProcessedAlertId = null;
+    const headerContextPath = '${pageContext.request.contextPath}';
+
+    function getAlertDestination(alertData) {
+        if (alertData.dlogId) {
+            return {
+                url: headerContextPath + '/detection/detail?dlogId=' + encodeURIComponent(alertData.dlogId),
+                popupName: 'detectionDetail'
+            };
+        }
+        if (alertData.danlogId) {
+            return {
+                url: headerContextPath + '/dangerlog/detail?danlogId=' + encodeURIComponent(alertData.danlogId),
+                popupName: 'dangerLogDetail'
+            };
+        }
+        return {
+            url: headerContextPath + '/alert/alertDetail?alertId=' + encodeURIComponent(alertData.alertId),
+            popupName: 'alertDetail'
+        };
+    }
+
+    function formatAlertTime(value) {
+        const date = value ? new Date(value) : null;
+        if (!date || Number.isNaN(date.getTime())) {
+            return '';
+        }
+        return String(date.getMonth() + 1).padStart(2, '0') + '-'
+            + String(date.getDate()).padStart(2, '0') + ' '
+            + String(date.getHours()).padStart(2, '0') + ':'
+            + String(date.getMinutes()).padStart(2, '0');
+    }
+
+    function buildAlarmItem(alertData) {
+        const destination = getAlertDestination(alertData);
+        const isDanger = String(alertData.alertType) === '1';
+        const typeText = isDanger ? '[이상객체]' : '[개체미달]';
+        const typeColor = isDanger ? '#ef4444' : '#f59e0b';
+        const $link = $('<a>', {
+            href: destination.url,
+            'data-detail-popup': '',
+            'data-popup-name': destination.popupName
+        });
+        $link.append($('<span>', {
+            text: typeText + ' ',
+            css: { color: typeColor, fontWeight: '700' }
+        }));
+        $link.append(document.createTextNode(alertData.alertMsg || '새 경보가 발생했습니다.'));
+
+        const $item = $('<li>');
+        $item.append($link);
+        const timeText = formatAlertTime(alertData.firstSendTime || alertData.sendDate);
+        if (timeText) {
+            $item.append($('<span>', {
+                text: timeText,
+                css: {
+                    display: 'block', fontSize: '11px', color: '#64748b',
+                    margin: '4px 18px 8px', textAlign: 'right'
+                }
+            }));
+        }
+        return $item;
+    }
+
+    async function loadRecentAlarms() {
+        try {
+            const response = await fetch(headerContextPath + '/api/event/recent?t=' + Date.now(), {
+                cache: 'no-store'
+            });
+            if (!response.ok) {
+                return;
+            }
+            const alerts = await response.json();
+            if (!Array.isArray(alerts)) {
+                return;
+            }
+
+            const $list = $('.alarm-list-content').empty();
+            if (!alerts.length) {
+                $list.append($('<li>', {
+                    class: 'empty-alarm-msg text-center text-muted py-4 small',
+                    text: '새로운 경보 알림이 없습니다.'
+                }));
+                return;
+            }
+            alerts.forEach(function(alertData) {
+                $list.append(buildAlarmItem(alertData));
+            });
+            lastProcessedAlertId = alerts[0].alertId;
+        } catch (error) {
+            console.error('Header alert bootstrap failed.', error);
+        }
+    }
 
     const pollAlertServer = async () => {
         try {
@@ -342,40 +439,7 @@ $(document).ready(function() {
     };
     function appendRealtimeAlarm(alertData) {
         $('.empty-alarm-msg').remove();
-        
-        let now = new Date();
-        let timeStr = now.getHours() + ':' + String(now.getMinutes()).padStart(2, '0');
-        let contextPath = '${pageContext.request.contextPath}';
-        let targetUrl = contextPath + '/alert/alertDetail?alertId=' + encodeURIComponent(alertData.alertId);
-        let popupName = 'alertDetail';
-        if (alertData.dlogId) {
-            targetUrl = contextPath + '/detection/detail?dlogId=' + encodeURIComponent(alertData.dlogId);
-            popupName = 'detectionDetail';
-        } else if (alertData.danlogId) {
-            targetUrl = contextPath + '/dangerlog/detail?danlogId=' + encodeURIComponent(alertData.danlogId);
-            popupName = 'dangerLogDetail';
-        }
-
-        let typeText = alertData.alertType === '1' ? '[이상객체]' : '[개체미달]';
-        let typeColor = alertData.alertType === '1' ? '#ff4d4d' : '#ff9f43';
-        let $link = $('<a>', {
-            href: targetUrl,
-            'data-detail-popup': '',
-            'data-popup-name': popupName,
-            css: { textDecoration: 'none', color: '#333', display: 'block' }
-        });
-        $link.append($('<span>', { text: typeText, css: { color: typeColor, fontWeight: 'bold' } }));
-        $link.append(document.createTextNode(' ' + (alertData.alertMsg || '새 경보가 발생했습니다.')));
-
-        let $newAlarm = $('<li>', {
-            css: { padding: '12px 15px', borderBottom: '1px solid #f5f5f5', lineHeight: '1.4', backgroundColor: '#fffafb' }
-        });
-        $newAlarm.append($link);
-        $newAlarm.append($('<div>', {
-            text: timeStr,
-            css: { fontSize: '11px', color: '#aaa', marginTop: '4px', textAlign: 'right' }
-        }));
-        $('.alarm-list-content').prepend($newAlarm);
+        $('.alarm-list-content').prepend(buildAlarmItem(alertData));
         document.dispatchEvent(new CustomEvent('ssa:alert-received', {
             detail: alertData
         }));
@@ -389,7 +453,7 @@ $(document).ready(function() {
         $('.alarm-count-badge').text(currentCount + 1).show();
     }
     <c:if test="${not empty sessionScope.SPRING_SECURITY_CONTEXT}">
-        pollAlertServer();
+        loadRecentAlarms().finally(pollAlertServer);
     </c:if>
 });
 

@@ -1,5 +1,6 @@
 package com.spring.yolo;
 
+import java.util.Collections;
 import java.util.List;
 
 import org.apache.ibatis.session.SqlSession;
@@ -36,5 +37,27 @@ public class AlertEventController {
             System.err.println("❌ 최신 알림 중계 실패: " + e.getMessage());
         }
         return null;
+    }
+
+    /**
+     * Header dropdown bootstrap for every authenticated JSP page.
+     * The existing latest endpoint remains the lightweight polling endpoint.
+     */
+    @GetMapping("/recent")
+    public List<AlertLogVO> getRecentAlerts() {
+        try {
+            PageMaker safeCmd = new PageMaker();
+            safeCmd.setPage(1);
+            safeCmd.setPerPageNum(5);
+            safeCmd.setSearchType("");
+            safeCmd.setKeyword("");
+
+            List<AlertLogVO> list = sqlSession.selectList(
+                    "AlertLog-Mapper.getAlertLogListWithPaging", safeCmd);
+            return list == null ? Collections.emptyList() : list;
+        } catch (Exception e) {
+            System.err.println("Header alert bootstrap failed: " + e.getMessage());
+            return Collections.emptyList();
+        }
     }
 }
