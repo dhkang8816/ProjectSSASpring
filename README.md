@@ -277,6 +277,30 @@ Copy-Item .env.example .env
 
 `.env.example`에는 안전한 예시값만 유지하고, 실제 `.env`와 Discord Webhook은 Git에 올리지 않습니다.
 
+#### 채널별 로컬 영상 설정
+
+`project_ssa_yolo/videos/`와 영상 파일은 저장소에 포함하지 않습니다. 영상은 용량이 크고 시연·보호소 환경에 따라 내용이 달라지므로 `.gitignore`의 `**/videos/` 규칙으로 제외됩니다. 따라서 신규 개발 환경에서는 아래처럼 로컬 `.env`에 각 채널의 실제 파일 경로를 지정해야 합니다.
+
+```dotenv
+SSA_VIDEO_1_PATH=C:/ssa-assets/videos/area-a.mp4
+SSA_VIDEO_2_PATH=C:/ssa-assets/videos/area-b.mp4
+SSA_VIDEO_3_PATH=C:/ssa-assets/videos/area-c.mp4
+SSA_ESP32_STREAM_URL=http://192.168.0.100:80/stream
+SSA_DEFAULT_VIDEO_SOURCE=video_1
+```
+
+| 관제 채널 | 소스 종류 | 설정값 | 기본 경로 또는 주소 |
+| --- | --- | --- | --- |
+| `video_1` | 로컬 MP4 등 OpenCV 입력 | `SSA_VIDEO_1_PATH` | `project_ssa_yolo/videos/streaming_0.mp4` |
+| `video_2` | 로컬 MP4 등 OpenCV 입력 | `SSA_VIDEO_2_PATH` | `project_ssa_yolo/videos/streaming_3.mp4` |
+| `video_3` | 로컬 MP4 등 OpenCV 입력 | `SSA_VIDEO_3_PATH` | `project_ssa_yolo/videos/streaming_2.mp4` |
+| `esp32` | ESP32-CAM MJPEG 스트림 | `SSA_ESP32_STREAM_URL` | `http://192.168.0.100:80/stream` |
+
+- `video_1~3`은 각자 독립적인 `SourceWorker`가 처리하며, 하나의 파일 경로를 여러 채널에 설정할 수도 있습니다.
+- `esp32`는 로컬 동영상 파일이 아니라 HTTP MJPEG 주소를 사용합니다.
+- 파일 또는 스트림 주소를 변경한 뒤 Flask 서버를 재시작합니다. 파일이 없거나 OpenCV가 열 수 없는 형식이면 해당 채널만 `탐지 중지` 상태가 됩니다.
+- 실제 영상 파일, ESP32의 사설 IP, 로컬 `.env`는 커밋하지 않습니다.
+
 ## 실행 방법
 
 ### 1. Oracle XE
