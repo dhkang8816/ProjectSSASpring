@@ -793,7 +793,7 @@ body {
 
 				<div class="video-grid-container">
 
-					<!-- 동영상 1번 박스 -->
+					<!-- 채널 1번 박스 -->
 					<div class="video-display-box stream-off" id="box_video_1">
 						<div class="flight-timer-overlay" id="flightTimer_video_1">
 							<span class="flight-timer-dot"></span><span
@@ -802,7 +802,7 @@ body {
 						<div class="battery-hud is-unavailable" id="batteryHud_video_1" title="DISCONNECTED">
 							<span class="battery-hud-label">BAT</span><span class="battery-hud-value">N/A</span>
 						</div>
-						<img id="droneVideo_video_1" class="streaming-frame" alt="동영상 1번" />
+						<img id="droneVideo_video_1" class="streaming-frame" alt="채널 1번" />
 						<div class="video-sensor-hud is-offline" title="SENSOR OFFLINE">
 							<span class="sensor-temp" title="온도">0°C</span><span
 								class="sensor-humidity" title="습도">0%</span><span
@@ -819,7 +819,7 @@ body {
 						</div>
 					</div>
 
-					<!-- 동영상 2번 박스 -->
+					<!-- 채널 2번 박스 -->
 					<div class="video-display-box stream-off" id="box_video_2">
 						<div class="flight-timer-overlay" id="flightTimer_video_2">
 							<span class="flight-timer-dot"></span><span
@@ -828,7 +828,7 @@ body {
 						<div class="battery-hud is-unavailable" id="batteryHud_video_2" title="DISCONNECTED">
 							<span class="battery-hud-label">BAT</span><span class="battery-hud-value">N/A</span>
 						</div>
-						<img id="droneVideo_video_2" class="streaming-frame" alt="동영상 2번" />
+						<img id="droneVideo_video_2" class="streaming-frame" alt="채널 2번" />
 						<div class="video-sensor-hud is-offline" title="SENSOR OFFLINE">
 							<span class="sensor-temp" title="온도">0°C</span><span
 								class="sensor-humidity" title="습도">0%</span><span
@@ -845,7 +845,7 @@ body {
 						</div>
 					</div>
 
-					<!-- 동영상 3번 박스 -->
+					<!-- 채널 3번 박스 -->
 					<div class="video-display-box stream-off" id="box_video_3">
 						<div class="flight-timer-overlay" id="flightTimer_video_3">
 							<span class="flight-timer-dot"></span><span
@@ -854,7 +854,7 @@ body {
 						<div class="battery-hud is-unavailable" id="batteryHud_video_3" title="DISCONNECTED">
 							<span class="battery-hud-label">BAT</span><span class="battery-hud-value">N/A</span>
 						</div>
-						<img id="droneVideo_video_3" class="streaming-frame" alt="동영상 3번" />
+						<img id="droneVideo_video_3" class="streaming-frame" alt="채널 3번" />
 						<div class="video-sensor-hud is-offline" title="SENSOR OFFLINE">
 							<span class="sensor-temp" title="온도">0°C</span><span
 								class="sensor-humidity" title="습도">0%</span><span
@@ -916,7 +916,7 @@ body {
 							<div style="display: flex; flex-direction: column; gap: 10px;">
 								<div
 									style="display: flex; align-items: center; justify-content: space-between; color: #fff; font-size: 12px;">
-									<span style="width: 80px; color: #94a3b8;">동영상 1번</span> <select
+									<span style="width: 80px; color: #94a3b8;">채널 1번</span> <select
 										id="drone_select_video_1"
 										class="drone-map-select form-select form-select-sm bg-dark text-white border-secondary"
 										style="width: 120px; padding: 4px; border-radius: 4px; font-size: 11px;"></select>
@@ -926,7 +926,7 @@ body {
 								</div>
 								<div
 									style="display: flex; align-items: center; justify-content: space-between; color: #fff; font-size: 12px;">
-									<span style="width: 80px; color: #94a3b8;">동영상 2번</span> <select
+									<span style="width: 80px; color: #94a3b8;">채널 2번</span> <select
 										id="drone_select_video_2"
 										class="drone-map-select form-select form-select-sm bg-dark text-white border-secondary"
 										style="width: 120px; padding: 4px; border-radius: 4px; font-size: 11px;"></select>
@@ -936,7 +936,7 @@ body {
 								</div>
 								<div
 									style="display: flex; align-items: center; justify-content: space-between; color: #fff; font-size: 12px;">
-									<span style="width: 80px; color: #94a3b8;">동영상 3번</span> <select
+									<span style="width: 80px; color: #94a3b8;">채널 3번</span> <select
 										id="drone_select_video_3"
 										class="drone-map-select form-select form-select-sm bg-dark text-white border-secondary"
 										style="width: 120px; padding: 4px; border-radius: 4px; font-size: 11px;"></select>
