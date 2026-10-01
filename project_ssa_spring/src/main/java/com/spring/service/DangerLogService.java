@@ -14,4 +14,5 @@ public interface DangerLogService {
     public void modifyDactionStatus(DangerLogVO dlv);
     public Map<String, Object> getTodayDangerStats() throws Exception;
     public Map<String, Object> getDangerStats(Date targetDate);
+    public List<Map<String, Object>> getDangerAlertCountByDrone(Date targetDate);
 }

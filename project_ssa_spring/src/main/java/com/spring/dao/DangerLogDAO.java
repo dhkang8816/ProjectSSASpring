@@ -14,4 +14,5 @@ public interface DangerLogDAO {
     public int updateDactionStatus(DangerLogVO dlv);
     public Map<String, Object> selectTodayDangerStats() throws Exception;
     public Map<String, Object> selectDangerStats(Map<String, Object> parameters);
+    public List<Map<String, Object>> selectDangerAlertCountByDrone(Map<String, Object> parameters);
 }

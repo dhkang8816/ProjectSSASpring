@@ -594,6 +594,18 @@ rotate
 									&& res.cumulativeFlightDurationSeconds !== null) ? res.cumulativeFlightDurationSeconds : 0;
 							var animalAdoptionRate = (res.animalAdoptionRate !== undefined && res.animalAdoptionRate !== null)
 									? res.animalAdoptionRate : 0.0;
+							var pendingAlertCount = (res.pendingAlertCount !== undefined && res.pendingAlertCount !== null)
+									? res.pendingAlertCount : 0;
+							var topAlertDroneId = res.topAlertDroneId || '집계 없음';
+							var topAlertDroneCount = (res.topAlertDroneCount !== undefined && res.topAlertDroneCount !== null)
+									? res.topAlertDroneCount : 0;
+							var topFlightDroneId = res.topFlightDroneId || '집계 없음';
+							var topFlightDurationSeconds = (res.topFlightDurationSeconds !== undefined
+									&& res.topFlightDurationSeconds !== null) ? res.topFlightDurationSeconds : 0;
+							var topAlertSummary = topAlertDroneId === '집계 없음' ? topAlertDroneId
+									: topAlertDroneId + '<br>' + '[' + topAlertDroneCount + ' 건' + ']';
+							var topFlightSummary = topFlightDroneId === '집계 없음' ? topFlightDroneId
+									: topFlightDroneId + '<br>' + '[' + formatFlightDuration(topFlightDurationSeconds) + ']';
 							var selectedDateLabel = res.selectedDateLabel || selectedDate;
 
 							$("#dashboardReportDate").text("기준일: " + selectedDateLabel);
@@ -616,7 +628,7 @@ rotate
 								statusColor = "#2ecc71";
 							}
 							var cardHtml = '<div style="width:100%; display:grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap:15px; text-align:center; padding:10px 0;">'
-									+ dashboardCardHtml('관제구역 종합 위험도', score + '점 [' + statusText + ']', statusColor, '18px')
+									+ dashboardCardHtml('관제구역 종합 위험도', score + '점<br>[' + statusText + ']', statusColor, '18px')
 									+ dashboardCardHtml('탐지 총 건수', todayDetect + ' 건', '#5ddcff')
 									+ dashboardCardHtml('현장조치 완료율', completeRate + ' %', '#2ecc71')
 									+ dashboardCardHtml('드론 총 비행시간', formatFlightDuration(flightDurationSeconds), '#3498db', '20px')
@@ -625,6 +637,9 @@ rotate
 									+ dashboardCardHtml('누적 조치 완료율', cumulativeCompleteRate + ' %', '#a78bfa')
 									+ dashboardCardHtml('누적 드론 총 비행시간', formatFlightDuration(cumulativeFlightDurationSeconds), '#60a5fa', '20px')
 									+ dashboardCardHtml('현재 보호동물 입양율', animalAdoptionRate + ' %', '#fbbf24')
+									+ dashboardCardHtml('미조치 경보', pendingAlertCount + ' 건', '#f97316')
+									+ dashboardCardHtml('경보 최다 드론', topAlertSummary, '#fb7185', '18px')
+									+ dashboardCardHtml('최장 비행 드론', topFlightSummary, '#60a5fa', '18px')
 									+ '</div>';
 							$("#aiBriefingContent").html(cardHtml);
 							$("#dashboardGraphZone").show();

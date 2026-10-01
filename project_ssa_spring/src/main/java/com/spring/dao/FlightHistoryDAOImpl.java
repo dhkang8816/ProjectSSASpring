@@ -47,4 +47,9 @@ public class FlightHistoryDAOImpl implements FlightHistoryDAO {
     public Map<String, Object> selectFlightDurationStats(Map<String, Object> parameters) {
         return sqlSession.selectOne(NAMESPACE + ".selectFlightDurationStats", parameters);
     }
+
+    @Override
+    public Map<String, Object> selectTopFlightDurationByDrone(Map<String, Object> parameters) {
+        return sqlSession.selectOne(NAMESPACE + ".selectTopFlightDurationByDrone", parameters);
+    }
 }

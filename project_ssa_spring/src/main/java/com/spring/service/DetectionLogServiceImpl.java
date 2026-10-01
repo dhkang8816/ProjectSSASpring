@@ -76,6 +76,13 @@ public class DetectionLogServiceImpl implements DetectionLogService {
         return detectionLogDAO.selectDetectionStats(parameters);
     }
 
+    @Override
+    public List<Map<String, Object>> getDetectionAlertCountByDrone(Date targetDate) {
+        Map<String, Object> parameters = new HashMap<>();
+        parameters.put("targetDate", targetDate);
+        return detectionLogDAO.selectDetectionAlertCountByDrone(parameters);
+    }
+
     private void validateDetectionLogId(int dlogId) {
         if (dlogId <= 0) {
             throw new InvalidRequestException("유효하지 않은 탐지 이력 ID입니다.");

@@ -14,4 +14,5 @@ public interface DetectionLogDAO {
     public int updateActionStatus(DetectionLogVO dlv);
     public Map<String, Object> selectTodayDetectionStats() throws Exception;
     public Map<String, Object> selectDetectionStats(Map<String, Object> parameters);
+    public List<Map<String, Object>> selectDetectionAlertCountByDrone(Map<String, Object> parameters);
 }

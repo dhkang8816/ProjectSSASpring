@@ -85,6 +85,11 @@ public class DashboardController {
 	    long animalTotal = 0;
 	    long adoptedAnimalCount = 0;
 	    double animalAdoptionRate = 0.0;
+	    long pendingAlertCount = 0;
+	    String topAlertDroneId = "집계 없음";
+	    long topAlertDroneCount = 0;
+	    String topFlightDroneId = "집계 없음";
+	    double topFlightHours = 0.0;
 		List<DangerLogVO> dangerList = null;
 		List<DetectionLogVO> detectList = null;
 		List<CommonCodeVO> dangerCodes = null;
@@ -104,6 +109,7 @@ public class DashboardController {
 	        Map<String, Object> cumulativeDetectStats = detectionLogService.getDetectionStats(null);
 	        Map<String, Object> selectedFlightStats = flightHistoryService.getFlightDurationStats(selectedDateValue);
 	        Map<String, Object> cumulativeFlightStats = flightHistoryService.getFlightDurationStats(null);
+	        Map<String, Object> topFlightStats = flightHistoryService.getTopFlightDurationByDrone(selectedDateValue);
 	        Map<String, Object> animalStats = animalDetailService.getAnimalStatusStats();
 
 	        dangerTotal = statValue(selectedDangerStats, "TOTAL_COUNT");
@@ -118,6 +124,30 @@ public class DashboardController {
 	        cumulativeFlightHours = statDecimalValue(cumulativeFlightStats, "TOTAL_FLIGHT_HOURS");
 	        animalTotal = statValue(animalStats, "TOTAL_COUNT");
 	        adoptedAnimalCount = statValue(animalStats, "ADOPTED_COUNT");
+	        pendingAlertCount = statValue(selectedDangerStats, "PENDING_COUNT")
+	                + statValue(selectedDetectStats, "PENDING_COUNT");
+
+	        Map<String, Long> alertCountByDrone = new HashMap<>();
+	        mergeAlertCountByDrone(alertCountByDrone,
+	                dangerLogService.getDangerAlertCountByDrone(selectedDateValue));
+	        mergeAlertCountByDrone(alertCountByDrone,
+	                detectionLogService.getDetectionAlertCountByDrone(selectedDateValue));
+	        for (Map.Entry<String, Long> entry : alertCountByDrone.entrySet()) {
+	            if (entry.getValue() > topAlertDroneCount
+	                    || (entry.getValue() == topAlertDroneCount
+	                            && entry.getKey().compareTo(topAlertDroneId) < 0)) {
+	                topAlertDroneId = entry.getKey();
+	                topAlertDroneCount = entry.getValue();
+	            }
+	        }
+
+	        if (topFlightStats != null && !topFlightStats.isEmpty()) {
+	            String droneId = textValue(topFlightStats, "DRONE_ID");
+	            if (!droneId.isEmpty()) {
+	                topFlightDroneId = droneId;
+	                topFlightHours = statDecimalValue(topFlightStats, "TOTAL_FLIGHT_HOURS");
+	            }
+	        }
 
 	        selectedDetectCount = (int) (dangerTotal + detectTotal);
 	        long selectedCompleteCount = dangerComplete + detectComplete;
@@ -155,6 +185,11 @@ public class DashboardController {
 	    resultMap.put("animalAdoptionRate", Math.round(animalAdoptionRate * 100) / 100.0);
 	    resultMap.put("animalTotal", animalTotal);
 	    resultMap.put("adoptedAnimalCount", adoptedAnimalCount);
+	    resultMap.put("pendingAlertCount", pendingAlertCount);
+	    resultMap.put("topAlertDroneId", topAlertDroneId);
+	    resultMap.put("topAlertDroneCount", topAlertDroneCount);
+	    resultMap.put("topFlightDroneId", topFlightDroneId);
+	    resultMap.put("topFlightDurationSeconds", Math.max(0L, Math.round(topFlightHours * 3600)));
 	    resultMap.put("selectedDate", selectedDate.toString());
 	    resultMap.put("selectedDateLabel", selectedDate.format(DateTimeFormatter.ofPattern("yyyy-MM-dd")));
 	    int realTimeDangerCount = (int) dangerTotal;
@@ -347,6 +382,26 @@ public class DashboardController {
 		}
 		Object value = stats.get(key);
 		return value instanceof Number ? ((Number) value).doubleValue() : 0.0d;
+	}
+
+	private void mergeAlertCountByDrone(Map<String, Long> totals, List<Map<String, Object>> rows) {
+		if (rows == null) {
+			return;
+		}
+		for (Map<String, Object> row : rows) {
+			String droneId = textValue(row, "DRONE_ID");
+			if (droneId.isEmpty()) {
+				continue;
+			}
+			totals.merge(droneId, statValue(row, "ALERT_COUNT"), Long::sum);
+		}
+	}
+
+	private String textValue(Map<String, Object> values, String key) {
+		if (values == null || values.get(key) == null) {
+			return "";
+		}
+		return String.valueOf(values.get(key)).trim();
 	}
 
 }

@@ -15,4 +15,5 @@ public interface DetectionLogService {
     public void modifyActionStatus(DetectionLogVO dlv);
     public Map<String, Object> getTodayDetectionStats() throws Exception;
     public Map<String, Object> getDetectionStats(Date targetDate);
+    public List<Map<String, Object>> getDetectionAlertCountByDrone(Date targetDate);
 }

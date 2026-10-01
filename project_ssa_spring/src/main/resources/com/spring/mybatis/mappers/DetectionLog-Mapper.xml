@@ -137,12 +137,23 @@
     <select id="selectDetectionStats" parameterType="map" resultType="java.util.HashMap">
         SELECT
             COUNT(*) AS "TOTAL_COUNT",
-            COUNT(CASE WHEN ACTION_STATUS = '2' THEN 1 END) AS "COMPLETE_COUNT"
+            COUNT(CASE WHEN ACTION_STATUS = '2' THEN 1 END) AS "COMPLETE_COUNT",
+            COUNT(CASE WHEN NVL(ACTION_STATUS, '0') != '2' THEN 1 END) AS "PENDING_COUNT"
         FROM DETECTION_LOG
         <if test="targetDate != null">
             WHERE DETECTION_DATE &gt;= TRUNC(#{targetDate, jdbcType=DATE})
               AND DETECTION_DATE &lt; TRUNC(#{targetDate, jdbcType=DATE}) + 1
         </if>
+    </select>
+
+    <select id="selectDetectionAlertCountByDrone" parameterType="map" resultType="java.util.HashMap">
+        SELECT
+            NVL(DRONE_ID, '미지정') AS "DRONE_ID",
+            COUNT(*) AS "ALERT_COUNT"
+        FROM DETECTION_LOG
+        WHERE DETECTION_DATE &gt;= TRUNC(#{targetDate, jdbcType=DATE})
+          AND DETECTION_DATE &lt; TRUNC(#{targetDate, jdbcType=DATE}) + 1
+        GROUP BY NVL(DRONE_ID, '미지정')
     </select>
 
 

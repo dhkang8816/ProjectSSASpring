@@ -109,6 +109,21 @@
         </if>
     </select>
 
+    <select id="selectTopFlightDurationByDrone" parameterType="map" resultType="java.util.HashMap">
+        SELECT *
+        FROM (
+            SELECT
+                NVL(DRONE_ID, '미지정') AS "DRONE_ID",
+                NVL(SUM(NVL(FLIGHT_DURATION, 0)), 0) AS "TOTAL_FLIGHT_HOURS"
+            FROM FLIGHT_HISTORY
+            WHERE FLIGHT_DATE &gt;= TRUNC(#{targetDate, jdbcType=DATE})
+              AND FLIGHT_DATE &lt; TRUNC(#{targetDate, jdbcType=DATE}) + 1
+            GROUP BY NVL(DRONE_ID, '미지정')
+            ORDER BY "TOTAL_FLIGHT_HOURS" DESC, "DRONE_ID" ASC
+        )
+        WHERE ROWNUM = 1
+    </select>
+
     
     <delete id="deleteFlightHistory" parameterType="int">
         DELETE FROM FLIGHT_HISTORY

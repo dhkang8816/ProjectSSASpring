@@ -50,4 +50,11 @@ public class FlightHistoryServiceImpl implements FlightHistoryService {
         parameters.put("targetDate", targetDate);
         return flightHistoryDAO.selectFlightDurationStats(parameters);
     }
+
+    @Override
+    public Map<String, Object> getTopFlightDurationByDrone(Date targetDate) {
+        Map<String, Object> parameters = new HashMap<>();
+        parameters.put("targetDate", targetDate);
+        return flightHistoryDAO.selectTopFlightDurationByDrone(parameters);
+    }
 }

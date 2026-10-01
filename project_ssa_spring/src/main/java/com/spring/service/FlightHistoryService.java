@@ -12,4 +12,5 @@ public interface FlightHistoryService {
     public FlightHistoryVO getFlightHistoryById(int flightId);
     public void removeFlightHistory(int flightId);
     public Map<String, Object> getFlightDurationStats(Date targetDate);
+    public Map<String, Object> getTopFlightDurationByDrone(Date targetDate);
 }

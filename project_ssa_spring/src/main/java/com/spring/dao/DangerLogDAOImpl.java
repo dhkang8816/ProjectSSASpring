@@ -52,4 +52,9 @@ public class DangerLogDAOImpl implements DangerLogDAO {
     public Map<String, Object> selectDangerStats(Map<String, Object> parameters) {
         return sqlSession.selectOne(NAMESPACE + ".selectDangerStats", parameters);
     }
+
+    @Override
+    public List<Map<String, Object>> selectDangerAlertCountByDrone(Map<String, Object> parameters) {
+        return sqlSession.selectList(NAMESPACE + ".selectDangerAlertCountByDrone", parameters);
+    }
 }

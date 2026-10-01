@@ -12,4 +12,5 @@ public interface FlightHistoryDAO {
     public FlightHistoryVO selectFlightHistoryById(int flightId);
     public int deleteFlightHistory(int flightId);
     public Map<String, Object> selectFlightDurationStats(Map<String, Object> parameters);
+    public Map<String, Object> selectTopFlightDurationByDrone(Map<String, Object> parameters);
 }

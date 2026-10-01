@@ -57,4 +57,11 @@ public class DangerLogServiceImpl implements DangerLogService {
         parameters.put("targetDate", targetDate);
         return dangerLogDAO.selectDangerStats(parameters);
     }
+
+    @Override
+    public List<Map<String, Object>> getDangerAlertCountByDrone(Date targetDate) {
+        Map<String, Object> parameters = new HashMap<>();
+        parameters.put("targetDate", targetDate);
+        return dangerLogDAO.selectDangerAlertCountByDrone(parameters);
+    }
 }
