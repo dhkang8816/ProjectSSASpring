@@ -1,3 +1,5 @@
+import os
+import threading
 import unittest
 from unittest.mock import patch
 
@@ -6,6 +8,27 @@ from apps.stream import views
 
 
 class StreamHealthRouteTest(unittest.TestCase):
+
+    def test_shutdown_requires_token_and_uses_runtime_callback(self):
+        shutdown_called = threading.Event()
+        with patch.dict(os.environ, {"SSA_FLASK_CONTROL_TOKEN": "x" * 32}, clear=False), \
+                patch("apps.services.starter.start_services"):
+            app = create_app("testing")
+            client = app.test_client()
+
+            denied = client.post("/stream/admin/shutdown")
+            self.assertEqual(403, denied.status_code)
+
+            app.config["SSA_SERVER_SHUTDOWN"] = shutdown_called.set
+            accepted = client.post(
+                "/stream/admin/shutdown",
+                headers={"X-SSA-Flask-Control-Token": "x" * 32},
+            )
+
+        self.assertEqual(200, accepted.status_code)
+        self.assertEqual("SUCCESS", accepted.get_json()["status"])
+        self.assertTrue(shutdown_called.wait(1.0))
+
     def test_health_returns_cached_status_without_starting_services(self):
         with patch("apps.services.starter.start_services") as start_services, \
                 patch.object(views.yolo_detector, "get_default_source_key", return_value="video_1"), \

@@ -8,6 +8,7 @@ process and can duplicate native resources.
 import os
 
 from dotenv import load_dotenv
+from werkzeug.serving import make_server
 
 from apps.app import create_app
 
@@ -24,10 +25,16 @@ app = create_app("local")
 
 
 if __name__ == "__main__":
-    app.run(
+    server = make_server(
         host=os.getenv("FLASK_RUN_HOST", "0.0.0.0"),
         port=_port(),
-        debug=False,
-        use_reloader=False,
+        app=app,
         threaded=True,
     )
+    # The token-protected endpoint starts this callback on a separate thread;
+    # calling shutdown from a request handler itself would deadlock serve_forever.
+    app.config["SSA_SERVER_SHUTDOWN"] = server.shutdown
+    try:
+        server.serve_forever()
+    finally:
+        server.server_close()

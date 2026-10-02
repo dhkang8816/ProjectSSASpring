@@ -245,6 +245,9 @@ SEQ_PDF_CACHE
 | `SSA_FLASK_ESP32_VIDEO_URL` | Flask ESP32 영상 endpoint URL |
 | `SSA_FLASK_VIDEO_CONNECT_TIMEOUT_MS`, `SSA_FLASK_VIDEO_READ_TIMEOUT_MS` | Flask 영상 proxy timeout |
 | `SSA_FLASK_LABEL_TIMEOUT_MS`, `SSA_FLASK_CONTROL_TIMEOUT_MS` | Flask 상태/제어 요청 timeout |
+| `SSA_FLASK_CONTROL_ENABLED` | Diagnostics의 Flask 시작·종료 제어 기능 활성화 여부. 기본값은 `false` |
+| `SSA_FLASK_PROJECT_DIR`, `SSA_FLASK_PYTHON_EXECUTABLE` | Flask 시작 시 사용할 로컬 `project_ssa_yolo` 경로와 Python 실행 파일 절대 경로 |
+| `SSA_FLASK_CONTROL_TOKEN` | Flask 정상 종료 API를 보호하는 24자 이상의 별도 토큰. Flask `.env`에도 동일한 값을 설정 |
 | `SSA_UPLOAD_ROOT` | snapshot 및 PDF cache 저장 루트 |
 | `SSA_PDF_BROWSER_PATH`, `SSA_PDF_RENDER_TIMEOUT_SECONDS` | Headless Chrome PDF 렌더링 설정 |
 | `SSA_DISCORD_INVITE_URL` | 공통 사이드바의 Discord 초대 링크. `RuntimeSettings`를 거쳐 모든 `menu.jsp`에 주입됩니다. |
@@ -265,7 +268,7 @@ Copy-Item .env.example .env
 
 | 변수 그룹 | 주요 변수 |
 | --- | --- |
-| Flask | `FLASK_APP`, `FLASK_RUN_HOST`, `FLASK_RUN_PORT`, `FLASK_RUN_EXTRA_ARGS`, `SSA_FLASK_SECRET_KEY`, `SSA_FLASK_CSRF_SECRET_KEY` |
+| Flask | `FLASK_APP`, `FLASK_RUN_HOST`, `FLASK_RUN_PORT`, `FLASK_RUN_EXTRA_ARGS`, `SSA_FLASK_SECRET_KEY`, `SSA_FLASK_CSRF_SECRET_KEY`, `SSA_FLASK_CONTROL_TOKEN` |
 | Spring callback | `SSA_SPRING_HOST` |
 | 영상/모델 | `SSA_YOLO_MODEL_PATH`, `SSA_VIDEO_1_PATH`, `SSA_VIDEO_2_PATH`, `SSA_VIDEO_3_PATH`, `SSA_ESP32_STREAM_URL`, `SSA_DEFAULT_VIDEO_SOURCE`, `SSA_YOLO_CONFIDENCE` |
 | ESP32 | `SSA_ESP32_COM_PORT`, `SSA_ESP32_STREAM_URL`, `SSA_ESP32_HTTP_CONNECT_TIMEOUT_SECONDS`, `SSA_ESP32_HTTP_READ_TIMEOUT_SECONDS`, `SSA_ESP32_MJPEG_BUFFER_MAX_BYTES`, `SSA_ESP32_RECONNECT_INITIAL_SECONDS`, `SSA_ESP32_RECONNECT_MAX_SECONDS` |
@@ -320,7 +323,24 @@ python -m pip install -r requirements.txt
 python run_server.py
 ```
 
-`run_server.py`는 `.env`를 읽고 `create_app("local")`을 실행합니다. OpenCV/FFmpeg/serial worker 중복을 막기 위해 `debug=False`, `use_reloader=False`, `threaded=True`로 실행됩니다. YOLO 모델과 영상 파일은 `.env`의 경로에 실제로 준비되어 있어야 합니다.
+`run_server.py`는 `.env`를 읽고 `create_app("local")`을 실행합니다. OpenCV/FFmpeg/serial worker 중복을 막기 위해 reloader 없이 단일 threaded Werkzeug 서버로 실행됩니다. YOLO 모델과 영상 파일은 `.env`의 경로에 실제로 준비되어 있어야 합니다.
+
+#### Diagnostics Flask 제어
+
+관리자 Diagnostics 화면의 Flask ON/OFF 버튼은 기본적으로 비활성화되어 있습니다. 로컬 개발 환경에서만 아래처럼 Tomcat 환경변수와 Flask `.env`에 같은 제어 토큰을 설정하면 활성화됩니다.
+
+```text
+# Tomcat Environment
+SSA_FLASK_CONTROL_ENABLED=true
+SSA_FLASK_PROJECT_DIR=C:/project_team3/workspaces/ProjectSSASpring/project_ssa_yolo
+SSA_FLASK_PYTHON_EXECUTABLE=C:/project_team3/build/envs/ssa310/python.exe
+SSA_FLASK_CONTROL_TOKEN=24자_이상의_별도_랜덤_토큰
+
+# project_ssa_yolo/.env
+SSA_FLASK_CONTROL_TOKEN=24자_이상의_별도_랜덤_토큰
+```
+
+Spring은 설정된 로컬 `run_server.py`만 시작하며, 종료는 토큰이 일치할 때 Flask의 정상 종료 API를 호출합니다. 원격 Flask 주소와 임의 Python 프로세스 강제 종료는 지원하지 않습니다.
 
 ### 3. Spring MVC 서버
 

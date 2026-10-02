@@ -1,8 +1,11 @@
+import hmac
+import os
+import threading
 import time
 
 import cv2
 import numpy as np
-from flask import Blueprint, Response, jsonify, render_template, request, stream_with_context
+from flask import Blueprint, Response, current_app, jsonify, render_template, request, stream_with_context
 
 from apps.app import csrf
 from apps.services import buzzer_helper, notifier, sensor_helper, yolo_detector
@@ -129,6 +132,32 @@ def health_status():
         "buzzer": buzzer_helper.get_buzzer_status(),
         "discord": notifier.get_notification_status(),
     })
+
+
+@stream.route("/admin/shutdown", methods=["POST"])
+@csrf.exempt
+def shutdown_runtime():
+    """Request a graceful local run_server.py shutdown from Spring admin UI.
+
+    The endpoint is intentionally unavailable unless a non-empty control token
+    is configured.  ``run_server.py`` supplies the callback only for its
+    single-process server mode; other WSGI deployments receive a safe 503.
+    """
+    configured_token = os.getenv("SSA_FLASK_CONTROL_TOKEN", "")
+    request_token = request.headers.get("X-SSA-Flask-Control-Token", "")
+    if not configured_token or not hmac.compare_digest(configured_token, request_token):
+        return jsonify({"status": "FAIL", "error": "unauthorized"}), 403
+
+    shutdown_callback = current_app.config.get("SSA_SERVER_SHUTDOWN")
+    if not callable(shutdown_callback):
+        return jsonify({"status": "FAIL", "error": "managed runtime shutdown unavailable"}), 503
+
+    threading.Thread(
+        target=shutdown_callback,
+        name="flask-runtime-shutdown",
+        daemon=True,
+    ).start()
+    return jsonify({"status": "SUCCESS", "message": "shutdown requested"})
 
 
 @stream.route("/buzzer/enabled", methods=["GET", "POST"])

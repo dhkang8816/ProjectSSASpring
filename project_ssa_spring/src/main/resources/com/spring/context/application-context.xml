@@ -152,6 +152,8 @@
 		<constructor-arg ref="dataSourceSpied" />
 		<constructor-arg ref="EnvironmentService" />
 	</bean>
+	<bean id="flaskRuntimeControlService"
+		class="com.spring.service.FlaskRuntimeControlService" />
 	<bean id="AlertMessageTemplateService"
 	      class="com.spring.service.AlertMessageTemplateServiceImpl">
 	</bean>
