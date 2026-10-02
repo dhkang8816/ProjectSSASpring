@@ -930,6 +930,10 @@ body {
 			running : false,
 			startTime : null
 		};
+		let detectionStatusFailureCount = 0;
+		let flightStatusFailureCount = 0;
+		let flaskStatusUnavailable = false;
+		const STATUS_FAILURE_THRESHOLD = 6;
 		let spaceWeatherLoading = false;
 
 		/* 관제지역 설정: 기존 Spring EnvironmentController API만 사용한다. */
@@ -1125,6 +1129,14 @@ body {
 						- flightStatus.startTime) : '--:--:--';
 		}
 
+		function clearFlightTimer() {
+			flightStatus = {
+				running : false,
+				startTime : null
+			};
+			renderFlightTimer();
+		}
+
 		function refreshFlightStatus() {
 			$.ajax({
 				url : yoloContextPath + '/yolo/flight/status',
@@ -1132,12 +1144,19 @@ body {
 				dataType : 'json',
 				cache : false
 			}).done(function(response) {
+				flightStatusFailureCount = 0;
 				const status = response && response[currentChannelKey];
 				flightStatus = {
-					running : !!(status && status.running),
+					running : !flaskStatusUnavailable
+							&& detectionEnabled !== false
+							&& !!(status && status.running),
 					startTime : status && status.startTime ? Number(status.startTime) : null
 				};
 				renderFlightTimer();
+			}).fail(function() {
+				flightStatusFailureCount += 1;
+				if (flightStatusFailureCount >= STATUS_FAILURE_THRESHOLD)
+					clearFlightTimer();
 			});
 		}
 
@@ -1354,6 +1373,7 @@ body {
 
 			setInterval(readStatus, 2000);
 			setInterval(renderFlightTimer, 1000);
+			setInterval(refreshFlightStatus, 5000);
 			setInterval(refreshEnvironmentAndCollision, 1000); 
 			setInterval(refreshDetailBatteryStatus, 3000);
 			setInterval(refreshWeatherEnvironment, 5 * 60 * 1000);
@@ -1464,8 +1484,12 @@ body {
 				cache : false,
 				success : function(response) {
 					const sources = response && response.sources;
-					if (!sources || !sources[currentChannelKey])
+					if (!sources || !sources[currentChannelKey]) {
+						registerDetectionStatusFailure();
 						return;
+					}
+					detectionStatusFailureCount = 0;
+					flaskStatusUnavailable = false;
 
 					const workerStatus = sources[currentChannelKey];
 					const enabled = !!workerStatus.running;
@@ -1475,8 +1499,22 @@ body {
 					renderState(enabled, stopping,
 							stopping ? 'STOPPING' : null);
 					setStream(enabled);
+					if (!enabled)
+						clearFlightTimer();
+				},
+				error : function() {
+					registerDetectionStatusFailure();
 				}
 			});
+		}
+
+		function registerDetectionStatusFailure() {
+			detectionStatusFailureCount += 1;
+			if (detectionStatusFailureCount >= STATUS_FAILURE_THRESHOLD) {
+				flaskStatusUnavailable = true;
+				clearFlightTimer();
+			}
+			renderState(false, true, 'ERR');
 		}
 
 		function toggleDetailChannelPower(checkbox) {

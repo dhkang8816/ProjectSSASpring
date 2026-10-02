@@ -1088,6 +1088,10 @@ body {
 		const flightStatusByChannel = {};
 		let detectionStatusRefreshTimer = null;
 		let isBulkToggling = false;
+		let detectionStatusFailureCount = 0;
+		let flightStatusFailureCount = 0;
+		let flaskStatusUnavailable = false;
+		const STATUS_FAILURE_THRESHOLD = 3;
 
 		function formatElapsed(ms) {
 			const totalSeconds = Math.max(0, Math.floor(ms / 1000));
@@ -1122,6 +1126,16 @@ body {
 					});
 		}
 
+		function clearFlightTimers() {
+			yoloSourceKeys.forEach(function(channelKey) {
+				flightStatusByChannel[channelKey] = {
+					running : false,
+					startTime : null
+				};
+			});
+			renderFlightTimers();
+		}
+
 		function refreshFlightStatus() {
 			$
 					.ajax({
@@ -1132,19 +1146,26 @@ body {
 					})
 					.done(
 							function(response) {
+								flightStatusFailureCount = 0;
 								yoloSourceKeys
 										.forEach(function(channelKey) {
 											const status = response
 													&& response[channelKey];
 											flightStatusByChannel[channelKey] = {
-												running : !!(status && status.running),
+												running : !flaskStatusUnavailable
+														&& !!(status && status.running)
+														&& detectionEnabled[channelKey] !== false,
 												startTime : status
 														&& status.startTime ? Number(status.startTime)
 														: null
 											};
 										});
 								renderFlightTimers();
-							});
+							}).fail(function() {
+						flightStatusFailureCount += 1;
+						if (flightStatusFailureCount >= STATUS_FAILURE_THRESHOLD)
+							clearFlightTimers();
+					});
 		}
 
 		function getChannelElements(channelKey) {
@@ -1221,9 +1242,12 @@ body {
 				success : function(response) {
 					const sources = response && response.sources;
 					if (!sources) {
-						handleDetectionStatusFailure();
+						registerDetectionStatusFailure();
+						scheduleDetectionStatusRefresh(5000);
 						return;
 					}
+					detectionStatusFailureCount = 0;
+					flaskStatusUnavailable = false;
 					let hasStoppingWorker = false;
 					yoloSourceKeys.forEach(function(channelKey) {
 						hasStoppingWorker = applyServerChannelState(channelKey,
@@ -1234,8 +1258,8 @@ body {
 							: 2000);
 				},
 				error : function() {
-					handleDetectionStatusFailure();
-					scheduleDetectionStatusRefresh(3000);
+					registerDetectionStatusFailure();
+					scheduleDetectionStatusRefresh(5000);
 				}
 			});
 		}
@@ -1257,6 +1281,15 @@ body {
 				if (label)
 					label.innerText = 'ERR';
 			});
+		}
+
+		function registerDetectionStatusFailure() {
+			detectionStatusFailureCount += 1;
+			if (detectionStatusFailureCount >= STATUS_FAILURE_THRESHOLD) {
+				flaskStatusUnavailable = true;
+				clearFlightTimers();
+			}
+			handleDetectionStatusFailure();
 		}
 
 		function toggleChannelPower(channelKey, checkbox) {
@@ -1859,6 +1892,7 @@ body {
 			syncMainDashboardHeight();
 			refreshMainDashboard();
 			window.setInterval(renderFlightTimers, 1000);
+			window.setInterval(refreshFlightStatus, 5000);
 			window.setInterval(refreshMainSensorStatus, 3000);
 			window.setInterval(refreshMainBatteryStatus, 3000);
 			window.setInterval(refreshMainDashboard, 60000);

@@ -23,6 +23,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.client.SimpleClientHttpRequestFactory;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -60,6 +61,8 @@ public class AIStreamBridgeController {
 			"SSA_FLASK_LABEL_TIMEOUT_MS", 1500);
 	private static final int FLASK_CONTROL_TIMEOUT_MS = RuntimeSettings.positiveInt(
 			"SSA_FLASK_CONTROL_TIMEOUT_MS", 7000);
+	private static final long FLIGHT_UNAVAILABLE_GRACE_MS = RuntimeSettings.positiveInt(
+			"SSA_FLIGHT_UNAVAILABLE_GRACE_SECONDS", 15) * 1000L;
 	private static final boolean LEGACY_LABEL_EVENT_SIDE_EFFECTS_ENABLED =
 			RuntimeSettings.enabled("SSA_ENABLE_LEGACY_LABEL_EVENT_SIDE_EFFECTS", false);
 	private static final String BATTERY_UNAVAILABLE_JSON =
@@ -80,7 +83,9 @@ public class AIStreamBridgeController {
 	private FlightHistoryService flightHistoryService;
 
 	private static final Map<String, ActiveFlightContext> activeFlightContextMap = new ConcurrentHashMap<>();
+	private final Object flightHealthMonitor = new Object();
 	private final ObjectMapper objectMapper = new ObjectMapper();
+	private volatile long flaskUnavailableSinceMs = -1L;
 
 	@GetMapping("/yolo/view")
 	public String showMainControlPage(Model model) {
@@ -239,6 +244,47 @@ public class AIStreamBridgeController {
 			result.put(sourceKey, sourceStatus);
 		}
 		return ResponseEntity.ok(result);
+	}
+
+	/**
+	 * A flight starts only after Flask confirms a worker start.  Therefore an
+	 * abrupt Flask stop must also close the Spring-side active-flight context;
+	 * otherwise the browser can continue calculating elapsed time from a stale
+	 * start timestamp.  A grace period prevents a brief network timeout from
+	 * being recorded as a flight end.
+	 */
+	@Scheduled(fixedDelay = 5000L)
+	public void reconcileActiveFlightsWithFlask() {
+		if (activeFlightContextMap.isEmpty()) {
+			flaskUnavailableSinceMs = -1L;
+			return;
+		}
+
+		try {
+			ResponseEntity<String> response = flaskRestTemplate(FLASK_LABEL_TIMEOUT_MS)
+					.getForEntity(FLASK_SERVER_URL + "/status", String.class);
+			if (!response.getStatusCode().is2xxSuccessful()) {
+				handleFlaskFlightHealthFailure();
+				return;
+			}
+
+			JsonNode sources = objectMapper.readTree(response.getBody()).path("sources");
+			if (!sources.isObject()) {
+				handleFlaskFlightHealthFailure();
+				return;
+			}
+
+			flaskUnavailableSinceMs = -1L;
+			for (String sourceKey : new ArrayList<>(activeFlightContextMap.keySet())) {
+				JsonNode source = sources.path(sourceKey);
+				if (source.isObject() && !source.path("running").asBoolean(false)) {
+					System.err.println("[비행 이력 종료] Flask worker stopped: " + sourceKey);
+					completeActiveFlight(sourceKey);
+				}
+			}
+		} catch (Exception e) {
+			handleFlaskFlightHealthFailure();
+		}
 	}
 
 	@RequestMapping("/yolo/changeVideo/{sourceKey}")
@@ -420,6 +466,27 @@ public class AIStreamBridgeController {
 			}
 		} catch (Exception e) {
 			System.err.println("[비행 이력 동기화] worker 응답을 해석하지 못했습니다: " + sourceKey + " / " + action);
+		}
+	}
+
+	private void handleFlaskFlightHealthFailure() {
+		long now = System.currentTimeMillis();
+		synchronized (flightHealthMonitor) {
+			if (flaskUnavailableSinceMs < 0L) {
+				flaskUnavailableSinceMs = now;
+				System.err.println("[비행 상태 확인] Flask 연결이 끊겼습니다. "
+						+ (FLIGHT_UNAVAILABLE_GRACE_MS / 1000L) + "초 동안 재연결을 기다립니다.");
+				return;
+			}
+			if (now - flaskUnavailableSinceMs < FLIGHT_UNAVAILABLE_GRACE_MS) {
+				return;
+			}
+
+			for (String sourceKey : new ArrayList<>(activeFlightContextMap.keySet())) {
+				System.err.println("[비행 이력 종료] Flask 통신 오류 유예시간 초과: " + sourceKey);
+				completeActiveFlight(sourceKey);
+			}
+			flaskUnavailableSinceMs = -1L;
 		}
 	}
 
