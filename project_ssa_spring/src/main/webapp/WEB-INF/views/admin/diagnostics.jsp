@@ -75,70 +75,6 @@
     gap: 8px;
 }
 
-#systemDiagnosticsPage .flask-runtime-status {
-    display: inline-flex;
-    align-items: center;
-    min-height: 34px;
-    padding: 0 11px;
-    border: 1px solid #475569;
-    border-radius: 7px;
-    background: #172033;
-    color: #cbd5e1;
-    font-size: 12px;
-    font-weight: 800;
-}
-
-#systemDiagnosticsPage .flask-runtime-status.is-online {
-    border-color: #16a34a;
-    background: rgba(22, 163, 74, .14);
-    color: #86efac;
-}
-
-#systemDiagnosticsPage .flask-runtime-status.is-offline {
-    border-color: #dc2626;
-    background: rgba(220, 38, 38, .12);
-    color: #fca5a5;
-}
-
-#systemDiagnosticsPage .flask-runtime-status.is-error {
-    border-color: #f59e0b;
-    background: rgba(245, 158, 11, .12);
-    color: #fcd34d;
-}
-
-#systemDiagnosticsPage .flask-runtime-button {
-    border: 1px solid transparent;
-    border-radius: 7px;
-    padding: 8px 12px;
-    color: #fff;
-    font-size: 13px;
-    font-weight: 800;
-    cursor: pointer;
-}
-
-#systemDiagnosticsPage .flask-runtime-button.start {
-    border-color: #16a34a;
-    background: #15803d;
-}
-
-#systemDiagnosticsPage .flask-runtime-button.stop {
-    border-color: #dc2626;
-    background: #b91c1c;
-}
-
-#systemDiagnosticsPage .flask-runtime-button:disabled {
-    cursor: not-allowed;
-    opacity: .42;
-}
-
-#systemDiagnosticsPage .flask-runtime-message {
-    width: 100%;
-    margin: 2px 0 0;
-    color: #94a3b8;
-    text-align: right;
-    font-size: 11px;
-}
-
 #systemDiagnosticsPage .diagnostics-summary {
     margin-bottom: 14px;
     color: #94a3b8;
@@ -229,9 +165,6 @@
     #systemDiagnosticsPage .diagnostics-actions {
         justify-content: flex-start;
     }
-    #systemDiagnosticsPage .flask-runtime-message {
-        text-align: left;
-    }
 }
 </style>
 </head>
@@ -244,15 +177,12 @@
             <div class="diagnostics-heading">
                 <h2 id="diagnosticsTitle">시스템 진단</h2>
                 <div class="diagnostics-actions">
-                    <span id="flaskRuntimeStatus" class="flask-runtime-status is-error" aria-live="polite">● Flask 확인 중</span>
-                    <button id="flaskToggleButton" type="button" class="flask-runtime-button start" disabled>Flask 시작</button>
                     <button id="diagnosticsRefresh" type="button" class="diagnostics-refresh">전체 진단 실행</button>
-                    <p id="flaskRuntimeMessage" class="flask-runtime-message"></p>
                 </div>
             </div>
             <p class="diagnostics-description">
                 진단 항목은 읽기 전용입니다. DB 조회, 서비스 상태 API 및 공개 API 연결만 확인하며,
-                Flask 제어 버튼은 토큰과 관리자 권한이 설정된 로컬 실행 환경에서만 동작합니다.
+                Flask 제어는 좌측 메뉴 하단 버튼에서 수행하며, 토큰과 관리자 권한이 설정된 로컬 실행 환경에서만 동작합니다.
             </p>
             <div id="diagnosticsSummary" class="diagnostics-summary" aria-live="polite">진단 준비 중</div>
             <div class="diagnostics-table-wrap">
@@ -280,11 +210,6 @@
     var refreshButton = document.getElementById('diagnosticsRefresh');
     var summary = document.getElementById('diagnosticsSummary');
     var rows = document.getElementById('diagnosticsRows');
-    var flaskStatus = document.getElementById('flaskRuntimeStatus');
-    var flaskMessage = document.getElementById('flaskRuntimeMessage');
-    var flaskToggleButton = document.getElementById('flaskToggleButton');
-    var flaskActionInProgress = false;
-
     function escapeHtml(value) {
         return String(value == null ? '' : value)
             .replace(/&/g, '&amp;')
@@ -320,73 +245,6 @@
         summary.textContent = 'PASS ' + counts.PASS + ' · WARN ' + counts.WARN + ' · FAIL ' + counts.FAIL;
     }
 
-    function renderFlaskRuntime(state) {
-        var online = !!(state && state.online);
-        flaskStatus.className = 'flask-runtime-status ' + (online ? 'is-online' : 'is-offline');
-        flaskStatus.textContent = online ? '● Flask ON' : '● Flask OFF';
-        flaskMessage.textContent = state && state.message ? state.message : '';
-        flaskToggleButton.className = 'flask-runtime-button ' + (online ? 'stop' : 'start');
-        flaskToggleButton.textContent = online ? 'Flask 종료' : 'Flask 시작';
-        flaskToggleButton.disabled = flaskActionInProgress
-            || !(state && (online ? state.canStop : state.canStart));
-    }
-
-    function renderFlaskRuntimeError() {
-        flaskStatus.className = 'flask-runtime-status is-error';
-        flaskStatus.textContent = '● Flask 연결 오류';
-        flaskMessage.textContent = 'Flask 상태를 확인하지 못했습니다.';
-        flaskToggleButton.disabled = true;
-    }
-
-    function refreshFlaskRuntime() {
-        if (flaskActionInProgress) {
-            return;
-        }
-        fetch(contextPath + '/admin/diagnostics/flask', { headers: { 'Accept': 'application/json' } })
-            .then(function (response) {
-                if (!response.ok) {
-                    throw new Error('HTTP ' + response.status);
-                }
-                return response.json();
-            })
-            .then(renderFlaskRuntime)
-            .catch(renderFlaskRuntimeError);
-    }
-
-    function controlFlask(action) {
-        if (action === 'stop' && !window.confirm('Flask 서버를 종료하시겠습니까? 진행 중인 탐지와 영상 전송이 중단됩니다.')) {
-            return;
-        }
-        flaskActionInProgress = true;
-        flaskToggleButton.disabled = true;
-        flaskStatus.className = 'flask-runtime-status is-error';
-        flaskStatus.textContent = action === 'start' ? '● Flask 시작 중' : '● Flask 종료 중';
-        flaskMessage.textContent = '요청 처리 및 상태 확인 중입니다.';
-
-        fetch(contextPath + '/admin/diagnostics/flask/' + action, {
-            method: 'POST',
-            headers: { 'Accept': 'application/json' }
-        }).then(function (response) {
-            if (!response.ok) {
-                throw new Error('HTTP ' + response.status);
-            }
-            return response.json();
-        }).then(function (state) {
-            renderFlaskRuntime(state);
-            if (state && state.message) {
-                flaskMessage.textContent = state.message;
-            }
-        }).catch(function () {
-            renderFlaskRuntimeError();
-        }).finally(function () {
-            flaskActionInProgress = false;
-            window.setTimeout(function () {
-                refreshFlaskRuntime();
-                runDiagnostics();
-            }, 1200);
-        });
-    }
-
     function runDiagnostics() {
         refreshButton.disabled = true;
         summary.textContent = '진단 실행 중';
@@ -408,12 +266,7 @@
     }
 
     refreshButton.addEventListener('click', runDiagnostics);
-    flaskToggleButton.addEventListener('click', function () {
-        controlFlask(flaskToggleButton.classList.contains('stop') ? 'stop' : 'start');
-    });
     runDiagnostics();
-    refreshFlaskRuntime();
-    window.setInterval(refreshFlaskRuntime, 3000);
 }());
 </script>
 </body>

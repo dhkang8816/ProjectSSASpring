@@ -245,7 +245,7 @@ SEQ_PDF_CACHE
 | `SSA_FLASK_ESP32_VIDEO_URL` | Flask ESP32 영상 endpoint URL |
 | `SSA_FLASK_VIDEO_CONNECT_TIMEOUT_MS`, `SSA_FLASK_VIDEO_READ_TIMEOUT_MS` | Flask 영상 proxy timeout |
 | `SSA_FLASK_LABEL_TIMEOUT_MS`, `SSA_FLASK_CONTROL_TIMEOUT_MS` | Flask 상태/제어 요청 timeout |
-| `SSA_FLASK_CONTROL_ENABLED` | Diagnostics의 Flask 시작·종료 제어 기능 활성화 여부. 기본값은 `false` |
+| `SSA_FLASK_CONTROL_ENABLED` | 관리자 사이드바의 Flask 시작·종료 제어 기능 활성화 여부. 기본값은 `false` |
 | `SSA_FLASK_PROJECT_DIR`, `SSA_FLASK_PYTHON_EXECUTABLE` | Flask 시작 시 사용할 로컬 `project_ssa_yolo` 경로와 Python 실행 파일 절대 경로 |
 | `SSA_FLASK_CONTROL_TOKEN` | Flask 정상 종료 API를 보호하는 24자 이상의 별도 토큰. Flask `.env`에도 동일한 값을 설정 |
 | `SSA_UPLOAD_ROOT` | snapshot 및 PDF cache 저장 루트 |
@@ -325,13 +325,16 @@ python run_server.py
 
 `run_server.py`는 `.env`를 읽고 `create_app("local")`을 실행합니다. OpenCV/FFmpeg/serial worker 중복을 막기 위해 reloader 없이 단일 threaded Werkzeug 서버로 실행됩니다. YOLO 모델과 영상 파일은 `.env`의 경로에 실제로 준비되어 있어야 합니다.
 
-#### Diagnostics Flask 제어
+#### 메뉴 Flask ON/OFF 제어 (로컬 개발 환경 전용)
 
-관리자 Diagnostics 화면의 Flask ON/OFF 버튼은 기본적으로 비활성화되어 있습니다. 로컬 개발 환경에서만 아래처럼 Tomcat 환경변수와 Flask `.env`에 같은 제어 토큰을 설정하면 활성화됩니다.
+관리자 계정에는 좌측 사이드바 하단에 Flask 상태 버튼이 표시됩니다. 기본적으로는 시작·종료 제어가 비활성화되어 있으며, **로컬 개발 환경에서만** 아래 Tomcat 환경변수와 Flask `.env` 설정을 모두 완료하면 활성화됩니다. Spring은 `localhost`, `127.0.0.1`, `::1` Flask만 제어할 수 있도록 제한합니다.
+
+Eclipse에서는 **Servers → Tomcat → Open Launch Configuration → Environment**에서 아래 값을 추가한 뒤 Tomcat을 재시작합니다.
 
 ```text
 # Tomcat Environment
 SSA_FLASK_CONTROL_ENABLED=true
+SSA_FLASK_STREAM_URL=http://localhost:5000/stream
 SSA_FLASK_PROJECT_DIR=C:/project_team3/workspaces/ProjectSSASpring/project_ssa_yolo
 SSA_FLASK_PYTHON_EXECUTABLE=C:/project_team3/build/envs/ssa310/python.exe
 SSA_FLASK_CONTROL_TOKEN=24자_이상의_별도_랜덤_토큰
@@ -340,7 +343,31 @@ SSA_FLASK_CONTROL_TOKEN=24자_이상의_별도_랜덤_토큰
 SSA_FLASK_CONTROL_TOKEN=24자_이상의_별도_랜덤_토큰
 ```
 
-Spring은 설정된 로컬 `run_server.py`만 시작하며, 종료는 토큰이 일치할 때 Flask의 정상 종료 API를 호출합니다. 원격 Flask 주소와 임의 Python 프로세스 강제 종료는 지원하지 않습니다.
+| 설정값 | 필수 여부 | 설명 |
+| --- | --- | --- |
+| `SSA_FLASK_CONTROL_ENABLED=true` | 필수 | 메뉴의 시작·종료 제어를 활성화합니다. 미설정 시 상태만 확인하고 제어할 수 없습니다. |
+| `SSA_FLASK_STREAM_URL` | 권장 | Flask stream base URL입니다. 제어 기능은 `http://localhost:5000/stream`처럼 로컬 주소여야 합니다. |
+| `SSA_FLASK_PROJECT_DIR` | 시작 시 필수 | `run_server.py`가 있는 `project_ssa_yolo`의 절대 경로입니다. |
+| `SSA_FLASK_PYTHON_EXECUTABLE` | 시작 시 필수 | Flask 의존성이 설치된 Python 실행 파일의 절대 경로입니다. |
+| `SSA_FLASK_CONTROL_TOKEN` | 필수 | 24자 이상 랜덤 토큰입니다. Tomcat 환경변수와 Flask `.env`에 **완전히 동일한 값**을 설정합니다. |
+
+토큰은 PowerShell 터미널에서 생성할 수 있습니다. Python 대화형 프롬프트(`>>>`) 안이 아니라 일반 PowerShell에서 실행합니다.
+
+```powershell
+python -c "import secrets; print(secrets.token_urlsafe(32))"
+```
+
+Flask `.env`에는 위 토큰 외에도 배포마다 별도의 고정 secret을 설정합니다. 실제 `.env`는 커밋하지 않습니다.
+
+```dotenv
+SSA_FLASK_SECRET_KEY=배포별_랜덤_시크릿
+SSA_FLASK_CSRF_SECRET_KEY=배포별_별도_랜덤_시크릿
+SSA_FLASK_CONTROL_TOKEN=Tomcat과_동일한_24자_이상_토큰
+```
+
+Spring은 설정된 로컬 `run_server.py`만 시작합니다. 종료는 토큰이 일치할 때 Flask의 정상 종료 API를 호출하므로 Flask도 반드시 `python run_server.py`로 실행해야 합니다. `flask run` 등 다른 실행 방식은 상태 확인은 가능해도 정상 종료 API가 준비되지 않아 종료 요청이 `503`으로 실패할 수 있습니다. 원격 Flask 주소와 임의 Python 프로세스 강제 종료는 지원하지 않습니다.
+
+환경변수를 바꾼 뒤에는 **Tomcat 재시작**, `.env`를 바꾼 뒤에는 **Flask 재시작**이 필요합니다. `RuntimeSettings`는 JVM system property를 먼저 읽고, 없을 때 Tomcat 환경변수를 읽습니다.
 
 ### 3. Spring MVC 서버
 

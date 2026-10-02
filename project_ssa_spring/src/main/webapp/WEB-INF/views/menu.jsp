@@ -21,6 +21,67 @@
 </c:if>
 <c:set var="isGuestOnly" value="${hasGuestRole and not hasUserRole and not isAdmin}" scope="page" />
 
+<style>
+#ssaSidebar .sidebar-flask-control {
+	flex: 0 0 auto !important;
+	width: 100% !important;
+	margin-top: auto !important;
+	padding: 10px 10px 0 !important;
+	box-sizing: border-box !important;
+	background: #0f172a !important;
+}
+
+button#sidebarFlaskToggleButton {
+	display: flex !important;
+	align-items: center !important;
+	justify-content: center !important;
+	box-sizing: border-box !important;
+	width: 100% !important;
+	min-height: 36px !important;
+	padding: 0 10px !important;
+	margin: 0 !important;
+	border: 1px solid #f59e0b !important;
+	border-radius: 6px !important;
+	background: rgba(245, 158, 11, .12) !important;
+	color: #fcd34d !important;
+	font-family: inherit !important;
+	font-size: 13px !important;
+	font-weight: 800 !important;
+	line-height: 1 !important;
+	-webkit-appearance: none !important;
+	appearance: none !important;
+	cursor: pointer !important;
+	transition: background-color .16s ease, border-color .16s ease, opacity .16s ease !important;
+}
+
+button#sidebarFlaskToggleButton.is-online {
+	border-color: #16a34a !important;
+	background: rgba(22, 163, 74, .14) !important;
+	color: #86efac !important;
+}
+
+button#sidebarFlaskToggleButton.is-offline {
+	border-color: #dc2626 !important;
+	background: rgba(220, 38, 38, .12) !important;
+	color: #fca5a5 !important;
+}
+
+button#sidebarFlaskToggleButton.is-error {
+	border-color: #f59e0b !important;
+	background: rgba(245, 158, 11, .12) !important;
+	color: #fcd34d !important;
+}
+
+button#sidebarFlaskToggleButton:disabled {
+	cursor: not-allowed !important;
+	opacity: .54 !important;
+}
+
+#ssaSidebar .sidebar-flask-control + .sidebar-discord {
+	margin-top: 0 !important;
+}
+</style>
+
 
 <nav id="ssaSidebar" class="ssa-sidebar">
 
@@ -178,6 +239,15 @@
 		</c:if>
 
 	</ul>
+
+	<c:if test="${isAdmin}">
+		<div class="sidebar-flask-control">
+			<button id="sidebarFlaskToggleButton" type="button"
+				class="sidebar-flask-toggle is-error" aria-live="polite" disabled>
+				● Flask 확인 중
+			</button>
+		</div>
+	</c:if>
 
 	<div class="sidebar-discord">
 		<a class="sidebar-discord-link" href="${discordInviteUrl}" target="_blank"
@@ -758,4 +828,87 @@
 	}
 
 })();
+</script>
+
+<script>
+(function () {
+	var flaskToggleButton = document.getElementById('sidebarFlaskToggleButton');
+	if (!flaskToggleButton) {
+		return;
+	}
+
+	var contextPath = '${pageContext.request.contextPath}';
+	var flaskActionInProgress = false;
+
+	function renderFlaskRuntime(state) {
+		var online = !!(state && state.online);
+		var action = online ? 'stop' : 'start';
+		flaskToggleButton.className = 'sidebar-flask-toggle ' + (online ? 'is-online' : 'is-offline');
+		flaskToggleButton.textContent = online ? '● Flask ON' : '● Flask OFF';
+		flaskToggleButton.dataset.action = action;
+		flaskToggleButton.title = online ? '클릭하여 Flask 서버 종료' : '클릭하여 Flask 서버 시작';
+		flaskToggleButton.setAttribute('aria-label', flaskToggleButton.title);
+		flaskToggleButton.disabled = flaskActionInProgress
+			|| !(state && (online ? state.canStop : state.canStart));
+	}
+
+	function renderFlaskRuntimeError() {
+		flaskToggleButton.className = 'sidebar-flask-toggle is-error';
+		flaskToggleButton.textContent = '● Flask 연결 오류';
+		flaskToggleButton.dataset.action = '';
+		flaskToggleButton.title = 'Flask 상태를 확인하지 못했습니다.';
+		flaskToggleButton.setAttribute('aria-label', flaskToggleButton.title);
+		flaskToggleButton.disabled = true;
+	}
+
+	function refreshFlaskRuntime() {
+		if (flaskActionInProgress) {
+			return;
+		}
+
+		fetch(contextPath + '/admin/diagnostics/flask', {
+			headers: { 'Accept': 'application/json' }
+		}).then(function (response) {
+			if (!response.ok) {
+				throw new Error('HTTP ' + response.status);
+			}
+			return response.json();
+		}).then(renderFlaskRuntime).catch(renderFlaskRuntimeError);
+	}
+
+	function controlFlask(action) {
+		if (action === 'stop'
+			&& !window.confirm('Flask 서버를 종료하시겠습니까? 진행 중인 탐지와 영상 전송이 중단됩니다.')) {
+			return;
+		}
+
+		flaskActionInProgress = true;
+		flaskToggleButton.disabled = true;
+		flaskToggleButton.className = 'sidebar-flask-toggle is-error';
+		flaskToggleButton.textContent = action === 'start' ? '● Flask 시작 중' : '● Flask 종료 중';
+
+		fetch(contextPath + '/admin/diagnostics/flask/' + action, {
+			method: 'POST',
+			headers: { 'Accept': 'application/json' }
+		}).then(function (response) {
+			if (!response.ok) {
+				throw new Error('HTTP ' + response.status);
+			}
+			return response.json();
+		}).then(renderFlaskRuntime).catch(renderFlaskRuntimeError).finally(function () {
+			flaskActionInProgress = false;
+			window.setTimeout(refreshFlaskRuntime, 1200);
+		});
+	}
+
+	flaskToggleButton.addEventListener('click', function () {
+		var action = flaskToggleButton.dataset.action;
+		if (action === 'start' || action === 'stop') {
+			controlFlask(action);
+		}
+	});
+
+	refreshFlaskRuntime();
+	window.setInterval(refreshFlaskRuntime, 3000);
+}());
 </script>
