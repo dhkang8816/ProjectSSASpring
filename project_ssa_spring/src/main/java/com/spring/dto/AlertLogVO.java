@@ -25,4 +25,5 @@ public class AlertLogVO {
     private Timestamp firstSendTime;
     private String alertType;
     private Integer danlogId;
+    private String actionStatus;
 }

@@ -55,8 +55,19 @@ public class AlertLogController {
                     vo.setAlertType(korName); 
                 }
             }
+
+            PageMaker actionStatusCodeCmd = new PageMaker();
+            actionStatusCodeCmd.setSearchGrpCode("ACTION_STATUS");
+            List<CommonCodeVO> actionStatusCodeList = commonCodeService.getCommonCodeList(actionStatusCodeCmd);
+            Map<String, String> actionStatusNames = actionStatusCodeList.stream()
+                .collect(Collectors.toMap(
+                    CommonCodeVO::getCode,
+                    CommonCodeVO::getCodeName,
+                    (existing, replacement) -> existing
+                ));
             
             model.addAttribute("alertList", alertList);
+            model.addAttribute("actionStatusNames", actionStatusNames);
             
         } catch (Exception e) {
             log.error("경보 목록 조회 및 코드 변환 중 에러 발생: ", e);

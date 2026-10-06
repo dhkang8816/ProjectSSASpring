@@ -35,7 +35,7 @@
     <select id="getAlertLogListWithPaging" parameterType="com.spring.cmd.PageMaker" resultType="com.spring.dto.AlertLogVO">
         <![CDATA[
         SELECT 
-            alertId, alertMsg, sendStatus, sendDate, dlogId, firstSendTime, alertType, danlogId
+            alertId, alertMsg, sendStatus, sendDate, dlogId, firstSendTime, alertType, danlogId, actionStatus
         FROM (
             SELECT 
                 ROWNUM as rnum, 
@@ -46,10 +46,22 @@
                 DLOG_ID as dlogId,
                 FIRST_SEND_TIME as firstSendTime,
                 ALERT_TYPE as alertType,
-                DANLOG_ID as danlogId
+                DANLOG_ID as danlogId,
+                ACTION_STATUS as actionStatus
             FROM (
-                SELECT * 
-                FROM ALERT_LOG 
+                SELECT
+                    AL.ALERT_ID,
+                    AL.ALERT_MSG,
+                    AL.SEND_STATUS,
+                    AL.SEND_DATE,
+                    AL.DLOG_ID,
+                    AL.FIRST_SEND_TIME,
+                    AL.ALERT_TYPE,
+                    AL.DANLOG_ID,
+                    COALESCE(DL.ACTION_STATUS, DGL.DACTION_STATUS) AS ACTION_STATUS
+                FROM ALERT_LOG AL
+                LEFT JOIN DETECTION_LOG DL ON DL.DLOG_ID = AL.DLOG_ID
+                LEFT JOIN DANGER_LOG DGL ON DGL.DANLOG_ID = AL.DANLOG_ID
                 WHERE 1=1
         ]]>
                 <if test="searchType == 'type' and keyword != ''">

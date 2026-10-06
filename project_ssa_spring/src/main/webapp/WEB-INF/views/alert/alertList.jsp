@@ -171,6 +171,38 @@ body {
 	font-size: 13px;
 }
 
+#alertListPage .badge-status {
+	display: inline-block;
+	padding: 4px 12px;
+	border-radius: 20px;
+	font-size: 11.5px;
+	font-weight: 700;
+}
+
+#alertListPage .badge-status.status-unverified {
+	background-color: rgba(239, 68, 68, 0.15);
+	color: #ef4444;
+	border: 1px solid rgba(239, 68, 68, 0.3);
+}
+
+#alertListPage .badge-status.status-progress {
+	background-color: rgba(245, 158, 11, 0.15);
+	color: #f59e0b;
+	border: 1px solid rgba(245, 158, 11, 0.3);
+}
+
+#alertListPage .badge-status.status-complete {
+	background-color: rgba(16, 185, 129, 0.15);
+	color: #10b981;
+	border: 1px solid rgba(16, 185, 129, 0.3);
+}
+
+#alertListPage .badge-status.badge-none {
+	background-color: rgba(30, 41, 59, 0.5);
+	color: #64748b;
+	border: 1px solid #1e293b;
+}
+
 #alertListPage .pagination {
 	display: flex;
 	list-style: none;
@@ -358,11 +390,11 @@ body {
 					<tr>
 						<th>경보번호</th>
 						<th>경보대상구분</th>
-						<th>연결 로그</th>
 						<th>경보알림메세지내용</th>
-						<th>전송성공여부</th>
 						<th>최초경보시각</th>
 						<th>경보전송일시</th>
+						<th>연결 로그</th>
+						<th>조치상태</th>
 					</tr>
 				</thead>
 				<tbody>
@@ -385,6 +417,19 @@ body {
 									<td>${alert.alertType}</td>
 
 
+
+
+
+									<td style="text-align: left;"><c:out
+											value="${alert.alertMsg}" /></td>
+
+									<td><fmt:formatDate value="${alert.firstSendTime}"
+											pattern="yyyy-MM-dd HH:mm:ss" /></td>
+
+
+									<td><fmt:formatDate value="${alert.sendDate}"
+											pattern="yyyy-MM-dd HH:mm:ss" /></td>
+
 									<td><c:choose>
 											<c:when test="${not empty alert.dlogId}">
 												<a class="btn-action-link" data-detail-popup
@@ -405,21 +450,24 @@ body {
 											</c:otherwise>
 										</c:choose></td>
 
+									<td>
+										<c:choose>
+											<c:when test="${alert.actionStatus eq '0'}">
+												<span class="badge-status status-unverified"><c:out value="${empty actionStatusNames[alert.actionStatus] ? alert.actionStatus : actionStatusNames[alert.actionStatus]}" /></span>
+											</c:when>
+											<c:when test="${alert.actionStatus eq '1'}">
+												<span class="badge-status status-progress"><c:out value="${empty actionStatusNames[alert.actionStatus] ? alert.actionStatus : actionStatusNames[alert.actionStatus]}" /></span>
+											</c:when>
+											<c:when test="${alert.actionStatus eq '2'}">
+												<span class="badge-status status-complete"><c:out value="${empty actionStatusNames[alert.actionStatus] ? alert.actionStatus : actionStatusNames[alert.actionStatus]}" /></span>
+											</c:when>
+											<c:otherwise>
+												<span class="badge-status badge-none"><c:out value="${empty alert.actionStatus ? '연결 로그 없음' : alert.actionStatus}" /></span>
+											</c:otherwise>
+										</c:choose>
+									</td>
 
 
-									<td style="text-align: left;"><c:out
-											value="${alert.alertMsg}" /></td>
-
-
-									<td>${alert.sendStatus}</td>
-
-
-									<td><fmt:formatDate value="${alert.firstSendTime}"
-											pattern="yyyy-MM-dd HH:mm:ss" /></td>
-
-
-									<td><fmt:formatDate value="${alert.sendDate}"
-											pattern="yyyy-MM-dd HH:mm:ss" /></td>
 								</tr>
 							</c:forEach>
 						</c:otherwise>

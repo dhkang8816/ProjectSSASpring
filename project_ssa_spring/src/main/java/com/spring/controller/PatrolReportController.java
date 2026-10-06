@@ -29,7 +29,6 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import jakarta.servlet.http.HttpServletRequest;
 
 import com.spring.cmd.PageMaker;
-import com.spring.dto.CommonCodeVO;
 import com.spring.dto.FlightHistoryVO;
 import com.spring.dto.MemberVO;
 import com.spring.dto.PatrolReportVO;

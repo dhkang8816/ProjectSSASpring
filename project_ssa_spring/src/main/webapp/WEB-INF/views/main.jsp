@@ -259,7 +259,7 @@ body {
 
 .main-alert-log-item {
 	display: grid;
-	grid-template-columns: auto minmax(0, 1fr) auto;
+	grid-template-columns: auto auto minmax(0, 1fr) auto;
 	align-items: center;
 	gap: 10px;
 	padding: 11px 4px;
@@ -288,6 +288,34 @@ body {
 .main-alert-log-type.detection {
 	color: #fed7aa;
 	background: rgba(249, 115, 22, 0.15);
+}
+
+.main-alert-log-status {
+	padding: 4px 7px;
+	border-radius: 5px;
+	font-size: 11px;
+	font-weight: 700;
+	white-space: nowrap;
+}
+
+.main-alert-log-status.unverified {
+	color: #fecaca;
+	background: rgba(239, 68, 68, 0.16);
+}
+
+.main-alert-log-status.progress {
+	color: #fde68a;
+	background: rgba(245, 158, 11, 0.15);
+}
+
+.main-alert-log-status.complete {
+	color: #a7f3d0;
+	background: rgba(16, 185, 129, 0.16);
+}
+
+.main-alert-log-status.none {
+	color: #94a3b8;
+	background: rgba(71, 85, 105, 0.24);
 }
 
 .main-alert-log-message {
@@ -1064,7 +1092,20 @@ body {
 								</c:choose>
 								<a class="main-alert-log-item" data-detail-popup
 									data-popup-name="${mainAlertPopup}"
-									data-alert-id="${alert.alertId}" href="${mainAlertUrl}"><span
+									data-alert-id="${alert.alertId}" href="${mainAlertUrl}"><c:choose>
+										<c:when test="${alert.actionStatus eq '0'}">
+											<span class="main-alert-log-status unverified">미확인</span>
+										</c:when>
+										<c:when test="${alert.actionStatus eq '1'}">
+											<span class="main-alert-log-status progress">조치중</span>
+										</c:when>
+										<c:when test="${alert.actionStatus eq '2'}">
+											<span class="main-alert-log-status complete">조치완료</span>
+										</c:when>
+										<c:otherwise>
+											<span class="main-alert-log-status none">연결 없음</span>
+										</c:otherwise>
+									</c:choose><span
 									class="main-alert-log-type ${alert.alertType eq '1' ? 'danger' : 'detection'}">${alert.alertType eq '1' ? '이상객체' : '개체미달'}</span><span
 									class="main-alert-log-message"><c:out
 											value="${alert.alertMsg}" /></span><span
