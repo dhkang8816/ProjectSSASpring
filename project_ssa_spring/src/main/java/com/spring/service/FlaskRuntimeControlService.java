@@ -3,11 +3,14 @@ package com.spring.service;
 import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.net.URI;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.spring.util.RuntimeSettings;
 
 /**
@@ -22,9 +25,11 @@ public class FlaskRuntimeControlService {
     private static final int CONTROL_TIMEOUT_MS = 3000;
 
     private final Object processMonitor = new Object();
+    private final ObjectMapper objectMapper = new ObjectMapper();
     private volatile Process managedProcess;
     private volatile long lastStartRequestedAt;
     private volatile boolean startupRequested;
+    private volatile boolean startupInitializationRequested;
 
     public Map<String, Object> status() {
         boolean online = isFlaskOnline();
@@ -33,8 +38,10 @@ public class FlaskRuntimeControlService {
         boolean projectReady = isProjectReady();
         boolean tokenReady = hasControlToken();
         boolean managedProcessAlive = isManagedProcessAlive();
-        if (online) {
+        StartupState startup = resolveStartupState(online, managedProcessAlive);
+        if (online && startup.ready) {
             startupRequested = false;
+            startupInitializationRequested = false;
         }
 
         Map<String, Object> result = new LinkedHashMap<>();
@@ -43,10 +50,10 @@ public class FlaskRuntimeControlService {
         result.put("managedProcess", managedProcessAlive);
         result.put("canStart", enabled && localTarget && projectReady && tokenReady && !online && !managedProcessAlive);
         result.put("canStop", enabled && localTarget && tokenReady && online);
-        result.put("startupInProgress", managedProcessAlive && !online);
-        result.put("startupStage", startupStage(online, managedProcessAlive));
-        result.put("startupProgress", startupProgress(online, managedProcessAlive));
-        result.put("startupLabel", startupLabel(online, managedProcessAlive));
+        result.put("startupInProgress", startupRequested && !startup.ready);
+        result.put("startupStage", startup.stage);
+        result.put("startupProgress", startup.progress);
+        result.put("startupLabel", startup.label);
         result.put("startupElapsedMillis", startupRequested
                 ? Math.max(0L, System.currentTimeMillis() - lastStartRequestedAt) : 0L);
         result.put("message", statusMessage(online, enabled, localTarget, projectReady, tokenReady));
@@ -75,6 +82,7 @@ public class FlaskRuntimeControlService {
                 managedProcess = processBuilder.start();
                 lastStartRequestedAt = System.currentTimeMillis();
                 startupRequested = true;
+                startupInitializationRequested = false;
                 return actionResult(true, "START_REQUESTED", "Flask 시작을 요청했습니다. 상태 확인을 기다립니다.");
             } catch (IOException error) {
                 return actionResult(false, "START_FAILED", "Flask를 시작하지 못했습니다. Python 실행 경로와 프로젝트 경로를 확인하세요.");
@@ -85,6 +93,7 @@ public class FlaskRuntimeControlService {
     public Map<String, Object> stop() {
         synchronized (processMonitor) {
             startupRequested = false;
+            startupInitializationRequested = false;
             if (!isFlaskOnline()) {
                 return actionResult(false, "ALREADY_OFFLINE", "Flask 서버가 이미 중지되어 있습니다.");
             }
@@ -183,6 +192,88 @@ public class FlaskRuntimeControlService {
             return "Python 프로세스가 종료되었습니다";
         }
         return "Flask 서버 대기";
+    }
+
+    /**
+     * The HTTP health endpoint only proves that the Flask web process is
+     * listening. During a managed start, additionally ask Flask to start its
+     * optional workers and surface its own step-by-step lifecycle state.
+     */
+    private StartupState resolveStartupState(boolean online, boolean managedProcessAlive) {
+        if (!online) {
+            if (managedProcessAlive) {
+                return new StartupState("PROCESS_RUNNING", 55, "Python 프로세스 실행 확인", false);
+            }
+            if (startupRequested) {
+                return new StartupState("START_FAILED", 0, "Python 프로세스가 종료되었습니다", false);
+            }
+            return new StartupState("IDLE", 0, "Flask 서버 대기", false);
+        }
+
+        if (!startupRequested) {
+            return new StartupState("READY", 100, "Flask 상태 API 응답 확인 완료", true);
+        }
+
+        StartupState state = startupInitializationRequested
+                ? requestFlaskStartupState(false)
+                : requestFlaskStartupState(true);
+        if (!startupInitializationRequested && !"SERVICE_FAILED".equals(state.stage)) {
+            startupInitializationRequested = true;
+        }
+        return state;
+    }
+
+    private StartupState requestFlaskStartupState(boolean initialize) {
+        HttpURLConnection connection = null;
+        try {
+            String path = initialize ? "/admin/initialize" : "/admin/startup-status";
+            connection = (HttpURLConnection) URI.create(streamBaseUrl() + path).toURL().openConnection();
+            connection.setRequestMethod(initialize ? "POST" : "GET");
+            connection.setConnectTimeout(CONTROL_TIMEOUT_MS);
+            connection.setReadTimeout(CONTROL_TIMEOUT_MS);
+            connection.setRequestProperty("X-SSA-Flask-Control-Token",
+                    RuntimeSettings.text("SSA_FLASK_CONTROL_TOKEN", ""));
+            if (initialize) {
+                connection.setDoOutput(true);
+            }
+
+            int status = connection.getResponseCode();
+            if (status < 200 || status >= 300) {
+                return new StartupState("SERVICE_FAILED", 0, "Flask 부가 서비스 상태 확인 실패", false);
+            }
+
+            JsonNode payload = objectMapper.readTree(
+                    new String(connection.getInputStream().readAllBytes(), StandardCharsets.UTF_8));
+            if (!"SUCCESS".equals(payload.path("status").asText())) {
+                return new StartupState("SERVICE_FAILED", 0, "Flask 부가 서비스 시작 요청이 거부되었습니다", false);
+            }
+
+            String stage = payload.path("stage").asText("SERVICES_STARTING");
+            int progress = payload.path("progress").asInt(70);
+            String label = payload.path("label").asText("부가 서비스 시작 중");
+            boolean ready = payload.path("ready").asBoolean(false);
+            return new StartupState(stage, progress, label, ready);
+        } catch (Exception ignored) {
+            return new StartupState("SERVICE_FAILED", 0, "Flask 부가 서비스 상태 확인 실패", false);
+        } finally {
+            if (connection != null) {
+                connection.disconnect();
+            }
+        }
+    }
+
+    private static final class StartupState {
+        private final String stage;
+        private final int progress;
+        private final String label;
+        private final boolean ready;
+
+        private StartupState(String stage, int progress, String label, boolean ready) {
+            this.stage = stage;
+            this.progress = progress;
+            this.label = label;
+            this.ready = ready;
+        }
     }
 
     private String statusMessage(boolean online, boolean enabled, boolean localTarget,

@@ -1,8 +1,10 @@
 import logging  # 🛠️ 로그 필터링을 위해 logging 라이브러리 추가
 import atexit
+import hmac
+import os
 import threading
 from pathlib import Path
-from flask import Flask
+from flask import Flask, jsonify
 from flask_migrate import Migrate
 from flask_login import LoginManager
 from flask import session, redirect, url_for, flash, request
@@ -49,6 +51,7 @@ def create_app(config_key):
     # receives, so the reloader parent cannot contend for COM6.
     services_start_lock = threading.Lock()
     services_started = False
+    services_initializing = False
 
     def ensure_services_started():
         nonlocal services_started
@@ -59,12 +62,51 @@ def create_app(config_key):
             start_services()
             services_started = True
 
+    def startup_status_payload():
+        from apps.services.starter import get_startup_status
+        payload = get_startup_status()
+        payload.update({
+            "servicesStarted": services_started,
+            "servicesInitializing": services_initializing,
+        })
+        return payload
+
+    def start_services_async():
+        nonlocal services_initializing
+        with services_start_lock:
+            if services_started or services_initializing:
+                return False
+            services_initializing = True
+
+        from apps.services.starter import mark_startup_requested
+        mark_startup_requested()
+
+        def initialize():
+            nonlocal services_initializing
+            try:
+                ensure_services_started()
+            except Exception:
+                from apps.services.starter import mark_startup_failed
+                mark_startup_failed()
+                raise
+            finally:
+                with services_start_lock:
+                    services_initializing = False
+
+        threading.Thread(target=initialize, name="ssa-runtime-services-init", daemon=True).start()
+        return True
+
     @app.before_request
     def initialize_runtime_services():
         # Administrator diagnostics must be a true read-only status request.
         # In particular, the first /stream/health request must not start the
         # sensor poller (and therefore must not open COM6) merely to report it.
-        if request.endpoint == "stream.health_status":
+        if request.endpoint in {
+            "stream.health_status",
+            "stream.shutdown_runtime",
+            "runtime_startup_status",
+            "runtime_initialize_services",
+        }:
             return
         ensure_services_started()
     
@@ -96,6 +138,26 @@ def create_app(config_key):
     
     from apps.esp32 import views as esp32_views
     app.register_blueprint(esp32_views.esp32_yolov12, url_prefix="/esp32_yolov12")
+
+    def control_token_is_valid():
+        configured_token = os.getenv("SSA_FLASK_CONTROL_TOKEN", "")
+        request_token = request.headers.get("X-SSA-Flask-Control-Token", "")
+        return bool(configured_token) and hmac.compare_digest(configured_token, request_token)
+
+    @app.route("/stream/admin/startup-status", methods=["GET"])
+    @csrf.exempt
+    def runtime_startup_status():
+        if not control_token_is_valid():
+            return jsonify({"status": "FAIL", "error": "unauthorized"}), 403
+        return jsonify({"status": "SUCCESS", **startup_status_payload()})
+
+    @app.route("/stream/admin/initialize", methods=["POST"])
+    @csrf.exempt
+    def runtime_initialize_services():
+        if not control_token_is_valid():
+            return jsonify({"status": "FAIL", "error": "unauthorized"}), 403
+        start_services_async()
+        return jsonify({"status": "SUCCESS", **startup_status_payload()})
     
     @app.before_request
     def check_access_control():

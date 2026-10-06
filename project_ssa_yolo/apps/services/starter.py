@@ -16,16 +16,52 @@ from apps.services.sensor_helper import start_sensor_service, stop_sensor_servic
 
 _startup_sound_lock = threading.Lock()
 _startup_sound_played = False
+_startup_status_lock = threading.RLock()
+_startup_status = {
+    "stage": "IDLE",
+    "progress": 0,
+    "label": "서비스 시작 대기",
+    "ready": False,
+}
+
+
+def _set_startup_status(stage, progress, label, ready=False):
+    with _startup_status_lock:
+        _startup_status.update({
+            "stage": stage,
+            "progress": int(progress),
+            "label": label,
+            "ready": bool(ready),
+        })
+
+
+def mark_startup_requested():
+    """Record the control-plane request before optional workers are started."""
+    _set_startup_status("SERVICES_STARTING", 70, "부가 서비스 시작 요청", False)
+
+
+def mark_startup_failed():
+    _set_startup_status("SERVICE_FAILED", 0, "부가 서비스 시작 실패", False)
+
+
+def get_startup_status():
+    """Return a stable snapshot for the token-protected runtime status route."""
+    with _startup_status_lock:
+        return dict(_startup_status)
 
 
 def start_services():
     """Initialize optional workers and queue at most one process startup tone."""
 
     global _startup_sound_played
+    _set_startup_status("SERVICES_STARTING", 70, "부가 서비스 시작 중", False)
     print("[starter] services starting")
     start_buzzer_service()
+    _set_startup_status("BUZZER_READY", 78, "부저 워커 시작", False)
     start_sensor_service()
+    _set_startup_status("SENSOR_READY", 86, "센서 워커 시작", False)
     start_notification_service()
+    _set_startup_status("DISCORD_READY", 94, "Discord 알림 워커 시작", False)
 
     if runtime_settings.BUZZER_STARTUP_SOUND_ENABLED:
         with _startup_sound_lock:
@@ -34,6 +70,7 @@ def start_services():
                 # worker and must never make Flask startup fail.
                 play_startup_melody()
                 _startup_sound_played = True
+    _set_startup_status("READY", 100, "부가 서비스 준비 완료", True)
     print("[starter] services ready")
 
 

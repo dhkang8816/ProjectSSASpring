@@ -21,6 +21,18 @@ class StarterTest(unittest.TestCase):
         finally:
             starter._startup_sound_played = original_played
 
+    def test_start_services_marks_optional_worker_initialization_ready(self):
+        with patch.object(starter, "start_buzzer_service"), \
+                patch.object(starter, "start_sensor_service"), \
+                patch.object(starter, "start_notification_service"), \
+                patch.object(starter.runtime_settings, "BUZZER_STARTUP_SOUND_ENABLED", False):
+            starter.start_services()
+
+        status = starter.get_startup_status()
+        self.assertEqual("READY", status["stage"])
+        self.assertEqual(100, status["progress"])
+        self.assertTrue(status["ready"])
+
     def test_shutdown_tone_runs_after_sensor_stop_and_before_buzzer_stop(self):
         calls = []
         with patch.object(starter, "stop_notification_service", side_effect=lambda: calls.append("notification")), \

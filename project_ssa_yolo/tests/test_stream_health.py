@@ -9,10 +9,38 @@ from apps.stream import views
 
 class StreamHealthRouteTest(unittest.TestCase):
 
+    def test_runtime_initialization_requires_token_and_starts_workers_asynchronously(self):
+        started = threading.Event()
+        token = "x" * 32
+        with patch.dict(os.environ, {"SSA_FLASK_CONTROL_TOKEN": token}, clear=False), \
+                patch("apps.services.starter.start_services", side_effect=started.set):
+            app = create_app("testing")
+            client = app.test_client()
+
+            denied = client.post("/stream/admin/initialize")
+            self.assertEqual(403, denied.status_code)
+
+            accepted = client.post(
+                "/stream/admin/initialize",
+                headers={"X-SSA-Flask-Control-Token": token},
+            )
+            self.assertEqual(200, accepted.status_code)
+            self.assertEqual("SUCCESS", accepted.get_json()["status"])
+            self.assertTrue(started.wait(1.0))
+
+            status = client.get(
+                "/stream/admin/startup-status",
+                headers={"X-SSA-Flask-Control-Token": token},
+            )
+
+        self.assertEqual(200, status.status_code)
+        self.assertEqual("SUCCESS", status.get_json()["status"])
+        self.assertTrue(status.get_json()["servicesStarted"])
+
     def test_shutdown_requires_token_and_uses_runtime_callback(self):
         shutdown_called = threading.Event()
         with patch.dict(os.environ, {"SSA_FLASK_CONTROL_TOKEN": "x" * 32}, clear=False), \
-                patch("apps.services.starter.start_services"):
+                patch("apps.services.starter.start_services") as start_services:
             app = create_app("testing")
             client = app.test_client()
 
@@ -28,6 +56,7 @@ class StreamHealthRouteTest(unittest.TestCase):
         self.assertEqual(200, accepted.status_code)
         self.assertEqual("SUCCESS", accepted.get_json()["status"])
         self.assertTrue(shutdown_called.wait(1.0))
+        start_services.assert_not_called()
 
     def test_health_returns_cached_status_without_starting_services(self):
         with patch("apps.services.starter.start_services") as start_services, \

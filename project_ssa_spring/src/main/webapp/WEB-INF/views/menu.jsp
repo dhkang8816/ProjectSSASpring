@@ -932,12 +932,21 @@ button#sidebarFlaskToggleButton:disabled {
 
 	function pollFlaskStartup(deadline) {
 		requestFlaskRuntime().then(function (state) {
+			if (state.startupInProgress) {
+				renderFlaskStartup(state);
+				if (Date.now() < deadline) {
+					window.setTimeout(function () { pollFlaskStartup(deadline); }, 500);
+					return;
+				}
+			}
 			if (state.online) {
 				flaskActionInProgress = false;
 				renderFlaskRuntime(state);
 				return;
 			}
-			if (state.startupStage === 'START_FAILED' || Date.now() >= deadline) {
+			if (state.startupStage === 'START_FAILED'
+				|| state.startupStage === 'SERVICE_FAILED'
+				|| Date.now() >= deadline) {
 				flaskActionInProgress = false;
 				renderFlaskRuntime(state);
 				return;
