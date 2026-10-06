@@ -13,6 +13,7 @@ public class PageMaker {
 	
 	private String searchType = "";
 	private String keyword = "";
+	private String confirmStatus = "";
 	
 	private int page = 1; // 페이지 번호
 	private int perPageNum = 10; // 리스트 개수

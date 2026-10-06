@@ -16,7 +16,7 @@ public class WorkFlowServiceImpl implements WorkFlowService {
     private final PatrolReportDAO patrolReportDAO;
 
     @Override public List<WorkFlowVO> getWorkFlowList(PageMaker pageMaker, String approverId) throws Exception {
-        pageMaker.setTotalCount(workFlowDAO.selectWorkFlowTotalCount(approverId));
+        pageMaker.setTotalCount(workFlowDAO.selectWorkFlowTotalCount(pageMaker, approverId));
         return workFlowDAO.selectWorkFlowList(pageMaker, approverId);
     }
     @Override public WorkFlowVO getWorkFlowById(Long approvalId) throws Exception {

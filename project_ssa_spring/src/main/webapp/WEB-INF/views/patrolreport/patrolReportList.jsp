@@ -81,6 +81,48 @@
     font-weight: 700; 
 }
 
+#patrolReportListPage .report-search-form {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+#patrolReportListPage .report-search-form select,
+#patrolReportListPage .report-search-form input {
+    height: 38px;
+    border: 1px solid #334155;
+    border-radius: 7px;
+    background: #111827;
+    color: #e2e8f0;
+    font-size: 13px;
+}
+
+#patrolReportListPage .report-search-form select {
+    min-width: 104px;
+    padding: 0 9px;
+}
+
+#patrolReportListPage .report-search-form input {
+    width: 180px;
+    padding: 0 10px;
+}
+
+#patrolReportListPage .btn-search {
+    height: 38px;
+    padding: 0 13px;
+    border: 1px solid #38bdf8;
+    border-radius: 7px;
+    background: #0ea5e9;
+    color: #ffffff;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+#patrolReportListPage .btn-search:hover {
+    background: #0284c7;
+}
+
 #patrolReportListPage .staff-table-wrapper {
     overflow-x: auto; 
     overflow-y: hidden; 
@@ -89,7 +131,7 @@
 
 
 #patrolReportListPage .table-zone {
-    min-width: 850px;
+    min-width: 900px;
     width: 100%;
     border-collapse: separate !important;
     border-spacing: 0 !important;
@@ -186,6 +228,73 @@
     border: 1px solid rgba(239, 68, 68, 0.3) !important;
 } 
 
+#patrolReportListPage .confirmation-filter-header {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+}
+
+#patrolReportListPage .confirm-filter-toggle {
+    padding: 4px 8px;
+    border: 1px solid #475569;
+    border-radius: 6px;
+    background: #172033;
+    color: #cbd5e1;
+    font-size: 11px;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+#patrolReportListPage .confirm-filter-toggle:hover,
+#patrolReportListPage .confirm-filter-toggle[aria-expanded="true"] {
+    border-color: #38bdf8;
+    background: #0f3146;
+    color: #7dd3fc;
+}
+
+#patrolReportConfirmFilterMenu[hidden] {
+    display: none;
+}
+
+#patrolReportConfirmFilterMenu {
+    position: fixed;
+    min-width: 174px;
+    padding: 8px;
+    border: 1px solid #334155;
+    border-radius: 8px;
+    background: #111827;
+    box-shadow: 0 12px 28px rgba(0, 0, 0, .42);
+    z-index: 10050;
+}
+
+#patrolReportConfirmFilterMenu .filter-menu-caption {
+    display: block;
+    padding: 5px 7px 8px;
+    color: #94a3b8;
+    font-size: 11px;
+}
+
+#patrolReportConfirmFilterMenu button {
+    display: block;
+    width: 100%;
+    padding: 8px 9px;
+    border: 0;
+    border-radius: 5px;
+    background: transparent;
+    color: #cbd5e1;
+    font-size: 12px;
+    font-weight: 700;
+    text-align: left;
+    cursor: pointer;
+}
+
+#patrolReportConfirmFilterMenu button:hover,
+#patrolReportConfirmFilterMenu button.is-active {
+    background: #0f3146;
+    color: #7dd3fc;
+}
+
 
 #patrolReportListPage .pagination {
     display: flex;
@@ -234,6 +343,18 @@
     #patrolReportListPage .btn-create {
         align-self: flex-end; 
     } 
+    #patrolReportListPage .summary-action-group {
+        width: 100%;
+        flex-wrap: wrap;
+        justify-content: flex-end;
+    }
+    #patrolReportListPage .report-search-form {
+        width: 100%;
+    }
+    #patrolReportListPage .report-search-form input {
+        flex: 1;
+        width: auto;
+    }
 }
 
 
@@ -264,6 +385,16 @@
 		    
 		    
 		    <div class="summary-action-group" style="display: flex !important; gap: 8px !important; align-items: center !important; float: none !important; margin: 0 !important;">
+		        <form class="report-search-form" method="get" action="${pageContext.request.contextPath}/patrolreport/list">
+		            <input type="hidden" name="confirmStatus" value="<c:out value='${pageMaker.confirmStatus}'/>" />
+		            <select name="searchType" aria-label="검색 기준">
+		                <option value="r" ${pageMaker.searchType eq 'r' ? 'selected' : ''}>보고서 번호</option>
+		                <option value="m" ${pageMaker.searchType eq 'm' ? 'selected' : ''}>작성 사번</option>
+		                <option value="d" ${pageMaker.searchType eq 'd' ? 'selected' : ''}>업무 일자</option>
+		            </select>
+		            <input type="search" name="keyword" value="<c:out value='${pageMaker.keyword}'/>" placeholder="검색어 입력" aria-label="검색어" />
+		            <button type="submit" class="btn-search">검색</button>
+		        </form>
 		        <button class="csv-download-btn neon-theme"
 		                onclick="downloadTableAsCsv('#patrolReportTable', 'patrol-report-list')"
 		                style="float: none !important; margin: 0 !important; display: inline-flex !important; white-space: nowrap !important;">
@@ -285,7 +416,13 @@
                         <th>비행시간</th>
                         <th>탐지건수</th>
                         <th>조치완료율</th>
-                        <th>확정 여부</th>
+                        <th>
+                            <div class="confirmation-filter-header">
+                                <span>승인 여부</span>
+                                <button type="button" id="patrolReportConfirmFilterButton" class="confirm-filter-toggle"
+                                    aria-expanded="false" aria-controls="patrolReportConfirmFilterMenu">승인 필터</button>
+                            </div>
+                        </th>
                     </tr>
                 </thead>
                 <tbody>
@@ -306,21 +443,11 @@
                                     <td>${report.totalDetectCount}건</td>
                                     <td>${report.completionRate}%</td>
                                     <td>
-                                        
-                                        <c:choose>
-                                            <c:when test="${report.confirmStatus eq '0'}">
-                                                <span class="badge-status badge-0">승인 대기</span>
-                                            </c:when>
-                                            <c:when test="${report.confirmStatus eq '1'}">
-                                                <span class="badge-status badge-1">승인 완료</span>
-                                            </c:when>
-                                            <c:when test="${report.confirmStatus eq '2'}">
-                                                <span class="badge-status badge-2">반려</span>
-                                            </c:when>
-                                            <c:otherwise>
-                                                <span class="badge-status" style="background: #334155; color: #94a3b8;">미정</span>
-                                            </c:otherwise>
-                                        </c:choose>
+                                        <c:forEach var="confirmStatus" items="${confirmStatusList}">
+                                            <c:if test="${report.confirmStatus eq confirmStatus.code}">
+                                                <span class="badge-status badge-${confirmStatus.code}">${confirmStatus.codeName}</span>
+                                            </c:if>
+                                        </c:forEach>
                                     </td>
                                 </tr>
                             </c:forEach>
@@ -335,7 +462,7 @@
                 <ul class="pagination">
                     <c:if test="${pageMaker.prev}">
                         <li>
-                            <a href="${pageContext.request.contextPath}/patrolreport/list?page=${pageMaker.startPage - 1}">&laquo; 이전</a>
+                            <a href="${pageContext.request.contextPath}/patrolreport/list?page=${pageMaker.startPage - 1}&amp;searchType=${pageMaker.searchType}&amp;keyword=<c:out value='${pageMaker.keyword}'/>&amp;confirmStatus=<c:out value='${pageMaker.confirmStatus}'/>">&laquo; 이전</a>
                         </li>
                     </c:if>
                     
@@ -346,7 +473,7 @@
                                     <strong>${pageNum}</strong>
                                 </c:when>
                                 <c:otherwise>
-                                    <a href="${pageContext.request.contextPath}/patrolreport/list?page=${pageNum}">${pageNum}</a>
+                                    <a href="${pageContext.request.contextPath}/patrolreport/list?page=${pageNum}&amp;searchType=${pageMaker.searchType}&amp;keyword=<c:out value='${pageMaker.keyword}'/>&amp;confirmStatus=<c:out value='${pageMaker.confirmStatus}'/>">${pageNum}</a>
                                 </c:otherwise>
                             </c:choose>
                         </li>
@@ -354,7 +481,7 @@
                     
                     <c:if test="${pageMaker.next}">
                         <li>
-                            <a href="${pageContext.request.contextPath}/patrolreport/list?page=${pageMaker.endPage + 1}">다음 &raquo;</a>
+                            <a href="${pageContext.request.contextPath}/patrolreport/list?page=${pageMaker.endPage + 1}&amp;searchType=${pageMaker.searchType}&amp;keyword=<c:out value='${pageMaker.keyword}'/>&amp;confirmStatus=<c:out value='${pageMaker.confirmStatus}'/>">다음 &raquo;</a>
                         </li>
                     </c:if>
                 </ul>
@@ -363,5 +490,70 @@
         
     </div>
 </div>
+
+<div id="patrolReportConfirmFilterMenu" hidden="hidden" role="menu" aria-label="승인 상태 필터">
+    <span class="filter-menu-caption">승인 상태</span>
+    <button type="button" role="menuitem" class="${empty pageMaker.confirmStatus ? 'is-active' : ''}" data-confirm-status="">전체</button>
+    <c:forEach var="confirmStatus" items="${confirmStatusList}">
+        <button type="button" role="menuitem" class="${pageMaker.confirmStatus eq confirmStatus.code ? 'is-active' : ''}" data-confirm-status="${confirmStatus.code}">${confirmStatus.codeName}</button>
+    </c:forEach>
+</div>
+
+<script>
+(function () {
+    var filterButton = document.getElementById('patrolReportConfirmFilterButton');
+    var filterMenu = document.getElementById('patrolReportConfirmFilterMenu');
+
+    function closeFilterMenu() {
+        filterMenu.hidden = true;
+        filterButton.setAttribute('aria-expanded', 'false');
+    }
+
+    function openFilterMenu() {
+        filterMenu.hidden = false;
+        var buttonRect = filterButton.getBoundingClientRect();
+        var left = Math.min(buttonRect.left, window.innerWidth - filterMenu.offsetWidth - 12);
+        filterMenu.style.top = (buttonRect.bottom + 6) + 'px';
+        filterMenu.style.left = Math.max(12, left) + 'px';
+        filterButton.setAttribute('aria-expanded', 'true');
+    }
+
+    filterButton.addEventListener('click', function () {
+        if (filterMenu.hidden) {
+            openFilterMenu();
+        } else {
+            closeFilterMenu();
+        }
+    });
+
+    filterMenu.addEventListener('click', function (event) {
+        var option = event.target.closest('button[data-confirm-status]');
+        if (!option) {
+            return;
+        }
+        var url = new URL(window.location.href);
+        url.searchParams.set('page', '1');
+        if (option.dataset.confirmStatus) {
+            url.searchParams.set('confirmStatus', option.dataset.confirmStatus);
+        } else {
+            url.searchParams.delete('confirmStatus');
+        }
+        window.location.assign(url.toString());
+    });
+
+    document.addEventListener('click', function (event) {
+        if (!filterMenu.hidden && !filterMenu.contains(event.target) && !filterButton.contains(event.target)) {
+            closeFilterMenu();
+        }
+    });
+
+    document.addEventListener('keydown', function (event) {
+        if (event.key === 'Escape' && !filterMenu.hidden) {
+            closeFilterMenu();
+            filterButton.focus();
+        }
+    });
+}());
+</script>
 </body>
 </html>

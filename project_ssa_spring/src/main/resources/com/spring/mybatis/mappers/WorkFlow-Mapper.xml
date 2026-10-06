@@ -20,15 +20,37 @@
         FROM WORKFLOW W INNER JOIN PATROL_REPORT P ON P.REPORT_ID = W.REPORT_ID
         LEFT JOIN MEMBER D ON D.MEMBER_ID = W.DRAFTER_ID LEFT JOIN MEMBER A ON A.MEMBER_ID = W.APPROVER_ID
     </sql>
+    <sql id="workflowSearchCondition">
+        <if test="pageMaker.keyword != null and pageMaker.keyword != ''">
+            <choose>
+                <when test="pageMaker.searchType == 'a'.toString()">
+                    AND TO_CHAR(W.APPROVAL_ID) LIKE '%' || #{pageMaker.keyword} || '%'
+                </when>
+                <when test="pageMaker.searchType == 'd'.toString()">
+                    AND (D.NAME LIKE '%' || #{pageMaker.keyword} || '%'
+                         OR W.DRAFTER_ID LIKE '%' || #{pageMaker.keyword} || '%')
+                </when>
+                <when test="pageMaker.searchType == 'r'.toString()">
+                    AND TO_CHAR(W.REPORT_ID) LIKE '%' || #{pageMaker.keyword} || '%'
+                </when>
+            </choose>
+        </if>
+        <if test="pageMaker.confirmStatus != null and pageMaker.confirmStatus != ''">
+            AND W.APP_STATUS = #{pageMaker.confirmStatus}
+        </if>
+    </sql>
     <select id="selectWorkFlowList" parameterType="map" resultMap="workFlowResultMap">
         SELECT * FROM (SELECT ROWNUM AS RNUM, X.* FROM (
             SELECT <include refid="workflowColumns" /> <include refid="workflowJoin" />
             WHERE W.APPROVER_ID = #{approverId}
+            <include refid="workflowSearchCondition" />
             ORDER BY CASE WHEN W.APP_STATUS = '0' THEN 0 ELSE 1 END, W.APPROVAL_ID DESC
         ) X WHERE ROWNUM &lt;= #{pageMaker.endRow}) WHERE RNUM &gt;= #{pageMaker.startRow}
     </select>
     <select id="selectWorkFlowTotalCount" parameterType="map" resultType="int">
-        SELECT COUNT(*) FROM WORKFLOW WHERE APPROVER_ID = #{approverId}
+        SELECT COUNT(*) <include refid="workflowJoin" />
+        WHERE W.APPROVER_ID = #{approverId}
+        <include refid="workflowSearchCondition" />
     </select>
     <insert id="insertWorkFlow" parameterType="com.spring.dto.WorkFlowVO">
         <selectKey keyProperty="approvalId" resultType="long" order="BEFORE">SELECT NVL(MAX(APPROVAL_ID), 0) + 1 FROM WORKFLOW</selectKey>

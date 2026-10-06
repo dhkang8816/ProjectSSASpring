@@ -14,8 +14,10 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import com.spring.cmd.PageMaker;
+import com.spring.dto.CommonCodeVO;
 import com.spring.dto.WorkFlowVO;
 import com.spring.security.CustomUser;
+import com.spring.service.CommonCodeService;
 import com.spring.service.WorkFlowService;
 import lombok.RequiredArgsConstructor;
 
@@ -24,18 +26,21 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class WorkFlowController {
 	private final WorkFlowService workFlowService;
+	private final CommonCodeService commonCodeService;
 
 	@GetMapping("/list")
 	public String list(@ModelAttribute("pageMaker") PageMaker pageMaker, Model model) throws Exception {
 		String currentMemberId = getCurrentMemberId();
 		List<WorkFlowVO> workflowList = workFlowService.getWorkFlowList(pageMaker, currentMemberId);
 		model.addAttribute("workflowList", workflowList);
+		model.addAttribute("confirmStatusList", getConfirmStatusList());
 		return "workflow/workFlowList";
 	}
 
 	@GetMapping("/detail/{approvalId}")
 	public String detail(@PathVariable("approvalId") Long approvalId, Model model) throws Exception {
 		model.addAttribute("workflow", getAssignedWorkflow(approvalId));
+		model.addAttribute("confirmStatusList", getConfirmStatusList());
 		return "workflow/workFlowDetail";
 	}
 
@@ -74,6 +79,10 @@ public class WorkFlowController {
 		if (workflow == null || !getCurrentMemberId().equals(workflow.getApproverId()))
 			throw new AccessDeniedException("Approval is not assigned to the current administrator.");
 		return workflow;
+	}
+
+	private List<CommonCodeVO> getConfirmStatusList() throws Exception {
+		return commonCodeService.getCodeListByGroup("CONFIRM_STATUS");
 	}
 
 	private String getCurrentMemberId() {

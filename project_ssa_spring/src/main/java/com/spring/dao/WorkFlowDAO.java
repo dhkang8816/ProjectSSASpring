@@ -6,7 +6,7 @@ import com.spring.dto.WorkFlowVO;
 
 public interface WorkFlowDAO {
     List<WorkFlowVO> selectWorkFlowList(PageMaker pageMaker, String approverId);
-    int selectWorkFlowTotalCount(String approverId);
+    int selectWorkFlowTotalCount(PageMaker pageMaker, String approverId);
     int insertWorkFlow(WorkFlowVO workFlow);
     WorkFlowVO selectWorkFlowById(Long approvalId);
     WorkFlowVO selectWorkFlowByReportId(Long reportId);

@@ -21,8 +21,9 @@ public class WorkFlowDAOImpl implements WorkFlowDAO {
         return sqlSession.selectList(NAMESPACE + "selectWorkFlowList", params);
     }
 
-    @Override public int selectWorkFlowTotalCount(String approverId) {
+    @Override public int selectWorkFlowTotalCount(PageMaker pageMaker, String approverId) {
         Map<String, Object> params = new HashMap<>();
+        params.put("pageMaker", pageMaker);
         params.put("approverId", approverId);
         return sqlSession.selectOne(NAMESPACE + "selectWorkFlowTotalCount", params);
     }

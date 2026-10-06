@@ -29,12 +29,14 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import jakarta.servlet.http.HttpServletRequest;
 
 import com.spring.cmd.PageMaker;
+import com.spring.dto.CommonCodeVO;
 import com.spring.dto.FlightHistoryVO;
 import com.spring.dto.MemberVO;
 import com.spring.dto.PatrolReportVO;
 import com.spring.dto.WorkFlowVO;
 import com.spring.security.CustomUser;
 import com.spring.service.DangerLogService;
+import com.spring.service.CommonCodeService;
 import com.spring.service.DetectionLogService;
 import com.spring.service.FlightHistoryService;
 import com.spring.service.MemberService;
@@ -58,10 +60,12 @@ public class PatrolReportController {
 	private final FlightHistoryService flightHistoryService;
 	private final MemberService memberService;
 	private final WorkFlowService workFlowService;
+	private final CommonCodeService commonCodeService;
 	@GetMapping("/list")
 	public String list(@ModelAttribute("pageMaker") PageMaker pageMaker, Model model) throws Exception {
 		List<PatrolReportVO> reportList = reportService.getReportListWithPaging(pageMaker);
 		model.addAttribute("reportList", reportList);
+		model.addAttribute("confirmStatusList", commonCodeService.getCodeListByGroup("CONFIRM_STATUS"));
 		return "patrolreport/patrolReportList";
 	}
 

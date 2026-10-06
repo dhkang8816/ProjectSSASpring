@@ -3,6 +3,27 @@
 
 <mapper namespace="PatrolReport-Mapper">
 
+    <sql id="reportSearchCondition">
+        <where>
+            <if test="keyword != null and keyword != ''">
+                <choose>
+                    <when test="searchType == 'r'.toString()">
+                        TO_CHAR(REPORT_ID) LIKE '%' || #{keyword} || '%'
+                    </when>
+                    <when test="searchType == 'm'.toString()">
+                        MEMBER_ID LIKE '%' || #{keyword} || '%'
+                    </when>
+                    <when test="searchType == 'd'.toString()">
+                        TO_CHAR(REPORT_DATE, 'YYYY-MM-DD') LIKE '%' || #{keyword} || '%'
+                    </when>
+                </choose>
+            </if>
+            <if test="confirmStatus != null and confirmStatus != ''">
+                AND CONFIRM_STATUS = #{confirmStatus}
+            </if>
+        </where>
+    </sql>
+
     
     <resultMap id="reportResultMap" type="com.spring.dto.PatrolReportVO">
         <id property="reportId" column="REPORT_ID" />
@@ -82,6 +103,7 @@
                     COMPLETION_RATE, CONFIRM_STATUS, PATROL_DATE, MOD_DATE, MEMBER_ID,
                     ACTION_TAKEN, REMARK
                 FROM PATROL_REPORT
+                <include refid="reportSearchCondition" />
                 ORDER BY REPORT_ID DESC
             ) a WHERE ROWNUM &lt;= #{endRow}
         ) WHERE rn &gt;= #{startRow}
@@ -90,6 +112,7 @@
     
     <select id="getReportTotalCount" parameterType="com.spring.cmd.PageMaker" resultType="int">
         SELECT COUNT(*) FROM PATROL_REPORT
+        <include refid="reportSearchCondition" />
     </select>
 
 	  

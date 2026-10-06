@@ -138,19 +138,19 @@
 	display: inline-block;
 }
 
-#workFlowListPage .pending {
+#workFlowListPage .status-0 {
 	background-color: rgba(245, 158, 11, 0.15) !important;
 	color: #f59e0b !important;
 	border: 1px solid rgba(245, 158, 11, 0.3) !important;
 }
 
-#workFlowListPage .approved {
+#workFlowListPage .status-1 {
 	background-color: rgba(16, 185, 129, 0.15) !important;
 	color: #10b981 !important;
 	border: 1px solid rgba(16, 185, 129, 0.3) !important;
 }
 
-#workFlowListPage .rejected {
+#workFlowListPage .status-2 {
 	background-color: rgba(239, 68, 68, 0.15) !important;
 	color: #ef4444 !important;
 	border: 1px solid rgba(239, 68, 68, 0.3) !important;
@@ -224,6 +224,55 @@
     font-weight: 500;
 }
 
+#workFlowListPage .workflow-list-actions {
+	display: inline-flex;
+	align-items: center;
+	justify-content: flex-end;
+	gap: 8px;
+}
+
+#workFlowListPage .workflow-search-form {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+}
+
+#workFlowListPage .workflow-search-form select,
+#workFlowListPage .workflow-search-form input {
+	height: 38px;
+	border: 1px solid #334155;
+	border-radius: 7px;
+	background: #111827;
+	color: #e2e8f0;
+	font-size: 13px;
+}
+
+#workFlowListPage .workflow-search-form select {
+	min-width: 100px;
+	padding: 0 9px;
+}
+
+#workFlowListPage .workflow-search-form input {
+	width: 180px;
+	padding: 0 10px;
+}
+
+#workFlowListPage .workflow-search-button {
+	height: 38px;
+	padding: 0 13px;
+	border: 1px solid #38bdf8;
+	border-radius: 7px;
+	background: #0ea5e9;
+	color: #ffffff;
+	font-size: 13px;
+	font-weight: 700;
+	cursor: pointer;
+}
+
+#workFlowListPage .workflow-search-button:hover {
+	background: #0284c7;
+}
+
 #workFlowListPage .panel>.staff-list-summary strong {
 	color: #38bdf8;
 	background: rgba(56, 189, 248, .1);
@@ -233,7 +282,7 @@
 
 #workFlowListPage .panel>table {
 	grid-area: table;
-	min-width: 850px;
+	min-width: 900px;
 	margin: 0 !important;
 }
 
@@ -244,6 +293,86 @@
 #workFlowListPage .panel>.pager {
 	grid-area: pager;
 	justify-self: center;
+}
+
+#workFlowListPage .confirmation-filter-header {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	gap: 7px;
+}
+
+#workFlowListPage .confirm-filter-toggle {
+	padding: 4px 8px;
+	border: 1px solid #475569;
+	border-radius: 6px;
+	background: #172033;
+	color: #cbd5e1;
+	font-size: 11px;
+	font-weight: 700;
+	cursor: pointer;
+}
+
+#workFlowListPage .confirm-filter-toggle:hover,
+#workFlowListPage .confirm-filter-toggle[aria-expanded="true"] {
+	border-color: #38bdf8;
+	background: #0f3146;
+	color: #7dd3fc;
+}
+
+#workflowConfirmFilterMenu[hidden] {
+	display: none;
+}
+
+#workflowConfirmFilterMenu {
+	position: fixed;
+	min-width: 174px;
+	padding: 8px;
+	border: 1px solid #334155;
+	border-radius: 8px;
+	background: #111827;
+	box-shadow: 0 12px 28px rgba(0, 0, 0, .42);
+	z-index: 10050;
+}
+
+#workflowConfirmFilterMenu .filter-menu-caption {
+	display: block;
+	padding: 5px 7px 8px;
+	color: #94a3b8;
+	font-size: 11px;
+}
+
+#workflowConfirmFilterMenu button {
+	display: block;
+	width: 100%;
+	padding: 8px 9px;
+	border: 0;
+	border-radius: 5px;
+	background: transparent;
+	color: #cbd5e1;
+	font-size: 12px;
+	font-weight: 700;
+	text-align: left;
+	cursor: pointer;
+}
+
+#workflowConfirmFilterMenu button:hover,
+#workflowConfirmFilterMenu button.is-active {
+	background: #0f3146;
+	color: #7dd3fc;
+}
+
+@media (max-width: 760px) {
+	#workFlowListPage .staff-list-summary,
+	#workFlowListPage .workflow-list-actions,
+	#workFlowListPage .workflow-search-form {
+		width: 100%;
+		flex-wrap: wrap;
+	}
+	#workFlowListPage .workflow-search-form input {
+		flex: 1;
+		width: auto;
+	}
 }
 
 
@@ -259,11 +388,22 @@
 			<h2>보고서 결재 관리</h2>
 			<div class="staff-list-summary">
 			    <div>총 <strong>${pageMaker.totalCount}</strong>건</div>
-			    
-			    <button class="csv-download-btn neon-theme" onclick="downloadTableAsCsv('#workflowTable', 'workflow-list')">
-			        <i class="fa-solid fa-file-csv" style="font-size: 14px;"></i>
-			        CSV
-			    </button>
+			    <div class="workflow-list-actions">
+			        <form class="workflow-search-form" method="get" action="${pageContext.request.contextPath}/workflow/list">
+			            <input type="hidden" name="confirmStatus" value="<c:out value='${pageMaker.confirmStatus}'/>" />
+			            <select name="searchType" aria-label="검색 기준">
+			                <option value="a" ${pageMaker.searchType eq 'a' ? 'selected' : ''}>결재 번호</option>
+			                <option value="d" ${pageMaker.searchType eq 'd' ? 'selected' : ''}>기안자</option>
+			                <option value="r" ${pageMaker.searchType eq 'r' ? 'selected' : ''}>보고서 번호</option>
+			            </select>
+			            <input type="search" name="keyword" value="<c:out value='${pageMaker.keyword}'/>" placeholder="검색어 입력" aria-label="검색어" />
+			            <button type="submit" class="workflow-search-button">검색</button>
+			        </form>
+			        <button class="csv-download-btn neon-theme" onclick="downloadTableAsCsv('#workflowTable', 'workflow-list')">
+			            <i class="fa-solid fa-file-csv" style="font-size: 14px;"></i>
+			            CSV
+			        </button>
+			    </div>
 			</div>
 			<table id="workflowTable" data-csv-export data-csv-filename="workflow-list">
 				<thead>
@@ -273,14 +413,20 @@
 						<th>요청일</th>
 						<th>보고서</th>
 						<th>작업</th>
-						<th>상태</th>
+						<th>
+							<div class="confirmation-filter-header">
+								<span>승인 여부</span>
+								<button type="button" id="workflowConfirmFilterButton" class="confirm-filter-toggle"
+									aria-expanded="false" aria-controls="workflowConfirmFilterMenu">승인 필터</button>
+							</div>
+						</th>
 					</tr>
 				</thead>
 				<tbody>
 					<c:choose>
 						<c:when test="${empty workflowList}">
 							<tr>
-								<td colspan="6"
+							<td colspan="6"
 									style="color: #64748b; padding: 60px; font-size: 14px;">배정된
 									결재 문서가 없습니다.</td>
 							</tr>
@@ -317,17 +463,13 @@
 											상세/처리 </a></td>
 
 									
-									<td><c:choose>
-											<c:when test="${workflow.appStatus eq '0'}">
-												<span class="badge-status pending">승인 대기</span>
-											</c:when>
-											<c:when test="${workflow.appStatus eq '1'}">
-												<span class="badge-status approved">승인 완료</span>
-											</c:when>
-											<c:otherwise>
-												<span class="badge-status rejected">반려</span>
-											</c:otherwise>
-										</c:choose></td>
+									<td>
+										<c:forEach var="confirmStatus" items="${confirmStatusList}">
+											<c:if test="${workflow.appStatus eq confirmStatus.code}">
+												<span class="badge-status status-${confirmStatus.code}">${confirmStatus.codeName}</span>
+											</c:if>
+										</c:forEach>
+									</td>
 								</tr>
 							</c:forEach>
 						</c:otherwise>
@@ -341,7 +483,7 @@
 					<ul class="pagination">
 						<c:if test="${pageMaker.prev}">
 							<li><a
-								href="${pageContext.request.contextPath}/workflow/list?page=${pageMaker.startPage - 1}">이전</a>
+								href="${pageContext.request.contextPath}/workflow/list?page=${pageMaker.startPage - 1}&amp;searchType=${pageMaker.searchType}&amp;keyword=<c:out value='${pageMaker.keyword}'/>&amp;confirmStatus=<c:out value='${pageMaker.confirmStatus}'/>">이전</a>
 							</li>
 						</c:if>
 						<c:forEach begin="${pageMaker.startPage}"
@@ -352,13 +494,13 @@
 									</c:when>
 									<c:otherwise>
 										<a
-											href="${pageContext.request.contextPath}/workflow/list?page=${num}">${num}</a>
+										href="${pageContext.request.contextPath}/workflow/list?page=${num}&amp;searchType=${pageMaker.searchType}&amp;keyword=<c:out value='${pageMaker.keyword}'/>&amp;confirmStatus=<c:out value='${pageMaker.confirmStatus}'/>">${num}</a>
 									</c:otherwise>
 								</c:choose></li>
 						</c:forEach>
 						<c:if test="${pageMaker.next}">
 							<li><a
-								href="${pageContext.request.contextPath}/workflow/list?page=${pageMaker.endPage + 1}">다음</a>
+								href="${pageContext.request.contextPath}/workflow/list?page=${pageMaker.endPage + 1}&amp;searchType=${pageMaker.searchType}&amp;keyword=<c:out value='${pageMaker.keyword}'/>&amp;confirmStatus=<c:out value='${pageMaker.confirmStatus}'/>">다음</a>
 							</li>
 						</c:if>
 					</ul>
@@ -368,5 +510,69 @@
 		</div>
 	</div>
 
+	<div id="workflowConfirmFilterMenu" hidden="hidden" role="menu" aria-label="승인 상태 필터">
+		<span class="filter-menu-caption">승인 상태</span>
+		<button type="button" role="menuitem" class="${empty pageMaker.confirmStatus ? 'is-active' : ''}" data-confirm-status="">전체</button>
+		<c:forEach var="confirmStatus" items="${confirmStatusList}">
+			<button type="button" role="menuitem" class="${pageMaker.confirmStatus eq confirmStatus.code ? 'is-active' : ''}" data-confirm-status="${confirmStatus.code}">${confirmStatus.codeName}</button>
+		</c:forEach>
+	</div>
+
+<script>
+(function () {
+	var filterButton = document.getElementById('workflowConfirmFilterButton');
+	var filterMenu = document.getElementById('workflowConfirmFilterMenu');
+
+	function closeFilterMenu() {
+		filterMenu.hidden = true;
+		filterButton.setAttribute('aria-expanded', 'false');
+	}
+
+	function openFilterMenu() {
+		filterMenu.hidden = false;
+		var buttonRect = filterButton.getBoundingClientRect();
+		var left = Math.min(buttonRect.left, window.innerWidth - filterMenu.offsetWidth - 12);
+		filterMenu.style.top = (buttonRect.bottom + 6) + 'px';
+		filterMenu.style.left = Math.max(12, left) + 'px';
+		filterButton.setAttribute('aria-expanded', 'true');
+	}
+
+	filterButton.addEventListener('click', function () {
+		if (filterMenu.hidden) {
+			openFilterMenu();
+		} else {
+			closeFilterMenu();
+		}
+	});
+
+	filterMenu.addEventListener('click', function (event) {
+		var option = event.target.closest('button[data-confirm-status]');
+		if (!option) {
+			return;
+		}
+		var url = new URL(window.location.href);
+		url.searchParams.set('page', '1');
+		if (option.dataset.confirmStatus) {
+			url.searchParams.set('confirmStatus', option.dataset.confirmStatus);
+		} else {
+			url.searchParams.delete('confirmStatus');
+		}
+		window.location.assign(url.toString());
+	});
+
+	document.addEventListener('click', function (event) {
+		if (!filterMenu.hidden && !filterMenu.contains(event.target) && !filterButton.contains(event.target)) {
+			closeFilterMenu();
+		}
+	});
+
+	document.addEventListener('keydown', function (event) {
+		if (event.key === 'Escape' && !filterMenu.hidden) {
+			closeFilterMenu();
+			filterButton.focus();
+		}
+	});
+}());
+</script>
 </body>
 </html>

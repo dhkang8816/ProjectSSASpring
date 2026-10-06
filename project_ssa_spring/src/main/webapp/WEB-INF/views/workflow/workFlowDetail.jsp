@@ -269,12 +269,12 @@ textarea:focus {
         <span style="color: #94a3b8;"><fmt:formatDate value="${workflow.requestDate}" pattern="yyyy-MM-dd HH:mm" /></span>
     </div>
     <div class="row">
-        <span class="label">결재 상태</span>
-        <c:choose>
-            <c:when test="${workflow.appStatus eq '0'}"><span class="badge-status status-0">승인 대기</span></c:when>
-            <c:when test="${workflow.appStatus eq '1'}"><span class="badge-status status-1">승인 완료</span></c:when>
-            <c:otherwise><span class="badge-status status-2">반려</span></c:otherwise>
-        </c:choose>
+        <span class="label">승인 상태</span>
+        <c:forEach var="confirmStatus" items="${confirmStatusList}">
+            <c:if test="${workflow.appStatus eq confirmStatus.code}">
+                <span class="badge-status status-${confirmStatus.code}">${confirmStatus.codeName}</span>
+            </c:if>
+        </c:forEach>
     </div>
     
     
