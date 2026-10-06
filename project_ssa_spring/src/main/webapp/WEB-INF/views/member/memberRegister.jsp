@@ -194,7 +194,7 @@ button:active { transform: translateY(0); }
 <body class="popup-page">
 
 <div class="form-panel">
-    <h2>➕ 관제소 신규 계정 등록</h2>
+    <h2>관제소 신규 계정 등록</h2>
     
     
     <form:form action="${pageContext.request.contextPath}/member/regist" method="post" enctype="multipart/form-data">

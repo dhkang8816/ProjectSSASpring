@@ -169,7 +169,7 @@ button:active { transform: translateY(0); }
 <body class="popup-page">
 
 <div class="detail-panel">
-    <h2>📋 관제소 보안 직원 상세 정보</h2>
+    <h2>관제소 보안 직원 상세 정보</h2>
     
     
     <div class="profile-top-section">

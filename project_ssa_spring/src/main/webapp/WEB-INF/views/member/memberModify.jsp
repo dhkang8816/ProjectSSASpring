@@ -206,7 +206,7 @@ button:active { transform: translateY(0); }
 <body class="popup-page">
 
 <div class="form-panel">
-    <h2>⚙ 직원 정보 수정 설정</h2>
+    <h2>직원 정보 수정 설정</h2>
 
     <c:if test="${param.passwordError eq 'true'}">
         <p class="password-error">새 비밀번호와 비밀번호 확인이 일치하지 않습니다.</p>
