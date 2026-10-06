@@ -23,6 +23,8 @@ public class FlaskRuntimeControlService {
 
     private final Object processMonitor = new Object();
     private volatile Process managedProcess;
+    private volatile long lastStartRequestedAt;
+    private volatile boolean startupRequested;
 
     public Map<String, Object> status() {
         boolean online = isFlaskOnline();
@@ -31,6 +33,9 @@ public class FlaskRuntimeControlService {
         boolean projectReady = isProjectReady();
         boolean tokenReady = hasControlToken();
         boolean managedProcessAlive = isManagedProcessAlive();
+        if (online) {
+            startupRequested = false;
+        }
 
         Map<String, Object> result = new LinkedHashMap<>();
         result.put("online", online);
@@ -38,6 +43,12 @@ public class FlaskRuntimeControlService {
         result.put("managedProcess", managedProcessAlive);
         result.put("canStart", enabled && localTarget && projectReady && tokenReady && !online && !managedProcessAlive);
         result.put("canStop", enabled && localTarget && tokenReady && online);
+        result.put("startupInProgress", managedProcessAlive && !online);
+        result.put("startupStage", startupStage(online, managedProcessAlive));
+        result.put("startupProgress", startupProgress(online, managedProcessAlive));
+        result.put("startupLabel", startupLabel(online, managedProcessAlive));
+        result.put("startupElapsedMillis", startupRequested
+                ? Math.max(0L, System.currentTimeMillis() - lastStartRequestedAt) : 0L);
         result.put("message", statusMessage(online, enabled, localTarget, projectReady, tokenReady));
         return result;
     }
@@ -62,6 +73,8 @@ public class FlaskRuntimeControlService {
                 processBuilder.redirectErrorStream(true);
                 processBuilder.redirectOutput(ProcessBuilder.Redirect.INHERIT);
                 managedProcess = processBuilder.start();
+                lastStartRequestedAt = System.currentTimeMillis();
+                startupRequested = true;
                 return actionResult(true, "START_REQUESTED", "Flask 시작을 요청했습니다. 상태 확인을 기다립니다.");
             } catch (IOException error) {
                 return actionResult(false, "START_FAILED", "Flask를 시작하지 못했습니다. Python 실행 경로와 프로젝트 경로를 확인하세요.");
@@ -71,6 +84,7 @@ public class FlaskRuntimeControlService {
 
     public Map<String, Object> stop() {
         synchronized (processMonitor) {
+            startupRequested = false;
             if (!isFlaskOnline()) {
                 return actionResult(false, "ALREADY_OFFLINE", "Flask 서버가 이미 중지되어 있습니다.");
             }
@@ -136,6 +150,39 @@ public class FlaskRuntimeControlService {
             process = null;
         }
         return process != null;
+    }
+
+    private String startupStage(boolean online, boolean managedProcessAlive) {
+        if (online) {
+            return "READY";
+        }
+        if (managedProcessAlive) {
+            return "PROCESS_RUNNING";
+        }
+        return startupRequested ? "START_FAILED" : "IDLE";
+    }
+
+    private int startupProgress(boolean online, boolean managedProcessAlive) {
+        if (online) {
+            return 100;
+        }
+        if (managedProcessAlive) {
+            return 55;
+        }
+        return 0;
+    }
+
+    private String startupLabel(boolean online, boolean managedProcessAlive) {
+        if (online) {
+            return "Flask 상태 API 응답 확인 완료";
+        }
+        if (managedProcessAlive) {
+            return "Python 프로세스 실행 확인";
+        }
+        if (startupRequested) {
+            return "Python 프로세스가 종료되었습니다";
+        }
+        return "Flask 서버 대기";
     }
 
     private String statusMessage(boolean online, boolean enabled, boolean localTarget,

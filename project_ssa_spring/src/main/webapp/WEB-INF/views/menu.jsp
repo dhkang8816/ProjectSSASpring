@@ -33,6 +33,8 @@
 
 button#sidebarFlaskToggleButton {
 	display: flex !important;
+	position: relative !important;
+	overflow: hidden !important;
 	align-items: center !important;
 	justify-content: center !important;
 	box-sizing: border-box !important;
@@ -52,6 +54,33 @@ button#sidebarFlaskToggleButton {
 	appearance: none !important;
 	cursor: pointer !important;
 	transition: background-color .16s ease, border-color .16s ease, opacity .16s ease !important;
+}
+
+#sidebarFlaskToggleButton .sidebar-flask-progress {
+	position: absolute;
+	inset: 0 auto 0 0;
+	width: 100%;
+	background: linear-gradient(90deg, rgba(14, 165, 233, .58), rgba(56, 189, 248, .24));
+	transform: scaleX(0);
+	transform-origin: left center;
+	transition: transform .35s ease;
+	pointer-events: none;
+}
+
+#sidebarFlaskToggleButton .sidebar-flask-label {
+	position: relative;
+	z-index: 1;
+}
+
+button#sidebarFlaskToggleButton.is-starting {
+	border-color: #38bdf8 !important;
+	background: rgba(14, 165, 233, .13) !important;
+	color: #e0f2fe !important;
+	opacity: 1 !important;
+}
+
+button#sidebarFlaskToggleButton.is-starting:disabled {
+	opacity: 1 !important;
 }
 
 button#sidebarFlaskToggleButton.is-online {
@@ -244,7 +273,8 @@ button#sidebarFlaskToggleButton:disabled {
 		<div class="sidebar-flask-control">
 			<button id="sidebarFlaskToggleButton" type="button"
 				class="sidebar-flask-toggle is-error" aria-live="polite" disabled>
-				● Flask 확인 중
+				<span class="sidebar-flask-progress" aria-hidden="true"></span>
+				<span class="sidebar-flask-label">● Flask 확인 중</span>
 			</button>
 		</div>
 	</c:if>
@@ -839,12 +869,23 @@ button#sidebarFlaskToggleButton:disabled {
 
 	var contextPath = '${pageContext.request.contextPath}';
 	var flaskActionInProgress = false;
+	var flaskLabel = flaskToggleButton.querySelector('.sidebar-flask-label');
+	var flaskProgress = flaskToggleButton.querySelector('.sidebar-flask-progress');
+
+	function setFlaskButtonContent(label, progress) {
+		flaskLabel.textContent = label;
+		flaskProgress.style.transform = 'scaleX(' + Math.max(0, Math.min(100, Number(progress) || 0)) / 100 + ')';
+	}
 
 	function renderFlaskRuntime(state) {
+		if (state && state.startupInProgress) {
+			renderFlaskStartup(state);
+			return;
+		}
 		var online = !!(state && state.online);
 		var action = online ? 'stop' : 'start';
 		flaskToggleButton.className = 'sidebar-flask-toggle ' + (online ? 'is-online' : 'is-offline');
-		flaskToggleButton.textContent = online ? '● Flask ON' : '● Flask OFF';
+		setFlaskButtonContent(online ? '● Flask ON' : '● Flask OFF', 0);
 		flaskToggleButton.dataset.action = action;
 		flaskToggleButton.title = online ? '클릭하여 Flask 서버 종료' : '클릭하여 Flask 서버 시작';
 		flaskToggleButton.setAttribute('aria-label', flaskToggleButton.title);
@@ -852,13 +893,33 @@ button#sidebarFlaskToggleButton:disabled {
 			|| !(state && (online ? state.canStop : state.canStart));
 	}
 
+	function renderFlaskStartup(state) {
+		flaskToggleButton.className = 'sidebar-flask-toggle is-starting';
+		setFlaskButtonContent('◌ ' + (state.startupLabel || 'Flask 시작 중'), state.startupProgress);
+		flaskToggleButton.dataset.action = '';
+		flaskToggleButton.title = state.startupLabel || 'Flask 시작 상태를 확인하고 있습니다.';
+		flaskToggleButton.setAttribute('aria-label', flaskToggleButton.title);
+		flaskToggleButton.disabled = true;
+	}
+
 	function renderFlaskRuntimeError() {
 		flaskToggleButton.className = 'sidebar-flask-toggle is-error';
-		flaskToggleButton.textContent = '● Flask 연결 오류';
+		setFlaskButtonContent('● Flask 연결 오류', 0);
 		flaskToggleButton.dataset.action = '';
 		flaskToggleButton.title = 'Flask 상태를 확인하지 못했습니다.';
 		flaskToggleButton.setAttribute('aria-label', flaskToggleButton.title);
 		flaskToggleButton.disabled = true;
+	}
+
+	function requestFlaskRuntime() {
+		return fetch(contextPath + '/admin/diagnostics/flask', {
+			headers: { 'Accept': 'application/json' }
+		}).then(function (response) {
+			if (!response.ok) {
+				throw new Error('HTTP ' + response.status);
+			}
+			return response.json();
+		});
 	}
 
 	function refreshFlaskRuntime() {
@@ -866,26 +927,47 @@ button#sidebarFlaskToggleButton:disabled {
 			return;
 		}
 
-		fetch(contextPath + '/admin/diagnostics/flask', {
-			headers: { 'Accept': 'application/json' }
-		}).then(function (response) {
-			if (!response.ok) {
-				throw new Error('HTTP ' + response.status);
+		requestFlaskRuntime().then(renderFlaskRuntime).catch(renderFlaskRuntimeError);
+	}
+
+	function pollFlaskStartup(deadline) {
+		requestFlaskRuntime().then(function (state) {
+			if (state.online) {
+				flaskActionInProgress = false;
+				renderFlaskRuntime(state);
+				return;
 			}
-			return response.json();
-		}).then(renderFlaskRuntime).catch(renderFlaskRuntimeError);
+			if (state.startupStage === 'START_FAILED' || Date.now() >= deadline) {
+				flaskActionInProgress = false;
+				renderFlaskRuntime(state);
+				return;
+			}
+			renderFlaskStartup(state);
+			window.setTimeout(function () { pollFlaskStartup(deadline); }, 500);
+		}).catch(function () {
+			if (Date.now() >= deadline) {
+				flaskActionInProgress = false;
+				renderFlaskRuntimeError();
+				return;
+			}
+			window.setTimeout(function () { pollFlaskStartup(deadline); }, 500);
+		});
 	}
 
 	function controlFlask(action) {
 		if (action === 'stop'
-			&& !window.confirm('Flask 서버를 종료하시겠습니까? 진행 중인 탐지와 영상 전송이 중단됩니다.')) {
+			&& !window.confirm('Flask 서버를 종료하시겠습니까? 진행 중인 영상 데이터 전송이 중단됩니다.')) {
 			return;
 		}
 
 		flaskActionInProgress = true;
 		flaskToggleButton.disabled = true;
-		flaskToggleButton.className = 'sidebar-flask-toggle is-error';
-		flaskToggleButton.textContent = action === 'start' ? '● Flask 시작 중' : '● Flask 종료 중';
+		if (action === 'start') {
+			renderFlaskStartup({ startupLabel: 'Flask 시작 요청 전송', startupProgress: 15 });
+		} else {
+			flaskToggleButton.className = 'sidebar-flask-toggle is-error';
+			setFlaskButtonContent('● Flask 종료 중', 0);
+		}
 
 		fetch(contextPath + '/admin/diagnostics/flask/' + action, {
 			method: 'POST',
@@ -895,9 +977,18 @@ button#sidebarFlaskToggleButton:disabled {
 				throw new Error('HTTP ' + response.status);
 			}
 			return response.json();
-		}).then(renderFlaskRuntime).catch(renderFlaskRuntimeError).finally(function () {
+		}).then(function (state) {
+			if (action === 'start' && state.success) {
+				renderFlaskStartup(state);
+				pollFlaskStartup(Date.now() + 30000);
+				return;
+			}
 			flaskActionInProgress = false;
+			renderFlaskRuntime(state);
 			window.setTimeout(refreshFlaskRuntime, 1200);
+		}).catch(function () {
+			flaskActionInProgress = false;
+			renderFlaskRuntimeError();
 		});
 	}
 
