@@ -322,7 +322,7 @@ textarea:focus {
     
     
     <div class="btn-back-container">
-        <button type="button" class="btn-list" onclick="return closePopupAndRefreshParent('${pageContext.request.contextPath}/workflow/list');">목록으로</button>
+        <button type="button" class="btn-list" onclick="return closePopupAndRefreshParent('${pageContext.request.contextPath}/workflow/list');">닫기</button>
     </div>
 </div>
 <script src="${pageContext.request.contextPath}/resources/js/popup-support.js"></script>

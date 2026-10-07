@@ -204,11 +204,21 @@
 	overflow-x: auto;
 }
 
-#workFlowListPage .panel>h2 {
+#workFlowListPage .panel>.workflow-title-bar {
 	grid-area: title;
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 16px;
 	margin: 0 !important;
 	padding: 0 0 16px;
 	border-bottom: 1px solid #1e293b;
+}
+
+#workFlowListPage .panel>.workflow-title-bar h2 {
+	margin: 0 !important;
+	padding: 0;
+	border: 0;
 	color: #fff !important;
 	font-size: 22px !important;
 }
@@ -363,6 +373,10 @@
 }
 
 @media (max-width: 760px) {
+	#workFlowListPage .workflow-title-bar {
+		align-items: stretch;
+		flex-direction: column;
+	}
 	#workFlowListPage .staff-list-summary,
 	#workFlowListPage .workflow-list-actions,
 	#workFlowListPage .workflow-search-form {
@@ -385,20 +399,22 @@
 
 	<div id="workFlowListPage" class="control-page-content">
 		<div class="panel">
-			<h2>보고서 결재 관리</h2>
+			<div class="workflow-title-bar">
+				<h2>보고서 결재 관리</h2>
+				<form class="workflow-search-form" method="get" action="${pageContext.request.contextPath}/workflow/list">
+					<input type="hidden" name="confirmStatus" value="<c:out value='${pageMaker.confirmStatus}'/>" />
+					<select name="searchType" aria-label="검색 기준">
+						<option value="a" ${pageMaker.searchType eq 'a' ? 'selected' : ''}>결재 번호</option>
+						<option value="d" ${pageMaker.searchType eq 'd' ? 'selected' : ''}>기안자</option>
+						<option value="r" ${pageMaker.searchType eq 'r' ? 'selected' : ''}>보고서 번호</option>
+					</select>
+					<input type="search" name="keyword" value="<c:out value='${pageMaker.keyword}'/>" placeholder="검색어 입력" aria-label="검색어" />
+					<button type="submit" class="workflow-search-button">검색</button>
+				</form>
+			</div>
 			<div class="staff-list-summary">
-			    <div>총 <strong>${pageMaker.totalCount}</strong>건</div>
+			    <div>총 보고서: <strong>${pageMaker.totalCount}</strong>건</div>
 			    <div class="workflow-list-actions">
-			        <form class="workflow-search-form" method="get" action="${pageContext.request.contextPath}/workflow/list">
-			            <input type="hidden" name="confirmStatus" value="<c:out value='${pageMaker.confirmStatus}'/>" />
-			            <select name="searchType" aria-label="검색 기준">
-			                <option value="a" ${pageMaker.searchType eq 'a' ? 'selected' : ''}>결재 번호</option>
-			                <option value="d" ${pageMaker.searchType eq 'd' ? 'selected' : ''}>기안자</option>
-			                <option value="r" ${pageMaker.searchType eq 'r' ? 'selected' : ''}>보고서 번호</option>
-			            </select>
-			            <input type="search" name="keyword" value="<c:out value='${pageMaker.keyword}'/>" placeholder="검색어 입력" aria-label="검색어" />
-			            <button type="submit" class="workflow-search-button">검색</button>
-			        </form>
 			        <button class="csv-download-btn neon-theme" onclick="downloadTableAsCsv('#workflowTable', 'workflow-list')">
 			            <i class="fa-solid fa-file-csv" style="font-size: 14px;"></i>
 			            CSV

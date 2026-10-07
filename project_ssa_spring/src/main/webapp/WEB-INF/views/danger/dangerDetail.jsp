@@ -167,7 +167,7 @@ button.btn-list:hover {
         <div class="btn-group">
             <button type="button" class="btn-modify" onclick="fn_submit('modify')">수정 완료</button>
             <button type="button" class="btn-delete" onclick="fn_submit('remove')">객체 삭제</button>
-            <button type="button" class="btn-list" onclick="fn_goList()">목록으로</button>
+            <button type="button" class="btn-list" onclick="fn_goList()">닫기</button>
         </div>
     </form:form>
 </div>

@@ -249,7 +249,6 @@ body {
                     <h2>경보 문구 설정</h2>
                     <p class="template-description">개체 미달과 위험 이상객체 경보에 사용할 문구를 관리합니다.</p>
                 </div>
-                <button type="button" class="template-back-link" onclick="closeAlertTemplateSettings();">닫기</button>
             </div>
 
             <p class="template-history-note">저장 후 새로 생성되는 경보에만 적용됩니다. 기존 감지·경보 이력의 문구는 감사 기록으로 보존됩니다.</p>
@@ -304,6 +303,7 @@ body {
                 </article>
 
                 <div class="template-actions">
+                    <button type="button" class="template-back-link" onclick="closeAlertTemplateSettings();">닫기</button>
                     <button type="submit" class="save-button">시간 저장</button>
                 </div>
             </form:form>

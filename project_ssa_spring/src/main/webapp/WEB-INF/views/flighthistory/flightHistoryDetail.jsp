@@ -257,7 +257,7 @@ button.btn-list:hover {
         
         <div class="btn-group">
             <button type="button" class="btn-delete" onclick="fn_delete()">이력 로그 삭제</button>
-            <button type="button" class="btn-list" onclick="fn_goList()">목록으로</button>
+            <button type="button" class="btn-list" onclick="fn_goList()">닫기</button>
         </div>
     </form:form>
 </div>

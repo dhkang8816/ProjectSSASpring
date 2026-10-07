@@ -278,7 +278,7 @@ button.btn-list:hover {
         
         <div class="btn-group">
             <button type="submit">조치 내용 저장</button>
-            <button type="button" class="btn-list" onclick="fn_goList()">목록으로</button>
+            <button type="button" class="btn-list" onclick="fn_goList()">닫기</button>
         </div>
     </form:form>
 </div>

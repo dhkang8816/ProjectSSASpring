@@ -232,7 +232,7 @@ button:active { transform: translateY(0); }
     
     <div class="action-bar">
         <button type="button" class="btn-modify" onclick="return openMemberModifyPopup();">정보 수정</button>
-        <button type="button" class="btn-back" onclick="return closePopupAndRefreshParent('${pageContext.request.contextPath}/member/list');">목록으로</button>
+        <button type="button" class="btn-back" onclick="return closePopupAndRefreshParent('${pageContext.request.contextPath}/member/list');">닫기</button>
     </div>
     
 </div> 

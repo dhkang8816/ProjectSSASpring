@@ -387,7 +387,7 @@ body {
 						삭제</button>
 				</form:form>
 				<button type="button" class="btn btn-secondary"
-					onclick="return closePopupAndRefreshParent('${pageContext.request.contextPath}/patrolreport/list');">목록으로</button>
+					onclick="return closePopupAndRefreshParent('${pageContext.request.contextPath}/patrolreport/list');">닫기</button>
 			</div>
 		</div>
 	</div>

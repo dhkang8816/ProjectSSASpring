@@ -170,7 +170,7 @@ button.btn-control:hover {
     
     <div class="btn-group">
         
-        <button type="button" class="btn-control" onclick="return closePopupAndRefreshParent('${pageContext.request.contextPath}/alert/list');">목록으로</button>
+        <button type="button" class="btn-control" onclick="return closePopupAndRefreshParent('${pageContext.request.contextPath}/alert/list');">닫기</button>
     </div>
 </div>
 <script src="${pageContext.request.contextPath}/resources/js/popup-support.js"></script>

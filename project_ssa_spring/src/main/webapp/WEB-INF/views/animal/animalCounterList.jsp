@@ -73,6 +73,10 @@ body {
 .search-box {
     margin: 20px 0;
     padding: 20px;
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 12px;
     background: rgba(17, 24, 39, 0.6) !important;
     border: 1px solid #1e293b !important;
     border-radius: 12px;
@@ -229,6 +233,11 @@ button:hover {
 }
 
 @media (max-width: 760px) {
+	.search-box {
+		align-items: stretch;
+		flex-direction: column;
+	}
+
     table {
         display: block;
         overflow-x: auto;
@@ -244,15 +253,6 @@ button:hover {
     <div class="panel">
         
         <h2>개체수 현황</h2>
-        
-        
-        <div style="width: 100% !important; display: flex !important; justify-content: flex-end !important; margin-bottom: 15px !important; box-sizing: border-box;">
-            <button type="button" onclick="return closePopupAndRefreshParent('${pageContext.request.contextPath}/animal/list');">
-                동물 관리 목록
-            </button>
-        </div>
-        
-        
         <table>
             <thead>
                 <tr>
@@ -298,6 +298,9 @@ button:hover {
                 <input type="text" name="keyword" value="${pageMaker.keyword}" placeholder="코드 번호 입력">
                 <button type="submit">검색</button>
             </form:form>
+			<button type="button" onclick="return closePopupAndRefreshParent('${pageContext.request.contextPath}/animal/list');">
+				닫기
+			</button>
         </div>
         
         <div style="margin-top: 25px;">

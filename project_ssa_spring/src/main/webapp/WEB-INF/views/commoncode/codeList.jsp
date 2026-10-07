@@ -397,7 +397,7 @@
 								
 								<tr style="cursor: pointer;"
 									onclick="return openDetailPopup('${pageContext.request.contextPath}/commoncode/detail?grpCode=${cc.grpCode}&code=${cc.code}', 'codeDetail');">
-									<td>${status.count}</td>
+									<td>${((pageMaker.page - 1) * pageMaker.perPageNum) + status.count}</td>
 									<td>${cc.grpCode}</td>
 									<td>${cc.code}</td>
 									

@@ -44,7 +44,7 @@
 
 #patrolReportListPage .staff-top-bar {
     display: flex; 
-    justify-content: flex-start; 
+    justify-content: space-between;
     align-items: center; 
     margin-bottom: 20px; 
     padding-bottom: 16px; 
@@ -335,6 +335,11 @@
 }
 
 @media (max-width:760px) { 
+    #patrolReportListPage .staff-top-bar {
+        align-items: stretch;
+        flex-direction: column;
+        gap: 10px;
+    }
     #patrolReportListPage .staff-summary-bar {
         align-items: stretch; 
         flex-direction: column; 
@@ -372,6 +377,16 @@
         
         <div class="staff-top-bar">
             <h2>일일 관제 업무 보고서 목록</h2>
+            <form class="report-search-form" method="get" action="${pageContext.request.contextPath}/patrolreport/list">
+                <input type="hidden" name="confirmStatus" value="<c:out value='${pageMaker.confirmStatus}'/>" />
+                <select name="searchType" aria-label="검색 기준">
+                    <option value="r" ${pageMaker.searchType eq 'r' ? 'selected' : ''}>보고서 번호</option>
+                    <option value="m" ${pageMaker.searchType eq 'm' ? 'selected' : ''}>작성 사번</option>
+                    <option value="d" ${pageMaker.searchType eq 'd' ? 'selected' : ''}>업무 일자</option>
+                </select>
+                <input type="search" name="keyword" value="<c:out value='${pageMaker.keyword}'/>" placeholder="검색어 입력" aria-label="검색어" />
+                <button type="submit" class="btn-search">검색</button>
+            </form>
         </div>
         
 		
@@ -385,16 +400,6 @@
 		    
 		    
 		    <div class="summary-action-group" style="display: flex !important; gap: 8px !important; align-items: center !important; float: none !important; margin: 0 !important;">
-		        <form class="report-search-form" method="get" action="${pageContext.request.contextPath}/patrolreport/list">
-		            <input type="hidden" name="confirmStatus" value="<c:out value='${pageMaker.confirmStatus}'/>" />
-		            <select name="searchType" aria-label="검색 기준">
-		                <option value="r" ${pageMaker.searchType eq 'r' ? 'selected' : ''}>보고서 번호</option>
-		                <option value="m" ${pageMaker.searchType eq 'm' ? 'selected' : ''}>작성 사번</option>
-		                <option value="d" ${pageMaker.searchType eq 'd' ? 'selected' : ''}>업무 일자</option>
-		            </select>
-		            <input type="search" name="keyword" value="<c:out value='${pageMaker.keyword}'/>" placeholder="검색어 입력" aria-label="검색어" />
-		            <button type="submit" class="btn-search">검색</button>
-		        </form>
 		        <button class="csv-download-btn neon-theme"
 		                onclick="downloadTableAsCsv('#patrolReportTable', 'patrol-report-list')"
 		                style="float: none !important; margin: 0 !important; display: inline-flex !important; white-space: nowrap !important;">
