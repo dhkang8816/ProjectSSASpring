@@ -291,7 +291,7 @@ body {
 
             <form:form class="policy-form" method="post" action="${pageContext.request.contextPath}/admin/alert-policy?popup=true">
                 <article class="template-card">
-                    <h3 class="template-card-title">미달 경보 지속 시간</h3>
+                    <h3 class="template-card-title">미달 경보 간격 시간</h3>
                     <p class="template-card-help">동물 탐지 결과에서 보호중 개체수가 기준보다 적은 상태가 이 시간 이상 연속될 때 경보를 생성합니다. 설정 변경 후 진행 중이던 미달 시간은 새 기준으로 다시 계산됩니다.</p>
                     <div class="policy-input-row">
                         <input id="underTargetSeconds" name="underTargetSeconds" type="number"
