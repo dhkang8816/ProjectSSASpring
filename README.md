@@ -369,7 +369,31 @@ Spring은 설정된 로컬 `run_server.py`만 시작합니다. 종료는 토큰�
 
 환경변수를 바꾼 뒤에는 **Tomcat 재시작**, `.env`를 바꾼 뒤에는 **Flask 재시작**이 필요합니다. `RuntimeSettings`는 JVM system property를 먼저 읽고, 없을 때 Tomcat 환경변수를 읽습니다.
 
-### 3. Spring MVC 서버
+### 3. 로컬 Maven 의존성: XSS.filter
+
+프로젝트는 `pom.xml`에서 `html.filter:XSS.filter:1.0` 라이브러리를 참조합니다. 저장소에 포함된 `html-filter-1.0.jar.zip`은 JAR 형식의 아카이브이므로, 최초 1회 로컬 Maven 저장소에 설치해야 Maven과 Eclipse가 의존성을 해석할 수 있습니다.
+
+`ProjectSSASpring` 저장소 루트에서 다음 명령을 실행합니다.
+
+```powershell
+mvn install:install-file `
+  -Dfile=.\html-filter-1.0.jar.zip `
+  -DgroupId=html.filter `
+  -DartifactId=XSS.filter `
+  -Dversion=1.0 `
+  -Dpackaging=jar `
+  -DgeneratePom=true
+```
+
+설치 후 아래 명령이 `True`를 반환하면 정상입니다.
+
+```powershell
+Test-Path "$env:USERPROFILE\.m2\repository\html\filter\XSS.filter\1.0\XSS.filter-1.0.jar"
+```
+
+Eclipse를 사용하는 경우 설치 후 프로젝트를 우클릭하여 **Maven > Update Project...**를 실행하거나 프로젝트를 다시 import합니다.
+
+### 4. Spring MVC 서버
 
 1. Eclipse에서 `project_ssa_spring`을 Existing Maven Project로 import합니다.
 2. Java 17과 Apache Tomcat 10.1 서버를 설정합니다.
@@ -383,7 +407,7 @@ Set-Location project_ssa_spring
 mvn test
 ```
 
-### 4. ESP32 연결 시 주의사항
+### 5. ESP32 연결 시 주의사항
 
 - COM 포트는 장비마다 다르므로 `SSA_ESP32_COM_PORT`로 지정합니다. `COM6`은 기본값일 뿐 필수값이 아닙니다.
 - Thonny 등 다른 도구가 동일한 serial port를 점유하면 `mpremote`와 충돌할 수 있습니다.
